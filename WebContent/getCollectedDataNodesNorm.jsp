@@ -3,7 +3,9 @@
 <%
 	DatabaseConnector myConnector = new DatabaseConnector();
 	ArrayList results = myConnector.getCollectedData();
+	//System.out.println(results);
 	results = myConnector.getStartNodes(results);
 	results = myConnector.normalizeTime(results);
 	out.print(myConnector.toJSON(results));
+	
 %>

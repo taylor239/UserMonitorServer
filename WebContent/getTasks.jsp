@@ -5,4 +5,5 @@
 	ArrayList results = myConnector.getTasks();
 	results = myConnector.normalizeTimeTasks(results);
 	out.print(myConnector.toJSON(results));
+	
 %>

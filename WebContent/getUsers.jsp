@@ -4,4 +4,5 @@
 	DatabaseConnector myConnector = new DatabaseConnector();
 	ArrayList results = myConnector.getUsers();
 	out.print(myConnector.toJSON(results));
+	
 %>

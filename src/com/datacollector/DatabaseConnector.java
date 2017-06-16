@@ -23,7 +23,6 @@ public class DatabaseConnector
 	private String taskQuery = "SELECT * FROM `Task` INNER JOIN `TaskEvent` ON `Task`.`username` = `TaskEvent`.`username` AND `Task`.`taskName` = `TaskEvent`.`taskName` ORDER BY `TaskEvent`.`username`, `TaskEvent`.`eventTime`";
 	
 	private String imageQuery = "SELECT * FROM `Screenshot` WHERE `username` = ? ORDER BY abs(UNIX_TIMESTAMP(?) - UNIX_TIMESTAMP(`taken`)) LIMIT 1";
-	
 	private TestingConnectionSource mySource;
 	
 	public DatabaseConnector()

@@ -5,4 +5,5 @@
 	ArrayList results = myConnector.getCollectedData();
 	results = myConnector.getStartNodes(results);
 	out.print(myConnector.toJSON(results));
+	
 %>
