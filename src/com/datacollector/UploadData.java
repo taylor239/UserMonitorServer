@@ -3,8 +3,16 @@ package com.datacollector;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 import javax.servlet.ServletException;
@@ -52,13 +60,245 @@ public class UploadData extends HttpServlet
 		ungzip.close();
 		byte[] uncompressed = output.toByteArray();
 		String uncompressedString = new String(uncompressed);
-		//System.out.println(uncompressedString);
+		if(uncompressedString.length() > 200)
+		{
+			System.out.println(uncompressedString.substring(0, 200));
+		}
+		else
+		{
+			System.out.println(uncompressedString);
+		}
 		
 		Gson gson = new GsonBuilder().create();
 		HashMap fromJSON = gson.fromJson(uncompressedString, HashMap.class);
-		System.out.println(fromJSON.keySet());
+		//System.out.println(fromJSON.keySet());
+		System.out.println(fromJSON.get("username"));
+		System.out.println(fromJSON.get("token"));
+		String username = (String) fromJSON.get("username");
+		String token = (String) fromJSON.get("token");
+		
+		try
+		{
+			Class.forName("com.mysql.jdbc.Driver");
+			TestingConnectionSource myConnectionSource = new TestingConnectionSource();
+			
+			Connection dbConn = myConnectionSource.getDatabaseConnection();
+			
+			String query = "SELECT * FROM `dataCollectionServer`.`UploadToken` WHERE `username` = ? AND `token` = ?";
+			
+			PreparedStatement toInsert = dbConn.prepareStatement(query);
+			toInsert.setString(1, username);
+			toInsert.setString(2, token);
+			ResultSet myResults = toInsert.executeQuery();
+			if(!myResults.next())
+			{
+				System.out.println("no such token");
+				return;
+			}
+			else
+			{
+				boolean isActive = myResults.getBoolean("active");
+				if(!isActive)
+				{
+					System.out.println("inactive");
+					return;
+				}
+				
+				
+				if(fromJSON.containsKey("User") && ((List)fromJSON.get("User")).size() > 0)
+				{
+					List<Map> userList = (List) fromJSON.get("User");
+					Map<String, Object> firstUser = (Map) userList.get(0);
+					int listSize = userList.size();
+					
+					String headings = "(";
+					String values = "(";
+					boolean first = true;
+					Set<String> masterKeySet = firstUser.keySet();
+					for(String heading : masterKeySet)
+					{
+						if(first)
+						{
+							
+						}
+						else
+						{
+							values += ", ";
+							headings += ", ";
+						}
+						values += "?";
+						headings += heading;
+						first = false;
+					}
+					values += ")";
+					headings += ")";
+					
+					String userInsert = "INSERT IGNORE INTO `dataCollectionServer`.`User` " + headings + " VALUES ";
+					StringBuilder totalQuery = new StringBuilder();
+					totalQuery.append(userInsert);
+					first = true;
+					for(int x=0; x<listSize; x++)
+					{
+						if(first)
+						{
+							
+						}
+						else
+						{
+							totalQuery.append(", ");
+						}
+						totalQuery.append(values);
+						first = false;
+					}
+					userInsert = totalQuery.toString();
+					System.out.println(userInsert);
+					//System.out.println(userList);
+					
+					PreparedStatement insertStatement = dbConn.prepareStatement(userInsert);
+					
+					int curEnt = 1;
+					for(Map entry : userList)
+					{
+						if(!entry.get("username").equals(username))
+						{
+							System.out.println("Invalid: " + entry.get("username") + ", " + username);
+						}
+						for(String key : masterKeySet)
+						{
+							System.out.println(entry.get(key).getClass());
+							insertStatement.setString(curEnt, "" + entry.get(key));
+							curEnt++;
+						}
+					}
+					
+					insertStatement.execute();
+				}
+				
+				insertInto("Screenshot", fromJSON, dbConn, username);
+				insertInto("Process", fromJSON, dbConn, username);
+				insertInto("ProcessArgs", fromJSON, dbConn, username);
+				insertInto("ProcessAttributes", fromJSON, dbConn, username);
+				insertInto("Window", fromJSON, dbConn, username);
+				insertInto("WindowDetails", fromJSON, dbConn, username);
+				insertInto("MouseInput", fromJSON, dbConn, username);
+				insertInto("KeyboardInput", fromJSON, dbConn, username);
+				
+				double totalDoneTmp = (Double) fromJSON.get("totalDone");
+				double totalToDoTmp = (Double) fromJSON.get("totalToDo");
+				int totalDone = (int)totalDoneTmp;
+				int totalToDo = (int)totalToDoTmp;
+				
+				String updateNumQuery = "UPDATE `dataCollectionServer`.`UploadToken` SET `framesUploaded` = ?, `framesRemaining` = ? WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ?";
+				PreparedStatement toUpdate = dbConn.prepareStatement(updateNumQuery);
+				toUpdate.setInt(1, totalDone);
+				toUpdate.setInt(2, totalToDo);
+				toUpdate.setString(3, username);
+				toUpdate.setString(4, token);
+				toUpdate.execute();
+				
+				if(totalToDo <= 0)
+				{
+					String inactiveQuery = "UPDATE `dataCollectionServer`.`UploadToken` SET `active` = '0' WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ?";
+					PreparedStatement toInactive = dbConn.prepareStatement(inactiveQuery);
+					toInactive.setString(1, username);
+					toInactive.setString(2, token);
+					toInactive.execute();
+				}
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		
+		System.out.println(new Date());
+		System.out.println("Done: " + fromJSON.get("totalDone") + "/" + fromJSON.get("totalToDo"));
+		
+		
 		
 		response.getWriter().append("Served at: ").append(request.getContextPath());
+	}
+	
+	public void insertInto(String table, Map fromJSON, Connection dbConn, String username) throws Exception
+	{
+		if(fromJSON.containsKey(table) && ((List)fromJSON.get(table)).size() > 0)
+		{
+			List<Map> userList = (List) fromJSON.get(table);
+			Map<String, Object> firstUser = (Map) userList.get(0);
+			int listSize = userList.size();
+			
+			String headings = "(";
+			String values = "(";
+			boolean first = true;
+			Set<String> masterKeySet = firstUser.keySet();
+			for(String heading : masterKeySet)
+			{
+				if(first)
+				{
+					
+				}
+				else
+				{
+					values += ", ";
+					headings += ", ";
+				}
+				values += "?";
+				headings += heading;
+				first = false;
+			}
+			values += ")";
+			headings += ")";
+			
+			String userInsert = "INSERT IGNORE INTO `dataCollectionServer`.`" + table + "` " + headings + " VALUES ";
+			StringBuilder totalQuery = new StringBuilder();
+			totalQuery.append(userInsert);
+			first = true;
+			for(int x=0; x<listSize; x++)
+			{
+				if(first)
+				{
+					
+				}
+				else
+				{
+					totalQuery.append(", ");
+				}
+				totalQuery.append(values);
+				first = false;
+			}
+			userInsert = totalQuery.toString();
+			System.out.println(userInsert);
+			//System.out.println(userList);
+			
+			PreparedStatement insertStatement = dbConn.prepareStatement(userInsert);
+			
+			int curEnt = 1;
+			for(Map entry : userList)
+			{
+				if(!entry.get("username").equals(username))
+				{
+					System.out.println("Invalid: " + entry.get("username") + ", " + username);
+					return;
+				}
+				for(String key : masterKeySet)
+				{
+					//System.out.println(entry.get(key).getClass());
+					if(key.equals("screenshot"))
+					{
+						String toDecode = (String) entry.get(key);
+						byte[] decoded = Base64.getDecoder().decode(toDecode);
+						insertStatement.setBytes(curEnt, decoded);
+					}
+					else
+					{
+						insertStatement.setString(curEnt, "" + entry.get(key));
+					}
+					curEnt++;
+				}
+			}
+			
+			insertStatement.execute();
+		}
 	}
 
 	/**
