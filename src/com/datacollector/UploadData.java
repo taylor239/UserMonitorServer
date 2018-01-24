@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
@@ -76,6 +77,7 @@ public class UploadData extends HttpServlet
 		System.out.println(fromJSON.get("token"));
 		String username = (String) fromJSON.get("username");
 		String token = (String) fromJSON.get("token");
+		String event = (String) fromJSON.get("event");
 		
 		try
 		{
@@ -84,11 +86,12 @@ public class UploadData extends HttpServlet
 			
 			Connection dbConn = myConnectionSource.getDatabaseConnection();
 			
-			String query = "SELECT * FROM `dataCollectionServer`.`UploadToken` WHERE `username` = ? AND `token` = ?";
+			String query = "SELECT * FROM `openDataCollectionServer`.`UploadToken` INNER JOIN `openDataCollectionServer`.`Event` ON `openDataCollectionServer`.`UploadToken`.`event` = `openDataCollectionServer`.`Event`.`event`  WHERE `username` = ? AND `token` = ? AND `openDataCollectionServer`.`UploadToken`.`event` = ?";
 			
 			PreparedStatement toInsert = dbConn.prepareStatement(query);
 			toInsert.setString(1, username);
 			toInsert.setString(2, token);
+			toInsert.setString(3, event);
 			ResultSet myResults = toInsert.executeQuery();
 			if(!myResults.next())
 			{
@@ -98,10 +101,21 @@ public class UploadData extends HttpServlet
 			else
 			{
 				boolean isActive = myResults.getBoolean("active");
-				if(!isActive)
+				boolean isContinuous = myResults.getBoolean("continuous");
+				Timestamp endDate = myResults.getTimestamp("end");
+				if(!isActive && !isContinuous)
 				{
 					System.out.println("inactive");
 					return;
+				}
+				else if(isContinuous)
+				{
+					Date curDate = new Date();
+					if(curDate.after(endDate))
+					{
+						System.out.println("after end date");
+						return;
+					}
 				}
 				
 				
@@ -133,7 +147,7 @@ public class UploadData extends HttpServlet
 					values += ")";
 					headings += ")";
 					
-					String userInsert = "INSERT IGNORE INTO `dataCollectionServer`.`User` " + headings + " VALUES ";
+					String userInsert = "INSERT IGNORE INTO `openDataCollectionServer`.`User` " + headings + " VALUES ";
 					StringBuilder totalQuery = new StringBuilder();
 					totalQuery.append(userInsert);
 					first = true;
@@ -188,7 +202,7 @@ public class UploadData extends HttpServlet
 				int totalDone = (int)totalDoneTmp;
 				int totalToDo = (int)totalToDoTmp;
 				
-				String updateNumQuery = "UPDATE `dataCollectionServer`.`UploadToken` SET `framesUploaded` = ?, `framesRemaining` = ? WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ?";
+				String updateNumQuery = "UPDATE `openDataCollectionServer`.`UploadToken` SET `framesUploaded` = ?, `framesRemaining` = ? WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ?";
 				PreparedStatement toUpdate = dbConn.prepareStatement(updateNumQuery);
 				toUpdate.setInt(1, totalDone);
 				toUpdate.setInt(2, totalToDo);
@@ -198,7 +212,7 @@ public class UploadData extends HttpServlet
 				
 				if(totalToDo <= 0)
 				{
-					String inactiveQuery = "UPDATE `dataCollectionServer`.`UploadToken` SET `active` = '0' WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ?";
+					String inactiveQuery = "UPDATE `openDataCollectionServer`.`UploadToken` SET `active` = '0' WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ?";
 					PreparedStatement toInactive = dbConn.prepareStatement(inactiveQuery);
 					toInactive.setString(1, username);
 					toInactive.setString(2, token);
@@ -249,7 +263,7 @@ public class UploadData extends HttpServlet
 			values += ")";
 			headings += ")";
 			
-			String userInsert = "INSERT IGNORE INTO `dataCollectionServer`.`" + table + "` " + headings + " VALUES ";
+			String userInsert = "INSERT IGNORE INTO `openDataCollectionServer`.`" + table + "` " + headings + " VALUES ";
 			StringBuilder totalQuery = new StringBuilder();
 			totalQuery.append(userInsert);
 			first = true;

@@ -14,9 +14,9 @@ public class TestingConnectionSource
 	private Connection myConnection;
 	
 	
-	String userName = "dataCollector";
+	String userName = "dataCollectorServer";
 	String password = "uBgiDDGhndviQeEZ";
-	String address = "jdbc:mysql://localhost:3306/dataCollectionServer";
+	String address = "jdbc:mysql://localhost:3306/openDataCollectionServer";
 	
 	public TestingConnectionSource()
 	{

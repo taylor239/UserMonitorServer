@@ -1,8 +1,8 @@
--- MySQL dump 10.16  Distrib 10.1.10-MariaDB, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.21, for Linux (x86_64)
 --
 -- Host: localhost    Database: dataCollection
 -- ------------------------------------------------------
--- Server version	10.1.10-MariaDB
+-- Server version	5.7.21-0ubuntu0.16.04.1
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -15,13 +15,34 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
---
--- Current Database: `dataCollection`
---
-
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `dataCollection` /*!40100 DEFAULT CHARACTER SET latin1 */;
-
+CREATE DATABASE IF NOT EXISTS `dataCollection` DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci;
 USE `dataCollection`;
+
+
+--
+-- Table structure for table `Event`
+--
+
+DROP TABLE IF EXISTS `Event`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `Event` (
+  `event` varchar(50) NOT NULL,
+  `start` timestamp NULL DEFAULT NULL,
+  `end` timestamp NULL DEFAULT NULL,
+  `description` text NOT NULL,
+  PRIMARY KEY (`event`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `Event`
+--
+
+LOCK TABLES `Event` WRITE;
+/*!40000 ALTER TABLE `Event` DISABLE KEYS */;
+/*!40000 ALTER TABLE `Event` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `KeyboardInput`
@@ -31,6 +52,7 @@ DROP TABLE IF EXISTS `KeyboardInput`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `KeyboardInput` (
+  `event` varchar(50) NOT NULL,
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
   `user` varchar(20) NOT NULL,
@@ -42,8 +64,8 @@ CREATE TABLE `KeyboardInput` (
   `type` varchar(10) NOT NULL,
   `inputTime` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`username`,`session`,`user`,`pid`,`start`,`xid`,`timeChanged`,`inputTime`,`type`) USING BTREE,
-  CONSTRAINT `KeyboardInput_ibfk_1` FOREIGN KEY (`username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) REFERENCES `WindowDetails` (`username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`event`,`username`,`session`,`user`,`pid`,`start`,`xid`,`timeChanged`,`inputTime`,`type`) USING BTREE,
+  CONSTRAINT `KeyboardInput_ibfk_1` FOREIGN KEY (`event`, `username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) REFERENCES `WindowDetails` (`event`, `username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -86,6 +108,7 @@ DROP TABLE IF EXISTS `MouseInput`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `MouseInput` (
+  `event` varchar(50) NOT NULL,
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
   `user` varchar(20) NOT NULL,
@@ -98,8 +121,8 @@ CREATE TABLE `MouseInput` (
   `yLoc` int(11) NOT NULL,
   `inputTime` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`username`,`session`,`user`,`pid`,`start`,`xid`,`timeChanged`,`inputTime`) USING BTREE,
-  CONSTRAINT `MouseInput_ibfk_1` FOREIGN KEY (`username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) REFERENCES `WindowDetails` (`username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`event`,`username`,`session`,`user`,`pid`,`start`,`xid`,`timeChanged`,`inputTime`) USING BTREE,
+  CONSTRAINT `MouseInput_ibfk_1` FOREIGN KEY (`event`, `username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) REFERENCES `WindowDetails` (`event`, `username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -120,6 +143,7 @@ DROP TABLE IF EXISTS `Process`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `Process` (
+  `event` varchar(50) NOT NULL,
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
   `user` varchar(20) NOT NULL,
@@ -127,8 +151,8 @@ CREATE TABLE `Process` (
   `start` varchar(10) NOT NULL,
   `command` text NOT NULL,
   `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`username`,`session`,`user`,`pid`,`start`) USING BTREE,
-  CONSTRAINT `Process_ibfk_1` FOREIGN KEY (`username`, `session`) REFERENCES `User` (`username`, `session`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`event`,`username`,`session`,`user`,`pid`,`start`) USING BTREE,
+  CONSTRAINT `Process_ibfk_1` FOREIGN KEY (`event`, `username`, `session`) REFERENCES `User` (`event`, `username`, `session`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -149,6 +173,7 @@ DROP TABLE IF EXISTS `ProcessArgs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `ProcessArgs` (
+  `event` varchar(50) NOT NULL,
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
   `user` varchar(20) NOT NULL,
@@ -157,8 +182,8 @@ CREATE TABLE `ProcessArgs` (
   `numbered` int(11) NOT NULL,
   `arg` text NOT NULL,
   `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`username`,`session`,`user`,`pid`,`start`,`numbered`) USING BTREE,
-  CONSTRAINT `ProcessArgs_ibfk_1` FOREIGN KEY (`username`, `session`, `user`, `pid`, `start`) REFERENCES `Process` (`username`, `session`, `user`, `pid`, `start`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`event`,`username`,`session`,`user`,`pid`,`start`,`numbered`) USING BTREE,
+  CONSTRAINT `ProcessArgs_ibfk_1` FOREIGN KEY (`event`, `username`, `session`, `user`, `pid`, `start`) REFERENCES `Process` (`event`, `username`, `session`, `user`, `pid`, `start`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -179,6 +204,7 @@ DROP TABLE IF EXISTS `ProcessAttributes`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `ProcessAttributes` (
+  `event` varchar(50) NOT NULL,
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
   `user` varchar(20) NOT NULL,
@@ -193,8 +219,8 @@ CREATE TABLE `ProcessAttributes` (
   `time` varchar(10) NOT NULL,
   `timestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`username`,`session`,`user`,`pid`,`start`,`timestamp`) USING BTREE,
-  CONSTRAINT `ProcessAttributes_ibfk_1` FOREIGN KEY (`username`, `session`, `user`, `pid`, `start`) REFERENCES `Process` (`username`, `session`, `user`, `pid`, `start`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`event`,`username`,`session`,`user`,`pid`,`start`,`timestamp`) USING BTREE,
+  CONSTRAINT `ProcessAttributes_ibfk_1` FOREIGN KEY (`event`, `username`, `session`, `user`, `pid`, `start`) REFERENCES `Process` (`event`, `username`, `session`, `user`, `pid`, `start`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -215,13 +241,14 @@ DROP TABLE IF EXISTS `Screenshot`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `Screenshot` (
+  `event` varchar(50) NOT NULL,
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
   `taken` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `screenshot` longblob NOT NULL,
   `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`username`,`session`,`taken`) USING BTREE,
-  CONSTRAINT `Screenshot_ibfk_1` FOREIGN KEY (`username`, `session`) REFERENCES `User` (`username`, `session`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`event`,`username`,`session`,`taken`) USING BTREE,
+  CONSTRAINT `Screenshot_ibfk_1` FOREIGN KEY (`event`, `username`, `session`) REFERENCES `User` (`event`, `username`, `session`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -242,13 +269,14 @@ DROP TABLE IF EXISTS `Task`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `Task` (
+  `event` varchar(50) NOT NULL,
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
   `taskName` varchar(50) NOT NULL,
   `completion` double NOT NULL,
   `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`username`,`session`,`taskName`) USING BTREE,
-  CONSTRAINT `Task_ibfk_1` FOREIGN KEY (`username`, `session`) REFERENCES `User` (`username`, `session`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`event`,`username`,`session`,`taskName`) USING BTREE,
+  CONSTRAINT `Task_ibfk_1` FOREIGN KEY (`event`, `username`, `session`) REFERENCES `User` (`event`, `username`, `session`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -269,14 +297,15 @@ DROP TABLE IF EXISTS `TaskEvent`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `TaskEvent` (
+  `event` varchar(50) NOT NULL,
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
   `taskName` varchar(50) NOT NULL,
   `eventTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `event` varchar(20) NOT NULL,
+  `eventDescription` varchar(20) NOT NULL,
   `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`username`,`session`,`taskName`,`eventTime`) USING BTREE,
-  CONSTRAINT `TaskEvent_ibfk_1` FOREIGN KEY (`username`, `session`, `taskName`) REFERENCES `Task` (`username`, `session`, `taskName`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`event`,`username`,`session`,`taskName`,`eventTime`) USING BTREE,
+  CONSTRAINT `TaskEvent_ibfk_1` FOREIGN KEY (`event`, `username`, `session`, `taskName`) REFERENCES `Task` (`event`, `username`, `session`, `taskName`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -297,10 +326,12 @@ DROP TABLE IF EXISTS `User`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `User` (
+  `event` varchar(50) NOT NULL,
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
   `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`username`,`session`)
+  PRIMARY KEY (`event`,`username`,`session`),
+  CONSTRAINT `User_ibfk_1` FOREIGN KEY (`event`) REFERENCES `Event` (`event`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -321,12 +352,13 @@ DROP TABLE IF EXISTS `UserIP`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `UserIP` (
+  `event` varchar(50) NOT NULL,
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
   `ip` varchar(50) NOT NULL,
   `start` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`username`,`session`,`ip`,`start`) USING BTREE,
-  CONSTRAINT `UserIP_ibfk_1` FOREIGN KEY (`username`, `session`) REFERENCES `User` (`username`, `session`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`event`,`username`,`session`,`ip`,`start`) USING BTREE,
+  CONSTRAINT `UserIP_ibfk_1` FOREIGN KEY (`event`, `username`, `session`) REFERENCES `User` (`event`, `username`, `session`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -347,6 +379,7 @@ DROP TABLE IF EXISTS `Window`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `Window` (
+  `event` varchar(50) NOT NULL,
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
   `user` varchar(20) NOT NULL,
@@ -356,8 +389,8 @@ CREATE TABLE `Window` (
   `firstClass` varchar(20) NOT NULL,
   `secondClass` varchar(20) NOT NULL,
   `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`username`,`session`,`user`,`pid`,`start`,`xid`) USING BTREE,
-  CONSTRAINT `Window_ibfk_1` FOREIGN KEY (`username`, `session`, `user`, `pid`, `start`) REFERENCES `Process` (`username`, `session`, `user`, `pid`, `start`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`event`,`username`,`session`,`user`,`pid`,`start`,`xid`) USING BTREE,
+  CONSTRAINT `Window_ibfk_1` FOREIGN KEY (`event`, `username`, `session`, `user`, `pid`, `start`) REFERENCES `Process` (`event`, `username`, `session`, `user`, `pid`, `start`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -378,6 +411,7 @@ DROP TABLE IF EXISTS `WindowDetails`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `WindowDetails` (
+  `event` varchar(50) NOT NULL,
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
   `user` varchar(20) NOT NULL,
@@ -391,8 +425,8 @@ CREATE TABLE `WindowDetails` (
   `name` text NOT NULL,
   `timeChanged` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`username`,`session`,`user`,`pid`,`start`,`xid`,`timeChanged`) USING BTREE,
-  CONSTRAINT `WindowDetails_ibfk_1` FOREIGN KEY (`username`, `session`, `user`, `pid`, `start`, `xid`) REFERENCES `Window` (`username`, `session`, `user`, `pid`, `start`, `xid`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`event`,`username`,`session`,`user`,`pid`,`start`,`xid`,`timeChanged`) USING BTREE,
+  CONSTRAINT `WindowDetails_ibfk_1` FOREIGN KEY (`event`, `username`, `session`, `user`, `pid`, `start`, `xid`) REFERENCES `Window` (`event`, `username`, `session`, `user`, `pid`, `start`, `xid`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -414,4 +448,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2017-09-16  6:37:23
+-- Dump completed on 2018-01-23  9:12:54

@@ -39,6 +39,7 @@ public class TokenStatusServlet extends HttpServlet {
 		Gson gson = new GsonBuilder().create();
 		
 		String username = request.getParameter("username");
+		String event = request.getParameter("event");
 		String token = request.getParameter("token");
 		String verify = request.getParameter("verifier");
 		
@@ -55,11 +56,12 @@ public class TokenStatusServlet extends HttpServlet {
 			
 			Connection dbConn = myConnectionSource.getDatabaseConnection();
 			
-			String query = "SELECT * FROM `dataCollectionServer`.`UploadToken` WHERE `username` = ? AND `token` = ?";
+			String query = "SELECT * FROM `openDataCollectionServer`.`UploadToken` WHERE `event` = ? AND `username` = ? AND `token` = ?";
 			
 			PreparedStatement toInsert = dbConn.prepareStatement(query);
-			toInsert.setString(1, username);
-			toInsert.setString(2, token);
+			toInsert.setString(1, event);
+			toInsert.setString(2, username);
+			toInsert.setString(3, token);
 			ResultSet myResults = toInsert.executeQuery();
 			if(!myResults.next())
 			{
@@ -73,11 +75,13 @@ public class TokenStatusServlet extends HttpServlet {
 			int framesUploaded = myResults.getInt("framesUploaded");
 			int totalFrames = myResults.getInt("framesRemaining");
 			boolean isActive = myResults.getBoolean("active");
+			boolean isContinuous = myResults.getBoolean("continuous");
 			HashMap outputMap = new HashMap();
 			outputMap.put("result", "ok");
 			outputMap.put("framesUploaded", framesUploaded);
 			outputMap.put("framesLeft", totalFrames);
 			outputMap.put("isActive", isActive);
+			outputMap.put("continuous", isContinuous);
 			outputMap.put("username", username);
 			outputMap.put("token", token);
 			String output = gson.toJson(outputMap);
