@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 5.7.20, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.21, for Linux (x86_64)
 --
--- Host: localhost    Database: openDataCollection
+-- Host: localhost    Database: openDataCollectionServer
 -- ------------------------------------------------------
--- Server version	5.7.20-0ubuntu0.16.04.1
+-- Server version	5.7.21-0ubuntu0.16.04.1
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -15,8 +15,8 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
-CREATE DATABASE IF NOT EXISTS `openDataCollection` DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci;
-USE `openDataCollection`;
+CREATE DATABASE IF NOT EXISTS `openDataCollectionServer` DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci;
+USE `openDataCollectionServer`;
 
 --
 -- Table structure for table `Event`
@@ -29,18 +29,42 @@ CREATE TABLE `Event` (
   `event` varchar(50) NOT NULL,
   `start` timestamp NULL DEFAULT NULL,
   `end` timestamp NULL DEFAULT NULL,
+  `description` text NOT NULL,
   PRIMARY KEY (`event`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `Event`
+-- Table structure for table `EventContact`
 --
 
-LOCK TABLES `Event` WRITE;
-/*!40000 ALTER TABLE `Event` DISABLE KEYS */;
-/*!40000 ALTER TABLE `Event` ENABLE KEYS */;
-UNLOCK TABLES;
+DROP TABLE IF EXISTS `EventContact`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `EventContact` (
+  `event` varchar(50) NOT NULL,
+  `name` varchar(50) NOT NULL,
+  `contact` text NOT NULL,
+  PRIMARY KEY (`event`,`name`),
+  CONSTRAINT `EventContact_ibfk_1` FOREIGN KEY (`event`) REFERENCES `Event` (`event`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `EventTimeSynchro`
+--
+
+DROP TABLE IF EXISTS `EventTimeSynchro`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `EventTimeSynchro` (
+  `event` varchar(50) NOT NULL,
+  `localServerTime` timestamp(3) NULL DEFAULT NULL,
+  `eventServerTime` bigint(20) NOT NULL,
+  PRIMARY KEY (`event`),
+  CONSTRAINT `EventTimeSynchro_ibfk_1` FOREIGN KEY (`event`) REFERENCES `Event` (`event`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `KeyboardInput`
@@ -68,15 +92,6 @@ CREATE TABLE `KeyboardInput` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `KeyboardInput`
---
-
-LOCK TABLES `KeyboardInput` WRITE;
-/*!40000 ALTER TABLE `KeyboardInput` DISABLE KEYS */;
-/*!40000 ALTER TABLE `KeyboardInput` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `LastTransfer`
 --
 
@@ -88,15 +103,6 @@ CREATE TABLE `LastTransfer` (
   PRIMARY KEY (`lastTransfer`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `LastTransfer`
---
-
-LOCK TABLES `LastTransfer` WRITE;
-/*!40000 ALTER TABLE `LastTransfer` DISABLE KEYS */;
-/*!40000 ALTER TABLE `LastTransfer` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `MouseInput`
@@ -120,18 +126,9 @@ CREATE TABLE `MouseInput` (
   `inputTime` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (`event`,`username`,`session`,`user`,`pid`,`start`,`xid`,`timeChanged`,`inputTime`) USING BTREE,
-  CONSTRAINT `MouseInput_ibfk_1` FOREIGN KEY (`event`,`username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) REFERENCES `WindowDetails` (`event`,`username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `MouseInput_ibfk_1` FOREIGN KEY (`event`, `username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) REFERENCES `WindowDetails` (`event`, `username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `MouseInput`
---
-
-LOCK TABLES `MouseInput` WRITE;
-/*!40000 ALTER TABLE `MouseInput` DISABLE KEYS */;
-/*!40000 ALTER TABLE `MouseInput` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `Process`
@@ -150,18 +147,9 @@ CREATE TABLE `Process` (
   `command` text NOT NULL,
   `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (`event`,`username`,`session`,`user`,`pid`,`start`) USING BTREE,
-  CONSTRAINT `Process_ibfk_1` FOREIGN KEY (`event`,`username`, `session`) REFERENCES `User` (`event`, `username`, `session`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `Process_ibfk_1` FOREIGN KEY (`event`, `username`, `session`) REFERENCES `User` (`event`, `username`, `session`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `Process`
---
-
-LOCK TABLES `Process` WRITE;
-/*!40000 ALTER TABLE `Process` DISABLE KEYS */;
-/*!40000 ALTER TABLE `Process` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `ProcessArgs`
@@ -184,15 +172,6 @@ CREATE TABLE `ProcessArgs` (
   CONSTRAINT `ProcessArgs_ibfk_1` FOREIGN KEY (`event`, `username`, `session`, `user`, `pid`, `start`) REFERENCES `Process` (`event`, `username`, `session`, `user`, `pid`, `start`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ProcessArgs`
---
-
-LOCK TABLES `ProcessArgs` WRITE;
-/*!40000 ALTER TABLE `ProcessArgs` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ProcessArgs` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `ProcessAttributes`
@@ -223,15 +202,6 @@ CREATE TABLE `ProcessAttributes` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `ProcessAttributes`
---
-
-LOCK TABLES `ProcessAttributes` WRITE;
-/*!40000 ALTER TABLE `ProcessAttributes` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ProcessAttributes` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `Screenshot`
 --
 
@@ -251,15 +221,6 @@ CREATE TABLE `Screenshot` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `Screenshot`
---
-
-LOCK TABLES `Screenshot` WRITE;
-/*!40000 ALTER TABLE `Screenshot` DISABLE KEYS */;
-/*!40000 ALTER TABLE `Screenshot` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `Task`
 --
 
@@ -277,15 +238,6 @@ CREATE TABLE `Task` (
   CONSTRAINT `Task_ibfk_1` FOREIGN KEY (`event`, `username`, `session`) REFERENCES `User` (`event`, `username`, `session`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `Task`
---
-
-LOCK TABLES `Task` WRITE;
-/*!40000 ALTER TABLE `Task` DISABLE KEYS */;
-/*!40000 ALTER TABLE `Task` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `TaskEvent`
@@ -308,13 +260,24 @@ CREATE TABLE `TaskEvent` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `TaskEvent`
+-- Table structure for table `UploadToken`
 --
 
-LOCK TABLES `TaskEvent` WRITE;
-/*!40000 ALTER TABLE `TaskEvent` DISABLE KEYS */;
-/*!40000 ALTER TABLE `TaskEvent` ENABLE KEYS */;
-UNLOCK TABLES;
+DROP TABLE IF EXISTS `UploadToken`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `UploadToken` (
+  `event` varchar(50) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `token` varchar(50) NOT NULL,
+  `framesUploaded` int(11) NOT NULL DEFAULT '0',
+  `framesRemaining` int(11) NOT NULL DEFAULT '0',
+  `active` tinyint(4) NOT NULL DEFAULT '1',
+  `lastAltered` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `continuous` tinyint(4) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`event`,`username`,`token`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `User`
@@ -328,18 +291,10 @@ CREATE TABLE `User` (
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
   `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`event`,`username`,`session`)
+  PRIMARY KEY (`event`,`username`,`session`),
+  CONSTRAINT `User_ibfk_1` FOREIGN KEY (`event`) REFERENCES `Event` (`event`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `User`
---
-
-LOCK TABLES `User` WRITE;
-/*!40000 ALTER TABLE `User` DISABLE KEYS */;
-/*!40000 ALTER TABLE `User` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `UserIP`
@@ -360,13 +315,19 @@ CREATE TABLE `UserIP` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `UserIP`
+-- Table structure for table `UserList`
 --
 
-LOCK TABLES `UserIP` WRITE;
-/*!40000 ALTER TABLE `UserIP` DISABLE KEYS */;
-/*!40000 ALTER TABLE `UserIP` ENABLE KEYS */;
-UNLOCK TABLES;
+DROP TABLE IF EXISTS `UserList`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `UserList` (
+  `event` varchar(50) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  PRIMARY KEY (`event`,`username`),
+  CONSTRAINT `UserList_ibfk_1` FOREIGN KEY (`event`) REFERENCES `Event` (`event`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `Window`
@@ -390,15 +351,6 @@ CREATE TABLE `Window` (
   CONSTRAINT `Window_ibfk_1` FOREIGN KEY (`event`, `username`, `session`, `user`, `pid`, `start`) REFERENCES `Process` (`event`, `username`, `session`, `user`, `pid`, `start`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `Window`
---
-
-LOCK TABLES `Window` WRITE;
-/*!40000 ALTER TABLE `Window` DISABLE KEYS */;
-/*!40000 ALTER TABLE `Window` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `WindowDetails`
@@ -426,15 +378,6 @@ CREATE TABLE `WindowDetails` (
   CONSTRAINT `WindowDetails_ibfk_1` FOREIGN KEY (`event`, `username`, `session`, `user`, `pid`, `start`, `xid`) REFERENCES `Window` (`event`, `username`, `session`, `user`, `pid`, `start`, `xid`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `WindowDetails`
---
-
-LOCK TABLES `WindowDetails` WRITE;
-/*!40000 ALTER TABLE `WindowDetails` DISABLE KEYS */;
-/*!40000 ALTER TABLE `WindowDetails` ENABLE KEYS */;
-UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -445,4 +388,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2018-01-19 11:22:55
+-- Dump completed on 2018-01-25 12:26:42
