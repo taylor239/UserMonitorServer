@@ -78,7 +78,7 @@ Ubuntu and Kali Linux, but may work on other versions of Linux.  We recommend Ka
 Linux for this competition, as it has handy tools for these problems.</li>
 <li>On your virtual device, navigate back to this page and make sure your
 token is entered in the field above.</li>
-<li>Download <a id="installScriptLink" href="../installDataCollection.sh?event=<%=event %>">this script</a>.</li>
+<li>Download <a id="installScriptLink" href="../installDataCollection.sh?event=<%=event %>" download>this script</a>.</li>
 <li>Enable execution of the script (how to do this is operating system specific).</li>
 <li>Install the data collection software by opening a terminal in the folder with
 the script and entering:<br />
@@ -93,7 +93,7 @@ If you would like to have your data collected thus far removed as well, contact
 the system admins, listed below.
 </p>
 <ol>
-<li>On your virtual machine, download <a href="stopscript.jsp">this script</a>.</li>
+<li>On your virtual machine, download <a href="stopscript.jsp" download>this script</a>.</li>
 </ol>
 </td>
 </tr>
