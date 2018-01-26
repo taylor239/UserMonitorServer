@@ -46,14 +46,14 @@ public class InstallScriptServlet extends HttpServlet {
 		try
 		{
 			myNewToken = UUID.randomUUID().toString();
-			String verifierURL = "http://localhost:8080/DataCollectorServer/UserEventStatus?username=" + curEmail + "&event=" + curEvent + "&token=" + myNewToken + "&verifier=for_revenge";
+			String verifierURL = "http://localhost:8080/DataCollectorServer/UserEventStatus?username=" + curEmail + "&event=" + curEvent + "&verifier=for_revenge";
 			URL myURL = new URL(verifierURL);
 			InputStream in = myURL.openStream();
 			String reply = org.apache.commons.io.IOUtils.toString(in);
 			org.apache.commons.io.IOUtils.closeQuietly(in);
 			System.out.println(reply);
 			HashMap replyMap = myGson.fromJson(reply, HashMap.class);
-			if(replyMap.get("result").equals("nokay"))
+			if(reply.isEmpty() || replyMap.get("result").equals("nokay"))
 			{
 				return;
 			}
@@ -95,16 +95,16 @@ public class InstallScriptServlet extends HttpServlet {
 		String output = "#!/bin/bash" 
 		+ "\nclear" 
 		+ "\n" 
-		+ "\necho \"You are about to install the data collection suite for the RevEngE Reverse Enginerring Engine.  This data collection suite aims to conduct research by monitoring users as they complete the challenges posted on the RevEngE website (revenge.cs.arizona.edu).  It works by collecting data from the operating system, including screenshots, keyboard and mouse input, and running processes, storing that data in a local database, and uploading that data to revenge.cs.arizona.edu when you run the corresponding upload script.  If you are a student participating in this research while completing a course assignment, please review any consent forms you have been given and, if you agree, return them to the appropriate individual.  Regardless of whether you are doing this for a course or not, please provide consent here as well if you wish to participate in the study. In order to give consent, type \\\"yes\\\" and push enter.  If you do not given consent, please type \\\"no\\\" instead and the software will not be installed.  The consent agreement may be downloaded and read from the following links:\"" 
+		+ "\necho \"You are about to install the data collection suite from the Catalyst Open Data Collection engine.  Please review the documentation for this software at the location you downloaded it.  Generalized documentation for this software and information about your particular event can also be found at the following locations:\"" 
 		+ "\n" 
 		+ "\necho \"\"" 
 		+ "\n" 
-		+ "\necho \"For students: revenge.cs.arizona.edu/RevEngE/Students.pdf\"" 
-		+ "\necho \"For anyone else: revenge.cs.arizona.edu/RevEngE/Professionals.pdf\"" 
+		+ "\necho \"http://localhost:8080/DataCollectorServer/openDataCollection/index.jsp\"" 
+		+ "\necho \"http://localhost:8080/DataCollectorServer/openDataCollection/event.jsp?event=" + curEvent + "\"" 
 		+ "\n" 
 		+ "\necho \"\"" 
 		+ "\n" 
-		+ "\necho \"Do you agree to the appropriate consent document?  Please enter yes or no.  If you enter yes, you agree that you have read and agree to the appropriate consent agreement.  Entering yes will install the data collection software suite.\"" 
+		+ "\necho \"When you downloaded this software, you were given and agreed to a consent document.  Do you agree to the appropriate consent document?  Please enter yes or no.  If you enter yes, you agree that you have read and agree to the appropriate consent agreement.  To confirm, do you agree to the appropriate consent terms located at the links above?  Entering yes will install the data collection software suite.\"" 
 		+ "\n" 
 		+ "\nread CONSENT" 
 		+ "\n" 
@@ -119,6 +119,7 @@ public class InstallScriptServlet extends HttpServlet {
 		+ "\n" 
 		+ "\necho \"Starting data collection install\"" 
 		+ "\n" 
+		+ "\nsudo apt-get update && sudo apt-get -y upgrade" 
 		+ "\nsudo apt-get -y install default-jre" 
 		+ "\nsudo apt-get -y install tomcat8" 
 		//+ "\nsudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password " + mySqlPassword + "'" 
