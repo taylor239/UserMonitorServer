@@ -53,7 +53,7 @@ public class InstallScriptServlet extends HttpServlet {
 			org.apache.commons.io.IOUtils.closeQuietly(in);
 			System.out.println(reply);
 			HashMap replyMap = myGson.fromJson(reply, HashMap.class);
-			if(reply.isEmpty() || replyMap.get("result").equals("nokay"))
+			if(reply.isEmpty() || replyMap.get("result").equals("nokay") || !replyMap.get("result").equals("ok"))
 			{
 				return;
 			}
