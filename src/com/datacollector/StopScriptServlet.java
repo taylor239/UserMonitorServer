@@ -50,12 +50,12 @@ public class StopScriptServlet extends HttpServlet {
 		+ "\n" 
 		+ "\n# Launch script" 
 		+ "\n" 
-		+ "\nmkdir ~/.config/autostart/"
 		+ "\nrm -rf ~/.config/autostart/DataCollector.desktop"
 		+ "\npkill -f \"/opt/dataCollector/DataCollectorStart.sh\"" 
 		+ "\npkill -f \"/usr/bin/java -jar /opt/dataCollector/DataCollector.jar\"" 
 		+ "\npkill -f \"/opt/dataCollector/DataCollectorStart.sh\"" 
-		+ "\npkill -f \"/usr/bin/java -jar /opt/dataCollector/DataCollector.jar\"" ;
+		+ "\npkill -f \"/usr/bin/java -jar /opt/dataCollector/DataCollector.jar\""
+		+ "\nreboot" ;
 		response.getWriter().append(output);
 	}
 

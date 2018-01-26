@@ -110,6 +110,9 @@ the system admins, listed below.
 <li>Open a terminal in the folder with the downloaded script and enter the following: <br/>
 <span style="font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;"><b>sudo ./stopDataCollection.sh.sh</b></span></li>
 <li>
+<b>This script will restart your computer when you run it to complete the uninstallation.</b>
+</li>
+<li>
 Note that this script leaves a few pieces of software that come with the data collection software
 installed so that, if you are running other software using these installations, that other software
 will not fail.  In particular, the default Java JDK, tomcat8, and mariadb are left installed, but
