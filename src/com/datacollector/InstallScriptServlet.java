@@ -3,6 +3,9 @@ package com.datacollector;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -87,10 +90,39 @@ public class InstallScriptServlet extends HttpServlet {
 			e.printStackTrace();
 		}
 		
+		String continuous = "";
+		String taskgui = "";
 		
+		try
+		{
+			Class.forName("com.mysql.jdbc.Driver");
+			TestingConnectionSource myConnectionSource = new TestingConnectionSource();
+			
+			Connection dbConn = myConnectionSource.getDatabaseConnection();
+			
+			String eventQuery = "SELECT * FROM `openDataCollectionServer`.`Event` WHERE `openDataCollectionServer`.`Event`.`event` = ?";
+			PreparedStatement queryStmt = dbConn.prepareStatement(eventQuery);
+			queryStmt.setString(1, curEvent);
+			ResultSet myResults = queryStmt.executeQuery();
+			if(!myResults.next())
+			{
+				return;
+			}
+			taskgui = myResults.getString("taskgui");
+			if(myResults.wasNull())
+			{
+				taskgui = "";
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 		
 		String serverName = "revenge.cs.arizona.edu";
 		String port = "80";
+		
+		String mariaPassword = "LFgVMrQ8rqR41StN";
 		
 		String output = "#!/bin/bash" 
 		+ "\nclear" 
@@ -99,8 +131,8 @@ public class InstallScriptServlet extends HttpServlet {
 		+ "\n" 
 		+ "\necho \"\"" 
 		+ "\n" 
-		+ "\necho \"http://localhost:8080/DataCollectorServer/openDataCollection/index.jsp\"" 
-		+ "\necho \"http://localhost:8080/DataCollectorServer/openDataCollection/event.jsp?event=" + curEvent + "\"" 
+		+ "\necho \"http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/index.jsp\"" 
+		+ "\necho \"http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/event.jsp?event=" + curEvent + "\"" 
 		+ "\n" 
 		+ "\necho \"\"" 
 		+ "\n" 
@@ -119,8 +151,35 @@ public class InstallScriptServlet extends HttpServlet {
 		+ "\n" 
 		+ "\necho \"Starting data collection install\"" 
 		+ "\n" 
-		+ "\nsudo apt-get update && sudo apt-get -y upgrade" 
+		+ "\nsudo rm /var/lib/dpkg/lock"
+		+ "\nsudo rm /var/cache/apt/archives/lock"
+		+ "\nsudo dpkg --configure -a" 
+		+ "\nsudo apt-get -y clean" 
+		+ "\nsudo rm /var/lib/dpkg/lock"
+		+ "\nsudo rm /var/cache/apt/archives/lock"
+		+ "\nsudo dpkg --configure -a" 
+		+ "\nsudo apt-get -y update --fix-missing" 
+		+ "\nsudo rm /var/lib/dpkg/lock"
+		+ "\nsudo rm /var/cache/apt/archives/lock"
+		+ "\nsudo dpkg --configure -a" 
+		+ "\nsudo apt-get -y upgrade" 
+		+ "\nsudo rm /var/lib/dpkg/lock"
+		+ "\nsudo rm /var/cache/apt/archives/lock"
+		+ "\nsudo dpkg --configure -a" 
+		+ "\nsudo apt-get -y update --fix-missing" 
+		+ "\nsudo rm /var/lib/dpkg/lock"
+		+ "\nsudo rm /var/cache/apt/archives/lock"
+		+ "\nsudo dpkg --configure -a" 
+		+ "\nsudo apt-get -y dist-upgrade" 
+		+ "\nsudo rm /var/lib/dpkg/lock"
+		+ "\nsudo rm /var/cache/apt/archives/lock"
+		+ "\nsudo dpkg --configure -a" 
+		+ "\nsudo apt-get -y update --fix-missing" 
+		+ "\nsudo rm /var/lib/dpkg/lock"
+		+ "\nsudo rm /var/cache/apt/archives/lock"
+		+ "\nsudo dpkg --configure -a" 
 		+ "\nsudo apt-get -y install default-jre" 
+		+ "\nsudo apt-get -y install mariadb-server" 
 		+ "\nsudo apt-get -y install tomcat8" 
 		//+ "\nsudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password " + mySqlPassword + "'" 
 		//+ "\nsudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password " + mySqlPassword + "'" 
@@ -130,7 +189,7 @@ public class InstallScriptServlet extends HttpServlet {
 		+ "\nmkdir -p /opt/dataCollector/" 
 		+ "\n\nwget http://" + serverName + ":" + port + "/DataCollectorServer/endpointSoftware/dataCollection.sql -O /opt/dataCollector/dataCollection.sql"
 		+ "\n\nmariadb -u root < /opt/dataCollector/dataCollection.sql"
-		+ "\nmariadb -u root -e \"CREATE USER 'dataCollector'@'localhost' IDENTIFIED BY 'LFgVMrQ8rqR41StN';\""
+		+ "\nmariadb -u root -e \"CREATE USER 'dataCollector'@'localhost' IDENTIFIED BY '" + mariaPassword + "';\""
 		+ "\nmariadb -u root -e \"GRANT USAGE ON *.* TO 'dataCollector'@'localhost' REQUIRE NONE WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0;\""
 		+ "\nmariadb -u root -e \"GRANT ALL PRIVILEGES ON dataCollection.* TO 'dataCollector'@'localhost';\""
 		+ "\n"
@@ -148,10 +207,11 @@ public class InstallScriptServlet extends HttpServlet {
 		+ "\n#!/bin/bash" 
 		+ "\nwhile true;" 
 		+ "\ndo" 
-		+ "\nservice mysql start" 
-		+ "\nservice tomcat8 start"
-		+ "\npkill -f \"/usr/bin/java -jar /opt/dataCollector/DataCollector.jar\"" 
-		+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
+		//+ "\nservice mysql start" 
+		//+ "\nservice tomcat8 start"
+		+ "\npkill -f \"/usr/bin/java -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar\"" 
+		//+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
+		+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " " + continuous + taskgui + " >> /opt/dataCollector/log.log 2>&1" 
 		+ "\necho \"Got a crash: $(date)\" >> /opt/dataCollector/log.log" 
 		+ "\nsleep 2" 
 		+ "\ndone" 

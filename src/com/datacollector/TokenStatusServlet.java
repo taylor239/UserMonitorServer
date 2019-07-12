@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.servlet.ServletException;
@@ -55,6 +56,46 @@ public class TokenStatusServlet extends HttpServlet {
 			TestingConnectionSource myConnectionSource = new TestingConnectionSource();
 			
 			Connection dbConn = myConnectionSource.getDatabaseConnection();
+			
+			String eventQuery = "SELECT * FROM `openDataCollectionServer`.`Event` INNER JOIN `openDataCollectionServer`.`EventContact` ON `openDataCollectionServer`.`Event`.`event` = `openDataCollectionServer`.`EventContact`.`event` WHERE `openDataCollectionServer`.`Event`.`event` = ?";
+			
+			String desc = "";
+			String start = "";
+			String end = "";
+			String password = "";
+			ArrayList contactName = new ArrayList();
+			ArrayList contacts = new ArrayList();
+			try
+			{
+				PreparedStatement queryStmt = dbConn.prepareStatement(eventQuery);
+				queryStmt.setString(1, event);
+				ResultSet myResults = queryStmt.executeQuery();
+				if(!myResults.next())
+				{
+					return;
+				}
+				desc = myResults.getString("description");
+				start = myResults.getString("start");
+				end = myResults.getString("end");
+				password = myResults.getString("password");
+				contactName.add(myResults.getString("name"));
+				contacts.add(myResults.getString("contact"));
+				while(myResults.next())
+				{
+					contactName.add(myResults.getString("name"));
+					contacts.add(myResults.getString("contact"));
+				}
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+			
+			if(!verify.equals(password))
+			{
+				System.out.println("Challenge unacceptable");
+				return;
+			}
 			
 			String query = "SELECT * FROM `openDataCollectionServer`.`UploadToken` WHERE `event` = ? AND `username` = ? AND `token` = ?";
 			

@@ -196,6 +196,8 @@ public class UploadData extends HttpServlet
 				insertInto("WindowDetails", fromJSON, dbConn, username);
 				insertInto("MouseInput", fromJSON, dbConn, username);
 				insertInto("KeyboardInput", fromJSON, dbConn, username);
+				insertInto("Task", fromJSON, dbConn, username);
+				insertInto("TaskEvent", fromJSON, dbConn, username);
 				
 				double totalDoneTmp = (Double) fromJSON.get("totalDone");
 				double totalToDoTmp = (Double) fromJSON.get("totalToDo");
@@ -281,7 +283,7 @@ public class UploadData extends HttpServlet
 				first = false;
 			}
 			userInsert = totalQuery.toString();
-			System.out.println(userInsert);
+			//System.out.println(userInsert);
 			//System.out.println(userList);
 			
 			PreparedStatement insertStatement = dbConn.prepareStatement(userInsert);
