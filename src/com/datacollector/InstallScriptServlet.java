@@ -42,6 +42,17 @@ public class InstallScriptServlet extends HttpServlet {
 		
 		String curEmail = request.getParameter("username");
 		String curEvent = request.getParameter("event");
+		String curDevice = request.getParameter("devicetype");
+		
+		int screenshotTime = 120000;
+		if(curDevice.equals("debvm"))
+		{
+			screenshotTime = 60000;
+		}
+		else if(curDevice.equals("debrpi"))
+		{
+			screenshotTime = 240000;
+		}
 		
 		boolean foundOK = false;
 		String myNewToken = "";
@@ -211,7 +222,7 @@ public class InstallScriptServlet extends HttpServlet {
 		//+ "\nservice tomcat8 start"
 		+ "\npkill -f \"/usr/bin/java -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar\"" 
 		//+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
-		+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " " + continuous + taskgui + " >> /opt/dataCollector/log.log 2>&1" 
+		+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " " + continuous + taskgui + " -screenshot " + screenshotTime + " >> /opt/dataCollector/log.log 2>&1" 
 		+ "\necho \"Got a crash: $(date)\" >> /opt/dataCollector/log.log" 
 		+ "\nsleep 2" 
 		+ "\ndone" 

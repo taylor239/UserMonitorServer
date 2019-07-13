@@ -59,14 +59,28 @@ Event Ends: <%=end %>
 <tr>
 <td>
 <%=desc %>
-
+<script>
+function updateLink()
+{
+	document.getElementById('installScriptLink').href='../installDataCollection.sh?event=<%=event %>&username=' + document.getElementById('tokenform').value + '&devicetype=' + document.getElementById('devicetypeform').value;
+}
+</script>
 <h2>Instructions</h2>
 <p>
 If you do not wish to participate in this study, please close this page.  If you
 consent to the above, enter your event token here:
 </p>
 <p>
-<input type="text" name="token" value="Token" onKeyUp="document.getElementById('installScriptLink').href='../installDataCollection.sh?event=<%=event %>&username=' + this.value">
+<input type="text" name="token" id="tokenform" value="Token" onKeyUp="updateLink()">
+</p>
+<p>
+Select your device type:
+</p>
+<p>
+<select name="deviceType" id="devicetypeform" onchange="updateLink()">
+<option value="debvm">Debian-based Virtual Machine</option>
+<option value="debrpi">Debian-based Raspberry PI</option>
+</select>
 </p>
 <p>
 Then, follow the following instructions to install the data
