@@ -54,55 +54,9 @@ public class InstallScriptServlet extends HttpServlet {
 			screenshotTime = 240000;
 		}
 		
-		boolean foundOK = false;
-		String myNewToken = "";
-		Gson myGson = new Gson();
-		try
-		{
-			myNewToken = UUID.randomUUID().toString();
-			String verifierURL = "http://localhost:8080/DataCollectorServer/UserEventStatus?username=" + curEmail + "&event=" + curEvent + "&verifier=for_revenge";
-			URL myURL = new URL(verifierURL);
-			InputStream in = myURL.openStream();
-			String reply = org.apache.commons.io.IOUtils.toString(in);
-			org.apache.commons.io.IOUtils.closeQuietly(in);
-			System.out.println(reply);
-			HashMap replyMap = myGson.fromJson(reply, HashMap.class);
-			if(reply.isEmpty() || replyMap.get("result").equals("nokay") || !replyMap.get("result").equals("ok"))
-			{
-				return;
-			}
-			
-			
-			while(!foundOK)
-			{
-				myNewToken = UUID.randomUUID().toString();
-				verifierURL = "http://localhost:8080/DataCollectorServer/TokenStatus?username=" + curEmail + "&event=" + curEvent + "&token=" + myNewToken + "&verifier=for_revenge";
-				myURL = new URL(verifierURL);
-				in = myURL.openStream();
-				reply = org.apache.commons.io.IOUtils.toString(in);
-				org.apache.commons.io.IOUtils.closeQuietly(in);
-				System.out.println(reply);
-				replyMap = myGson.fromJson(reply, HashMap.class);
-				if(replyMap.get("result").equals("nokay"))
-				{
-					foundOK = true;
-				}
-			}
-			
-			String addTokenURL = "http://localhost:8080/DataCollectorServer/AddToken?username=" + curEmail + "&event=" + curEvent + "&token=" + myNewToken + "&mode=continuous&verifier=for_revenge";
-			myURL = new URL(addTokenURL);
-			in = myURL.openStream();
-			reply = org.apache.commons.io.IOUtils.toString(in);
-			org.apache.commons.io.IOUtils.closeQuietly(in);
-			
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}
-		
 		String continuous = "";
 		String taskgui = "";
+		String password = "";
 		
 		try
 		{
@@ -119,6 +73,12 @@ public class InstallScriptServlet extends HttpServlet {
 			{
 				return;
 			}
+			password = myResults.getString("password");
+			continuous = myResults.getString("taskgui");
+			if(myResults.wasNull())
+			{
+				continuous = "";
+			}
 			taskgui = myResults.getString("taskgui");
 			if(myResults.wasNull())
 			{
@@ -129,6 +89,54 @@ public class InstallScriptServlet extends HttpServlet {
 		{
 			e.printStackTrace();
 		}
+		
+		boolean foundOK = false;
+		String myNewToken = "";
+		Gson myGson = new Gson();
+		try
+		{
+			myNewToken = UUID.randomUUID().toString();
+			String verifierURL = "http://localhost:8080/DataCollectorServer/UserEventStatus?username=" + curEmail + "&event=" + curEvent + "&verifier=" + password;
+			URL myURL = new URL(verifierURL);
+			InputStream in = myURL.openStream();
+			String reply = org.apache.commons.io.IOUtils.toString(in);
+			org.apache.commons.io.IOUtils.closeQuietly(in);
+			System.out.println(reply);
+			HashMap replyMap = myGson.fromJson(reply, HashMap.class);
+			if(reply.isEmpty() || replyMap.get("result").equals("nokay") || !replyMap.get("result").equals("ok"))
+			{
+				return;
+			}
+			
+			
+			while(!foundOK)
+			{
+				myNewToken = UUID.randomUUID().toString();
+				verifierURL = "http://localhost:8080/DataCollectorServer/TokenStatus?username=" + curEmail + "&event=" + curEvent + "&token=" + myNewToken + "&verifier=" + password;
+				myURL = new URL(verifierURL);
+				in = myURL.openStream();
+				reply = org.apache.commons.io.IOUtils.toString(in);
+				org.apache.commons.io.IOUtils.closeQuietly(in);
+				System.out.println(reply);
+				replyMap = myGson.fromJson(reply, HashMap.class);
+				if(replyMap.get("result").equals("nokay"))
+				{
+					foundOK = true;
+				}
+			}
+			
+			String addTokenURL = "http://localhost:8080/DataCollectorServer/AddToken?username=" + curEmail + "&event=" + curEvent + "&token=" + myNewToken + "&mode=continuous&verifier=" + password;
+			myURL = new URL(addTokenURL);
+			in = myURL.openStream();
+			reply = org.apache.commons.io.IOUtils.toString(in);
+			org.apache.commons.io.IOUtils.closeQuietly(in);
+			
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		
 		
 		String serverName = "revenge.cs.arizona.edu";
 		String port = "80";
