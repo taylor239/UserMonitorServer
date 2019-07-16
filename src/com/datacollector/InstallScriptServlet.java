@@ -132,7 +132,7 @@ public class InstallScriptServlet extends HttpServlet {
 			org.apache.commons.io.IOUtils.closeQuietly(in);
 			if(!continuous.equals(""))
 			{
-				continuous = "-continuous " + addTokenURL + " " + continuous;
+				continuous = "-continuous " + myNewToken + " " + continuous;
 			}
 			
 		}
