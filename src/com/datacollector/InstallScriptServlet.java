@@ -79,10 +79,6 @@ public class InstallScriptServlet extends HttpServlet {
 			{
 				continuous = "";
 			}
-			else
-			{
-				continuous = "-continuous " + continuous;
-			}
 			taskgui = myResults.getString("taskgui");
 			if(myResults.wasNull())
 			{
@@ -134,6 +130,10 @@ public class InstallScriptServlet extends HttpServlet {
 			in = myURL.openStream();
 			reply = org.apache.commons.io.IOUtils.toString(in);
 			org.apache.commons.io.IOUtils.closeQuietly(in);
+			if(!continuous.equals(""))
+			{
+				continuous = "-continuous " + addTokenURL + " " + continuous;
+			}
 			
 		}
 		catch(Exception e)
