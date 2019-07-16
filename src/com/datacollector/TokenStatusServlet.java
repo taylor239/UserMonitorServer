@@ -44,12 +44,6 @@ public class TokenStatusServlet extends HttpServlet {
 		String token = request.getParameter("token");
 		String verify = request.getParameter("verifier");
 		
-		if(!verify.equals("for_revenge"))
-		{
-			System.out.println("Challenge unacceptable");
-			return;
-		}
-		
 		try
 		{
 			Class.forName("com.mysql.jdbc.Driver");

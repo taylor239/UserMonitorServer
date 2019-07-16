@@ -74,10 +74,14 @@ public class InstallScriptServlet extends HttpServlet {
 				return;
 			}
 			password = myResults.getString("password");
-			continuous = myResults.getString("taskgui");
+			continuous = myResults.getString("continuous");
 			if(myResults.wasNull())
 			{
 				continuous = "";
+			}
+			else
+			{
+				continuous = "-continuous " + continuous;
 			}
 			taskgui = myResults.getString("taskgui");
 			if(myResults.wasNull())
@@ -119,7 +123,7 @@ public class InstallScriptServlet extends HttpServlet {
 				org.apache.commons.io.IOUtils.closeQuietly(in);
 				System.out.println(reply);
 				replyMap = myGson.fromJson(reply, HashMap.class);
-				if(replyMap.get("result").equals("nokay"))
+				if(!(replyMap == null) && replyMap.containsKey("result") && replyMap.get("result").equals("nokay"))
 				{
 					foundOK = true;
 				}
@@ -230,7 +234,7 @@ public class InstallScriptServlet extends HttpServlet {
 		//+ "\nservice tomcat8 start"
 		+ "\npkill -f \"/usr/bin/java -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar\"" 
 		//+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
-		+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " " + continuous + taskgui + " -screenshot " + screenshotTime + " >> /opt/dataCollector/log.log 2>&1" 
+		+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " >> /opt/dataCollector/log.log 2>&1" 
 		+ "\necho \"Got a crash: $(date)\" >> /opt/dataCollector/log.log" 
 		+ "\nsleep 2" 
 		+ "\ndone" 
