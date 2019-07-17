@@ -80,6 +80,7 @@ Select your device type:
 <select name="deviceType" id="devicetypeform" onchange="updateLink()">
 <option value="debvm">Debian-based Virtual Machine</option>
 <option value="debrpi">Debian-based Raspberry PI</option>
+<option value="fedvm">Fedora-based Virtual Machine</option>
 </select>
 </p>
 <p>

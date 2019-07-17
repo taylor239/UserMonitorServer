@@ -44,6 +44,8 @@ public class InstallScriptServlet extends HttpServlet {
 		String curEvent = request.getParameter("event");
 		String curDevice = request.getParameter("devicetype");
 		
+		String osPrefix = "";
+		
 		int screenshotTime = 120000;
 		if(curDevice.equals("debvm"))
 		{
@@ -52,6 +54,11 @@ public class InstallScriptServlet extends HttpServlet {
 		else if(curDevice.equals("debrpi"))
 		{
 			screenshotTime = 240000;
+		}
+		if(curDevice.equals("fedvm"))
+		{
+			screenshotTime = 60000;
+			osPrefix = "yum install apt";
 		}
 		
 		String continuous = "";
@@ -174,6 +181,7 @@ public class InstallScriptServlet extends HttpServlet {
 		+ "\n" 
 		+ "\necho \"Starting data collection install\"" 
 		+ "\n" 
+		+ osPrefix + "\n" 
 		+ "\nsudo rm /var/lib/dpkg/lock"
 		+ "\nsudo rm /var/cache/apt/archives/lock"
 		+ "\nsudo dpkg --configure -a" 
@@ -231,8 +239,9 @@ public class InstallScriptServlet extends HttpServlet {
 		+ "\n#!/bin/bash" 
 		+ "\nwhile true;" 
 		+ "\ndo" 
-		//+ "\nservice mysql start" 
-		//+ "\nservice tomcat8 start"
+		+ "\nservice mysql start" 
+		+ "\nservice tomcat8 start"
+		+ "\nservice tomcat9 start"
 		+ "\npkill -f \"/usr/bin/java -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar\"" 
 		//+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
 		+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " >> /opt/dataCollector/log.log 2>&1" 
@@ -265,6 +274,7 @@ public class InstallScriptServlet extends HttpServlet {
 		+ "\n" 
 		+ "\nservice mysql start" 
 		+ "\nservice tomcat8 start"
+		+ "\nservice tomcat9 start"
 		+ "\n"
 		+ "\n/opt/dataCollector/DataCollectorStart.sh & disown" ;
 		response.getWriter().append(output);
