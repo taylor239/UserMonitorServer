@@ -21,7 +21,7 @@ import com.google.gson.Gson;
 /**
  * Servlet implementation class InstallScriptServlet
  */
-@WebServlet("/installDataCollection.sh")
+@WebServlet("/installDataCollectionInit.sh")
 public class InstallScriptServletInit extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        

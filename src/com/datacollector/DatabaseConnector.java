@@ -287,7 +287,12 @@ public class DatabaseConnector
 	{
 		ArrayList myReturn = new ArrayList();
 		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
 		Connection myConnector = mySource.getDatabaseConnection();
+		conn = myConnector;
 		try
 		{
 			PreparedStatement myStatement = myConnector.prepareStatement(userQuery);
@@ -298,11 +303,19 @@ public class DatabaseConnector
 				nextRow.put("Username", myResults.getString("username"));
 				myReturn.add(nextRow);
 			}
+			stmt = myStatement;
+			rset = myResults;
 		}
 		catch(Exception e)
 		{
 			e.printStackTrace();
 		}
+		finally
+		{
+            try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
 		
 		return myReturn;
 	}
@@ -311,7 +324,12 @@ public class DatabaseConnector
 	{
 		ArrayList myReturn = new ArrayList();
 		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
 		Connection myConnector = mySource.getDatabaseConnection();
+		conn = myConnector;
 		try
 		{
 			PreparedStatement myStatement = myConnector.prepareStatement(taskQuery);
@@ -328,11 +346,19 @@ public class DatabaseConnector
 				
 				myReturn.add(nextRow);
 			}
+			stmt = myStatement;
+			rset = myResults;
 		}
 		catch(Exception e)
 		{
 			e.printStackTrace();
 		}
+		finally
+		{
+            try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
 		
 		return convertTimeTask(myReturn);
 	}
@@ -341,7 +367,12 @@ public class DatabaseConnector
 	{
 		ArrayList myReturn = new ArrayList();
 		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
 		Connection myConnector = mySource.getDatabaseConnection();
+		conn = myConnector;
 		try
 		{
 			PreparedStatement myStatement = myConnector.prepareStatement(totalQuery);
@@ -455,11 +486,19 @@ public class DatabaseConnector
 				myReturn.put(userMap, userMap);
 				*/
 			}
+			stmt = myStatement;
+			rset = myResults;
 		}
 		catch(SQLException e)
 		{
 			e.printStackTrace();
 		}
+		finally
+		{
+            try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
 		
 		return convertTime(myReturn);
 	}
@@ -468,7 +507,12 @@ public class DatabaseConnector
 	{
 		byte[] myReturn = null;
 		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
 		Connection myConnector = mySource.getDatabaseConnection();
+		conn = myConnector;
 		try
 		{
 			PreparedStatement myStatement = myConnector.prepareStatement(imageQuery);
@@ -483,11 +527,19 @@ public class DatabaseConnector
 				//BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
 				myReturn = imageBytes;
 			}
+			stmt = myStatement;
+			rset = myResults;
 		}
 		catch(Exception e)
 		{
 			e.printStackTrace();
 		}
+		finally
+		{
+            try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
 		
 		return myReturn;
 	}

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -79,20 +80,27 @@ public class UploadData extends HttpServlet
 		String token = (String) fromJSON.get("token");
 		String event = (String) fromJSON.get("event");
 		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
 		try
 		{
 			Class.forName("com.mysql.jdbc.Driver");
 			TestingConnectionSource myConnectionSource = new TestingConnectionSource();
 			
 			Connection dbConn = myConnectionSource.getDatabaseConnection();
+			conn = dbConn;
 			
 			String query = "SELECT * FROM `openDataCollectionServer`.`UploadToken` INNER JOIN `openDataCollectionServer`.`Event` ON `openDataCollectionServer`.`UploadToken`.`event` = `openDataCollectionServer`.`Event`.`event`  WHERE `username` = ? AND `token` = ? AND `openDataCollectionServer`.`UploadToken`.`event` = ?";
 			
 			PreparedStatement toInsert = dbConn.prepareStatement(query);
+			stmt = toInsert;
 			toInsert.setString(1, username);
 			toInsert.setString(2, token);
 			toInsert.setString(3, event);
 			ResultSet myResults = toInsert.executeQuery();
+			rset = myResults;
 			if(!myResults.next())
 			{
 				System.out.println("no such token");
@@ -169,6 +177,8 @@ public class UploadData extends HttpServlet
 					//System.out.println(userList);
 					
 					PreparedStatement insertStatement = dbConn.prepareStatement(userInsert);
+					stmt.close();
+					stmt = insertStatement;
 					
 					int curEnt = 1;
 					for(Map entry : userList)
@@ -186,6 +196,7 @@ public class UploadData extends HttpServlet
 					}
 					
 					insertStatement.execute();
+					insertStatement.close();
 				}
 				
 				insertInto("Screenshot", fromJSON, dbConn, username);
@@ -211,6 +222,8 @@ public class UploadData extends HttpServlet
 				toUpdate.setString(3, username);
 				toUpdate.setString(4, token);
 				toUpdate.execute();
+				stmt = toUpdate;
+				stmt.close();
 				
 				if(totalToDo <= 0)
 				{
@@ -219,6 +232,8 @@ public class UploadData extends HttpServlet
 					toInactive.setString(1, username);
 					toInactive.setString(2, token);
 					toInactive.execute();
+					stmt = toInactive;
+					stmt.close();
 				}
 			}
 		}
@@ -226,6 +241,12 @@ public class UploadData extends HttpServlet
 		{
 			e.printStackTrace();
 		}
+		finally
+		{
+            try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
 		
 		System.out.println(new Date());
 		System.out.println("Done: " + fromJSON.get("totalDone") + "/" + fromJSON.get("totalToDo"));
@@ -314,6 +335,7 @@ public class UploadData extends HttpServlet
 			}
 			
 			insertStatement.execute();
+			insertStatement.close();
 		}
 	}
 
