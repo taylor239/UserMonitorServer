@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
 
@@ -20,7 +22,7 @@ import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 
 import java.sql.Connection;
 
-public class TestingConnectionSource
+public class TestingConnectionSource implements Runnable
 {
 	private Connection myConnection;
 	
@@ -29,6 +31,8 @@ public class TestingConnectionSource
 	String password = "uBgiDDGhndviQeEZ";
 	String address = "jdbc:mysql://localhost:3306/openDataCollectionServer";
 	static DataSource singletonDataSource = null;
+	static ConcurrentHashMap<Object, Object> toClose, nextClose;
+	static Thread closeThread;
 	
 	public TestingConnectionSource()
 	{
@@ -46,9 +50,18 @@ public class TestingConnectionSource
 	
 	public Connection getDatabaseConnection()
 	{
-		if(myConnection != null)
+		if(closeThread == null || !(closeThread.isAlive()))
 		{
-			return myConnection;
+			closeThread = new Thread(this);
+			closeThread.start();
+		}
+		//if(myConnection != null)
+		//{
+		//	return myConnection;
+		//}
+		if(nextClose == null)
+		{
+			nextClose = new ConcurrentHashMap();
 		}
 		try
 		{
@@ -57,7 +70,12 @@ public class TestingConnectionSource
 			{
 				singletonDataSource = setupDataSource(address, userName, password);
 			}
-			return singletonDataSource.getConnection();
+			Connection toReturn = singletonDataSource.getConnection();
+			if(!nextClose.containsKey(toReturn))
+			{
+				nextClose.put(toReturn, true);
+			}
+			return toReturn;
 			//Connection newConnection = DriverManager.getConnection(address, userName, password);
 			//return newConnection;
 		}
@@ -123,5 +141,35 @@ public class TestingConnectionSource
         //return null;
         return dataSource;
     }
+
+	@Override
+	public void run()
+	{
+		while(true)
+		{
+			try
+			{
+				Thread.sleep(2000);
+				if(toClose != null)
+				{
+					for(Map.Entry<Object,Object> entry : toClose.entrySet())
+					{
+						Connection curConnection = ((Connection)entry.getKey());
+						if(curConnection != null && !curConnection.isClosed())
+						{
+							System.out.println("Closing a connection");
+							((Connection)entry.getKey()).close();
+						}
+					}
+				}
+				toClose = nextClose;
+				nextClose = new ConcurrentHashMap();
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
+	}
 
 }
