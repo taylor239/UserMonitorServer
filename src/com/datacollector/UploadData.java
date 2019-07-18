@@ -236,6 +236,7 @@ public class UploadData extends HttpServlet
 					stmt.close();
 				}
 			}
+			if (conn != null) conn.close();
 		}
 		catch(Exception e)
 		{

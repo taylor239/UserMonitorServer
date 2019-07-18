@@ -28,6 +28,7 @@ public class TestingConnectionSource
 	String userName = "dataCollectorServer";
 	String password = "uBgiDDGhndviQeEZ";
 	String address = "jdbc:mysql://localhost:3306/openDataCollectionServer";
+	static DataSource singletonDataSource = null;
 	
 	public TestingConnectionSource()
 	{
@@ -52,8 +53,11 @@ public class TestingConnectionSource
 		try
 		{
 			Class.forName("com.mysql.jdbc.Driver");
-			DataSource mySource = setupDataSource(address, userName, password);
-			return mySource.getConnection();
+			if(singletonDataSource == null)
+			{
+				singletonDataSource = setupDataSource(address, userName, password);
+			}
+			return singletonDataSource.getConnection();
 			//Connection newConnection = DriverManager.getConnection(address, userName, password);
 			//return newConnection;
 		}
