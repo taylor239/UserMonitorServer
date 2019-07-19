@@ -29,10 +29,11 @@ public class TestingConnectionSource implements Runnable
 	
 	String userName = "dataCollectorServer";
 	String password = "uBgiDDGhndviQeEZ";
-	String address = "jdbc:mysql://localhost:3306/openDataCollectionServer";
+	String address = "jdbc:mysql://localhost:3306/openDataCollectionServer?autoReconnect=true";
 	static DataSource singletonDataSource = null;
 	static ConcurrentHashMap<Object, Object> toClose, nextClose;
 	static Thread closeThread;
+	static boolean running = true;
 	
 	public TestingConnectionSource()
 	{
@@ -71,6 +72,7 @@ public class TestingConnectionSource implements Runnable
 				singletonDataSource = setupDataSource(address, userName, password);
 			}
 			Connection toReturn = singletonDataSource.getConnection();
+			//toReturn.set
 			if(!nextClose.containsKey(toReturn))
 			{
 				nextClose.put(toReturn, true);
@@ -117,6 +119,7 @@ public class TestingConnectionSource implements Runnable
         //
         PoolableConnectionFactory poolableConnectionFactory =
             new PoolableConnectionFactory(connectionFactory, null);
+        poolableConnectionFactory.setMaxConnLifetimeMillis(120000);
 
         //
         // Now we'll need a ObjectPool that serves as the
@@ -145,11 +148,11 @@ public class TestingConnectionSource implements Runnable
 	@Override
 	public void run()
 	{
-		while(true)
+		while(running)
 		{
 			try
 			{
-				Thread.sleep(2000);
+				Thread.sleep(10000);
 				if(toClose != null)
 				{
 					for(Map.Entry<Object,Object> entry : toClose.entrySet())
