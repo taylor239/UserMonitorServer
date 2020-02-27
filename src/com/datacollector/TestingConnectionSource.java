@@ -49,6 +49,23 @@ public class TestingConnectionSource implements Runnable
 		*/
 	}
 	
+	public TestingConnectionSource(String theUser, String thePwd, String theAddr)
+	{
+		userName = theUser;
+		password = thePwd;
+		address = theAddr;
+		/*
+		try
+		{
+			Class.forName("com.mysql.jdbc.Driver");
+		}
+		catch (ClassNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+		*/
+	}
+	
 	public Connection getDatabaseConnection()
 	{
 		if(closeThread == null || !(closeThread.isAlive()))
