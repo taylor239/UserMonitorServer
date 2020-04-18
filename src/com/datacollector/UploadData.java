@@ -22,6 +22,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -87,12 +88,20 @@ public class UploadData extends HttpServlet
 		try
 		{
 			Class.forName("com.mysql.jdbc.Driver");
-			TestingConnectionSource myConnectionSource = new TestingConnectionSource();
+			HttpSession session = request.getSession(true);
+			DatabaseConnector myConnector=(DatabaseConnector)session.getAttribute("connector");
+			if(myConnector==null)
+			{
+				myConnector=new DatabaseConnector(getServletContext());
+				session.setAttribute("connector", myConnector);
+			}
+			TestingConnectionSource myConnectionSource = myConnector.getConnectionSource();
 			
-			Connection dbConn = myConnectionSource.getDatabaseConnection();
+			
+			Connection dbConn = myConnectionSource.getDatabaseConnectionNoTimeout();
 			conn = dbConn;
 			
-			String query = "SELECT * FROM `openDataCollectionServer`.`UploadToken` INNER JOIN `openDataCollectionServer`.`Event` ON `openDataCollectionServer`.`UploadToken`.`event` = `openDataCollectionServer`.`Event`.`event`  WHERE `username` = ? AND `token` = ? AND `openDataCollectionServer`.`UploadToken`.`event` = ?";
+			String query = "SELECT * FROM `UploadToken` INNER JOIN `Event` ON `UploadToken`.`event` = `Event`.`event`  WHERE `username` = ? AND `token` = ? AND `UploadToken`.`event` = ?";
 			
 			PreparedStatement toInsert = dbConn.prepareStatement(query);
 			stmt = toInsert;
@@ -155,7 +164,7 @@ public class UploadData extends HttpServlet
 					values += ")";
 					headings += ")";
 					
-					String userInsert = "INSERT IGNORE INTO `openDataCollectionServer`.`User` " + headings + " VALUES ";
+					String userInsert = "INSERT IGNORE INTO `User` " + headings + " VALUES ";
 					StringBuilder totalQuery = new StringBuilder();
 					totalQuery.append(userInsert);
 					first = true;
@@ -215,7 +224,7 @@ public class UploadData extends HttpServlet
 				int totalDone = (int)totalDoneTmp;
 				int totalToDo = (int)totalToDoTmp;
 				
-				String updateNumQuery = "UPDATE `openDataCollectionServer`.`UploadToken` SET `framesUploaded` = ?, `framesRemaining` = ? WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ?";
+				String updateNumQuery = "UPDATE `UploadToken` SET `framesUploaded` = ?, `framesRemaining` = ? WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ?";
 				PreparedStatement toUpdate = dbConn.prepareStatement(updateNumQuery);
 				toUpdate.setInt(1, totalDone);
 				toUpdate.setInt(2, totalToDo);
@@ -227,7 +236,7 @@ public class UploadData extends HttpServlet
 				
 				if(totalToDo <= 0)
 				{
-					String inactiveQuery = "UPDATE `openDataCollectionServer`.`UploadToken` SET `active` = '0' WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ?";
+					String inactiveQuery = "UPDATE `UploadToken` SET `active` = '0' WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ?";
 					PreparedStatement toInactive = dbConn.prepareStatement(inactiveQuery);
 					toInactive.setString(1, username);
 					toInactive.setString(2, token);
@@ -287,7 +296,7 @@ public class UploadData extends HttpServlet
 			values += ")";
 			headings += ")";
 			
-			String userInsert = "INSERT IGNORE INTO `openDataCollectionServer`.`" + table + "` " + headings + " VALUES ";
+			String userInsert = "INSERT IGNORE INTO `" + table + "` " + headings + " VALUES ";
 			StringBuilder totalQuery = new StringBuilder();
 			totalQuery.append(userInsert);
 			first = true;
@@ -337,6 +346,7 @@ public class UploadData extends HttpServlet
 			
 			insertStatement.execute();
 			insertStatement.close();
+			dbConn.close();
 		}
 	}
 

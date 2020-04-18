@@ -12,6 +12,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -46,11 +47,19 @@ public class UserEventStatusServlet extends HttpServlet {
 		try
 		{
 			Class.forName("com.mysql.jdbc.Driver");
-			TestingConnectionSource myConnectionSource = new TestingConnectionSource();
+			HttpSession session = request.getSession(true);
+			DatabaseConnector myConnector=(DatabaseConnector)session.getAttribute("connector");
+			if(myConnector==null)
+			{
+				myConnector=new DatabaseConnector(getServletContext());
+				session.setAttribute("connector", myConnector);
+			}
+			TestingConnectionSource myConnectionSource = myConnector.getConnectionSource();
+			
 			
 			Connection dbConn = myConnectionSource.getDatabaseConnection();
 			
-			String eventQuery = "SELECT * FROM `openDataCollectionServer`.`Event` INNER JOIN `openDataCollectionServer`.`EventContact` ON `openDataCollectionServer`.`Event`.`event` = `openDataCollectionServer`.`EventContact`.`event` WHERE `openDataCollectionServer`.`Event`.`event` = ?";
+			String eventQuery = "SELECT * FROM `Event` INNER JOIN `EventContact` ON `Event`.`event` = `EventContact`.`event` WHERE `Event`.`event` = ?";
 			
 			String desc = "";
 			String start = "";
@@ -90,7 +99,7 @@ public class UserEventStatusServlet extends HttpServlet {
 				return;
 			}
 			
-			String query = "SELECT * FROM `openDataCollectionServer`.`UserList` WHERE `event` = ? AND `username` = ?";
+			String query = "SELECT * FROM `UserList` WHERE `event` = ? AND `username` = ?";
 			
 			PreparedStatement toInsert = dbConn.prepareStatement(query);
 			toInsert.setString(1, event);

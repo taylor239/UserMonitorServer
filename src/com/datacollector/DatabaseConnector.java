@@ -12,8 +12,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.imageio.ImageIO;
+import javax.servlet.ServletContext;
+
+
+
 
 public class DatabaseConnector
 {
@@ -25,12 +30,63 @@ public class DatabaseConnector
 	private String imageQuery = "SELECT * FROM `dataCollectionServer`.`Screenshot` WHERE `username` = ? ORDER BY abs(UNIX_TIMESTAMP(?) - UNIX_TIMESTAMP(`taken`)) LIMIT 1";
 	private TestingConnectionSource mySource;
 	
-	public DatabaseConnector()
+	private String databaseName = "dataserver";
+	
+	//public DatabaseConnector()
+	//{
+		//ConcurrentHashMap tmp=DatabaseInformationManager.getInstance().getNext(databaseName);
+	//	mySource = new TestingConnectionSource();
+	//	setupConnectionSource();
+	//}
+	
+	public DatabaseConnector(ServletContext sc)
 	{
-		mySource = new TestingConnectionSource();
+		setupDBManager(sc);
+		setupConnectionSource();
+		
 	}
 	
-	public static void main(String[] args)
+	public DatabaseConnector(ServletContext sc, String dbname)
+	{
+		setupDBManager(sc);
+		databaseName = dbname;
+		setupConnectionSource();
+	}
+	
+	public void setupConnectionSource()
+	{
+		ConcurrentHashMap tmp=DatabaseInformationManager.getInstance().getNext(databaseName);
+		//(String)tmp.get("address"), (String)tmp.get("driver"), (String)tmp.get("username"), (Integer)tmp.get("maxconnections"), (String)tmp.get("password")
+		mySource = new TestingConnectionSource((String)tmp.get("username"), (String)tmp.get("password"), (String)tmp.get("address"));
+	}
+	
+	public TestingConnectionSource getConnectionSource()
+	{
+		return mySource;
+	}
+	
+	public void setupDBManager(ServletContext sc)
+	{
+		DatabaseInformationManager manager=DatabaseInformationManager.getInstance();
+		//ServletContext sc=getServletContext();
+		String reportPath=sc.getRealPath("/WEB-INF/conf");
+		reportPath+="/databases.xml";
+		manager.addInfoFile(reportPath);
+		/*DatabaseConnector myConnector=(DatabaseConnector)session.getAttribute("connector");
+		if(myConnector==null)
+		{
+			myConnector=new DatabaseConnector("pillar");
+			try {
+				myConnector.connect();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			session.setAttribute("connector", myConnector);
+		}*/
+	}
+	
+	/*public static void main(String[] args)
 	{
 		DatabaseConnector myConnector = new DatabaseConnector();
 		ArrayList results = myConnector.getUsers();
@@ -48,7 +104,7 @@ public class DatabaseConnector
 		}
 		
 		System.out.println(myConnector.toJSON(filteredResults));
-	}
+	}*/
 	
 	public ArrayList getStartNodesTask(ArrayList fullData)
 	{

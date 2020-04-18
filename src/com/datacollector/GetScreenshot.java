@@ -10,6 +10,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 /**
  * Servlet implementation class GetScreenshot
@@ -34,7 +35,13 @@ public class GetScreenshot extends HttpServlet
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
 		response.setContentType("image/jpg");
-		DatabaseConnector myConnector = new DatabaseConnector();
+		HttpSession session = request.getSession(true);
+		DatabaseConnector myConnector=(DatabaseConnector)session.getAttribute("connector");
+		if(myConnector==null)
+		{
+			myConnector=new DatabaseConnector(getServletContext());
+			session.setAttribute("connector", myConnector);
+		}
 		//response.getWriter().append("Served at: ").append(request.getContextPath());
 		String username = request.getParameter("username");
 		String timestamp = request.getParameter("timestamp");

@@ -12,6 +12,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -36,22 +37,34 @@ public class TokenStatusServlet extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
-		
+		System.out.println("Got a request");
 		Gson gson = new GsonBuilder().create();
 		
 		String username = request.getParameter("username");
+		System.out.println(username);
 		String event = request.getParameter("event");
+		System.out.println(event);
 		String token = request.getParameter("token");
+		System.out.println(token);
 		String verify = request.getParameter("verifier");
+		System.out.println(verify);
 		
 		try
 		{
 			Class.forName("com.mysql.jdbc.Driver");
-			TestingConnectionSource myConnectionSource = new TestingConnectionSource();
+			HttpSession session = request.getSession(true);
+			DatabaseConnector myConnector=(DatabaseConnector)session.getAttribute("connector");
+			if(myConnector==null)
+			{
+				myConnector=new DatabaseConnector(getServletContext());
+				session.setAttribute("connector", myConnector);
+			}
+			TestingConnectionSource myConnectionSource = myConnector.getConnectionSource();
+			
 			
 			Connection dbConn = myConnectionSource.getDatabaseConnection();
 			
-			String eventQuery = "SELECT * FROM `openDataCollectionServer`.`Event` INNER JOIN `openDataCollectionServer`.`EventContact` ON `openDataCollectionServer`.`Event`.`event` = `openDataCollectionServer`.`EventContact`.`event` WHERE `openDataCollectionServer`.`Event`.`event` = ?";
+			String eventQuery = "SELECT * FROM `Event` INNER JOIN `EventContact` ON `Event`.`event` = `EventContact`.`event` WHERE `Event`.`event` = ?";
 			
 			String desc = "";
 			String start = "";
@@ -91,7 +104,7 @@ public class TokenStatusServlet extends HttpServlet {
 				return;
 			}
 			
-			String query = "SELECT * FROM `openDataCollectionServer`.`UploadToken` WHERE `event` = ? AND `username` = ? AND `token` = ?";
+			String query = "SELECT * FROM `UploadToken` WHERE `event` = ? AND `username` = ? AND `token` = ?";
 			
 			PreparedStatement toInsert = dbConn.prepareStatement(query);
 			toInsert.setString(1, event);

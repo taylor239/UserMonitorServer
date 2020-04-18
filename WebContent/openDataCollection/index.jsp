@@ -87,7 +87,14 @@ Please select your event from the list below:
 <option value="none">Select here</option>
 <%
 Class.forName("com.mysql.jdbc.Driver");
-TestingConnectionSource myConnectionSource = new TestingConnectionSource();
+DatabaseConnector myConnector=(DatabaseConnector)session.getAttribute("connector");
+if(myConnector==null)
+{
+	myConnector=new DatabaseConnector(getServletContext());
+	session.setAttribute("connector", myConnector);
+}
+TestingConnectionSource myConnectionSource = myConnector.getConnectionSource();
+
 Connection dbConn = myConnectionSource.getDatabaseConnection();
 String query = "SELECT * FROM `openDataCollectionServer`.`Event`";
 try

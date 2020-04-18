@@ -6,7 +6,14 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <%
 Class.forName("com.mysql.jdbc.Driver");
-TestingConnectionSource myConnectionSource = new TestingConnectionSource();
+DatabaseConnector myConnector=(DatabaseConnector)session.getAttribute("connector");
+if(myConnector==null)
+{
+	myConnector=new DatabaseConnector(getServletContext());
+	session.setAttribute("connector", myConnector);
+}
+TestingConnectionSource myConnectionSource = myConnector.getConnectionSource();
+
 Connection dbConn = myConnectionSource.getDatabaseConnection();
 String event = request.getParameter("event");
 String query = "SELECT * FROM `openDataCollectionServer`.`Event` INNER JOIN `openDataCollectionServer`.`EventContact` ON `openDataCollectionServer`.`Event`.`event` = `openDataCollectionServer`.`EventContact`.`event` WHERE `openDataCollectionServer`.`Event`.`event` = ?";

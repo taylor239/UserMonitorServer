@@ -35,8 +35,8 @@ public class TestingConnectionSource implements Runnable
 	static Thread closeThread;
 	static boolean running = true;
 	
-	public TestingConnectionSource()
-	{
+	//public TestingConnectionSource()
+	//{
 		/*
 		try
 		{
@@ -47,7 +47,7 @@ public class TestingConnectionSource implements Runnable
 			e.printStackTrace();
 		}
 		*/
-	}
+	//}
 	
 	public TestingConnectionSource(String theUser, String thePwd, String theAddr)
 	{
@@ -94,6 +94,45 @@ public class TestingConnectionSource implements Runnable
 			{
 				nextClose.put(toReturn, true);
 			}
+			return toReturn;
+			//Connection newConnection = DriverManager.getConnection(address, userName, password);
+			//return newConnection;
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public Connection getDatabaseConnectionNoTimeout()
+	{
+		if(closeThread == null || !(closeThread.isAlive()))
+		{
+			closeThread = new Thread(this);
+			closeThread.start();
+		}
+		//if(myConnection != null)
+		//{
+		//	return myConnection;
+		//}
+		if(nextClose == null)
+		{
+			nextClose = new ConcurrentHashMap();
+		}
+		try
+		{
+			Class.forName("com.mysql.jdbc.Driver");
+			if(singletonDataSource == null)
+			{
+				singletonDataSource = setupDataSource(address, userName, password);
+			}
+			Connection toReturn = singletonDataSource.getConnection();
+			//toReturn.set
+			//if(!nextClose.containsKey(toReturn))
+			//{
+			//	nextClose.put(toReturn, true);
+			//}
 			return toReturn;
 			//Connection newConnection = DriverManager.getConnection(address, userName, password);
 			//return newConnection;
