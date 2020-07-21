@@ -42,6 +42,7 @@ public class UserEventStatusServlet extends HttpServlet {
 		
 		String username = request.getParameter("username");
 		String event = request.getParameter("event");
+		String admin = request.getParameter("admin");
 		String verify = request.getParameter("verifier");
 		
 		try
@@ -59,7 +60,7 @@ public class UserEventStatusServlet extends HttpServlet {
 			
 			Connection dbConn = myConnectionSource.getDatabaseConnection();
 			
-			String eventQuery = "SELECT * FROM `Event` INNER JOIN `EventContact` ON `Event`.`event` = `EventContact`.`event` WHERE `Event`.`event` = ?";
+			String eventQuery = "SELECT * FROM `Event` INNER JOIN `EventContact` ON `Event`.`event` = `EventContact`.`event` WHERE `Event`.`event` = ? `Event`.`adminEmail` = ?";
 			
 			String desc = "";
 			String start = "";
@@ -71,6 +72,7 @@ public class UserEventStatusServlet extends HttpServlet {
 			{
 				PreparedStatement queryStmt = dbConn.prepareStatement(eventQuery);
 				queryStmt.setString(1, event);
+				queryStmt.setString(2, admin);
 				ResultSet myResults = queryStmt.executeQuery();
 				if(!myResults.next())
 				{
@@ -99,11 +101,12 @@ public class UserEventStatusServlet extends HttpServlet {
 				return;
 			}
 			
-			String query = "SELECT * FROM `UserList` WHERE `event` = ? AND `username` = ?";
+			String query = "SELECT * FROM `UserList` WHERE `event` = ? AND `username` = ? AND `adminEmail` = ?";
 			
 			PreparedStatement toInsert = dbConn.prepareStatement(query);
 			toInsert.setString(1, event);
 			toInsert.setString(2, username);
+			toInsert.setString(3, admin);
 			ResultSet myResults = toInsert.executeQuery();
 			if(!myResults.next())
 			{
@@ -118,6 +121,7 @@ public class UserEventStatusServlet extends HttpServlet {
 			outputMap.put("result", "ok");
 			outputMap.put("username", username);
 			outputMap.put("event", event);
+			outputMap.put("admin", admin);
 			String output = gson.toJson(outputMap);
 			response.getWriter().append(output);
 		}

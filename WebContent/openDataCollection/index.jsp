@@ -66,18 +66,41 @@ upload after completing the event.
 <p>
 The terms of use, including compliance with applicable laws, are issued on
 a per-event basis.  To continue using CDC as a participant, select your
-event below.  For those interested in using CDC for their own event, please
-contact CDC's maintainers from the <a href="http://revenge.cs.arizona.edu">
-RevEngE site's contact information</a>.  As a final note, <b>never install
-CDC software on any device you will use outside of your event.  Alwas install
+event below.  For those interested in using CDC for their own event, please <a href="login.jsp">
+sign up or login here</a>.  If you are already signed in, you can navigate directly to your <a href="home.jsp">home page</a>.  As a final note, <b>never install
+CDC software on any device you will use outside of your event.  Always install
 the software on virtualized devices, such as virtual machines.  If this software is used on a device, it
 will record sensitive data, including passwords, the user enters on that
-device.</b>
+device.  The software does include a pause feature to stop collection while entering sensitive data,
+but enter that data at your own risk.</b>
 </p>
 </td>
 </tr>
+<%
+boolean publicEvents = false;
+String admin = request.getParameter("admin");
+if(admin == null || admin.isEmpty())
+{
+	publicEvents = true;
+	admin = "cgtboy1988@yahoo.com";
+}
+%>
 <tr>
 <td>
+<%
+if(publicEvents)
+{
+	%>
+	Showing public events because no event administrator was specified.<br>
+	<%
+}
+else
+{
+	%>
+	Showing events for <%=admin %>.<br>
+	<%
+}
+%>
 Please select your event from the list below:
 </td>
 </tr>
@@ -96,10 +119,11 @@ if(myConnector==null)
 TestingConnectionSource myConnectionSource = myConnector.getConnectionSource();
 
 Connection dbConn = myConnectionSource.getDatabaseConnection();
-String query = "SELECT * FROM `openDataCollectionServer`.`Event`";
+String query = "SELECT * FROM `openDataCollectionServer`.`Event` WHERE `adminEmail` = ?";
 try
 {
 	PreparedStatement queryStmt = dbConn.prepareStatement(query);
+	queryStmt.setString(1, admin);
 	ResultSet myResults = queryStmt.executeQuery();
 	while(myResults.next())
 	{
@@ -118,6 +142,7 @@ catch(Exception e)
 </select>
 <form action="event.jsp" id="eventform">
 <input type="submit" value="Submit">
+<input type="hidden" name="admin" value="<%=admin %>">
 </form>
 </td>
 </tr>

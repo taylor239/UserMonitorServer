@@ -42,6 +42,7 @@ public class GetUploadListServelet extends HttpServlet {
 		String username = request.getParameter("username");
 		String verify = request.getParameter("verifier");
 		String event = request.getParameter("event");
+		String admin = request.getParameter("admin");
 		
 		try
 		{
@@ -58,7 +59,7 @@ public class GetUploadListServelet extends HttpServlet {
 			
 			Connection dbConn = myConnectionSource.getDatabaseConnection();
 			
-			String eventQuery = "SELECT * FROM `Event` INNER JOIN `EventContact` ON `Event`.`event` = `EventContact`.`event` WHERE `Event`.`event` = ?";
+			String eventQuery = "SELECT * FROM `Event` INNER JOIN `EventContact` ON `Event`.`event` = `EventContact`.`event` WHERE `Event`.`event` = ? AND `Event`.`adminEmail` = ?";
 			
 			String desc = "";
 			String start = "";
@@ -70,6 +71,7 @@ public class GetUploadListServelet extends HttpServlet {
 			{
 				PreparedStatement queryStmt = dbConn.prepareStatement(eventQuery);
 				queryStmt.setString(1, event);
+				queryStmt.setString(2, admin);
 				ResultSet myResults = queryStmt.executeQuery();
 				if(!myResults.next())
 				{
@@ -98,13 +100,14 @@ public class GetUploadListServelet extends HttpServlet {
 				return;
 			}
 			
-			String query = "SELECT * FROM `UploadToken` WHERE `username` = ? AND `event` = ?";
+			String query = "SELECT * FROM `UploadToken` WHERE `username` = ? AND `event` = ? AND `adminEmail` = ?";
 			
 			System.out.println("Getting uploads from " + event + " " + username);
 			
 			PreparedStatement toInsert = dbConn.prepareStatement(query);
 			toInsert.setString(1, username);
 			toInsert.setString(2, event);
+			toInsert.setString(3, admin);
 			ResultSet myResults = toInsert.executeQuery();
 			ArrayList totalOutput = new ArrayList();
 			//System.out.println(myResults);
@@ -121,6 +124,8 @@ public class GetUploadListServelet extends HttpServlet {
 				outputMap.put("isActive", isActive);
 				outputMap.put("username", username);
 				outputMap.put("token", token);
+				outputMap.put("event", event);
+				outputMap.put("admin", admin);
 				outputMap.put("lastAltered", lastAltered);
 				totalOutput.add(outputMap);
 			}

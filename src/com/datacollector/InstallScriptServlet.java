@@ -42,6 +42,7 @@ public class InstallScriptServlet extends HttpServlet {
 		
 		String curEmail = request.getParameter("username");
 		String curEvent = request.getParameter("event");
+		String curAdmin = request.getParameter("admin");
 		String curDevice = request.getParameter("devicetype");
 		
 		String osPrefix = "";
@@ -79,9 +80,10 @@ public class InstallScriptServlet extends HttpServlet {
 			
 			Connection dbConn = myConnectionSource.getDatabaseConnection();
 			
-			String eventQuery = "SELECT * FROM `Event` WHERE `Event`.`event` = ?";
+			String eventQuery = "SELECT * FROM `Event` WHERE `Event`.`event` = ? AND `Event`.`adminEmail` = ?";
 			PreparedStatement queryStmt = dbConn.prepareStatement(eventQuery);
 			queryStmt.setString(1, curEvent);
+			queryStmt.setString(2, curAdmin);
 			ResultSet myResults = queryStmt.executeQuery();
 			if(!myResults.next())
 			{
@@ -110,7 +112,7 @@ public class InstallScriptServlet extends HttpServlet {
 		try
 		{
 			myNewToken = UUID.randomUUID().toString();
-			String verifierURL = "http://localhost:8080/DataCollectorServer/UserEventStatus?username=" + curEmail + "&event=" + curEvent + "&verifier=" + password;
+			String verifierURL = "http://localhost:8080/DataCollectorServer/UserEventStatus?username=" + curEmail + "&event=" + curEvent + "&verifier=" + password + "&admin=" + curAdmin;
 			URL myURL = new URL(verifierURL);
 			InputStream in = myURL.openStream();
 			String reply = org.apache.commons.io.IOUtils.toString(in);
@@ -126,7 +128,7 @@ public class InstallScriptServlet extends HttpServlet {
 			while(!foundOK)
 			{
 				myNewToken = UUID.randomUUID().toString();
-				verifierURL = "http://localhost:8080/DataCollectorServer/TokenStatus?username=" + curEmail + "&event=" + curEvent + "&token=" + myNewToken + "&verifier=" + password;
+				verifierURL = "http://localhost:8080/DataCollectorServer/TokenStatus?username=" + curEmail + "&event=" + curEvent + "&token=" + myNewToken + "&verifier=" + password + "&admin=" + curAdmin;
 				myURL = new URL(verifierURL);
 				in = myURL.openStream();
 				reply = org.apache.commons.io.IOUtils.toString(in);
@@ -139,7 +141,7 @@ public class InstallScriptServlet extends HttpServlet {
 				}
 			}
 			
-			String addTokenURL = "http://localhost:8080/DataCollectorServer/AddToken?username=" + curEmail + "&event=" + curEvent + "&token=" + myNewToken + "&mode=continuous&verifier=" + password;
+			String addTokenURL = "http://localhost:8080/DataCollectorServer/AddToken?username=" + curEmail + "&event=" + curEvent + "&token=" + myNewToken + "&admin=" + curAdmin + "&mode=continuous&verifier=" + password;
 			myURL = new URL(addTokenURL);
 			in = myURL.openStream();
 			reply = org.apache.commons.io.IOUtils.toString(in);
@@ -250,7 +252,7 @@ public class InstallScriptServlet extends HttpServlet {
 			+ "\ndo" 
 			+ "\npkill -f \"/usr/bin/java -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar\"" 
 			//+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
-			+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " >> /opt/dataCollector/log.log 2>&1" 
+			+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + " -adminemail " + curAdmin + ":" + port + " -event " + curEvent + " " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " >> /opt/dataCollector/log.log 2>&1" 
 			+ "\necho \"Got a crash: $(date)\" >> /opt/dataCollector/log.log" 
 			+ "\nsleep 2" 
 			+ "\ndone" 

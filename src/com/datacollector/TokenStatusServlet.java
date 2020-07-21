@@ -46,6 +46,8 @@ public class TokenStatusServlet extends HttpServlet {
 		System.out.println(event);
 		String token = request.getParameter("token");
 		System.out.println(token);
+		String admin = request.getParameter("admin");
+		System.out.println(admin);
 		String verify = request.getParameter("verifier");
 		System.out.println(verify);
 		
@@ -64,7 +66,7 @@ public class TokenStatusServlet extends HttpServlet {
 			
 			Connection dbConn = myConnectionSource.getDatabaseConnection();
 			
-			String eventQuery = "SELECT * FROM `Event` INNER JOIN `EventContact` ON `Event`.`event` = `EventContact`.`event` WHERE `Event`.`event` = ?";
+			String eventQuery = "SELECT * FROM `Event` INNER JOIN `EventContact` ON `Event`.`event` = `EventContact`.`event` WHERE `Event`.`event` = ? AND `Event`.`adminEmail` = ?";
 			
 			String desc = "";
 			String start = "";
@@ -76,9 +78,14 @@ public class TokenStatusServlet extends HttpServlet {
 			{
 				PreparedStatement queryStmt = dbConn.prepareStatement(eventQuery);
 				queryStmt.setString(1, event);
+				queryStmt.setString(2, admin);
 				ResultSet myResults = queryStmt.executeQuery();
 				if(!myResults.next())
 				{
+					HashMap outputMap = new HashMap();
+					outputMap.put("result", "nokay");
+					String output = gson.toJson(outputMap);
+					response.getWriter().append(output);
 					return;
 				}
 				desc = myResults.getString("description");
@@ -101,15 +108,20 @@ public class TokenStatusServlet extends HttpServlet {
 			if(!verify.equals(password))
 			{
 				System.out.println("Challenge unacceptable");
+				HashMap outputMap = new HashMap();
+				outputMap.put("result", "nokay");
+				String output = gson.toJson(outputMap);
+				response.getWriter().append(output);
 				return;
 			}
 			
-			String query = "SELECT * FROM `UploadToken` WHERE `event` = ? AND `username` = ? AND `token` = ?";
+			String query = "SELECT * FROM `UploadToken` WHERE `event` = ? AND `username` = ? AND `token` = ? AND `adminEmail` = ?";
 			
 			PreparedStatement toInsert = dbConn.prepareStatement(query);
 			toInsert.setString(1, event);
 			toInsert.setString(2, username);
 			toInsert.setString(3, token);
+			toInsert.setString(4, admin);
 			ResultSet myResults = toInsert.executeQuery();
 			if(!myResults.next())
 			{
@@ -132,6 +144,7 @@ public class TokenStatusServlet extends HttpServlet {
 			outputMap.put("continuous", isContinuous);
 			outputMap.put("username", username);
 			outputMap.put("token", token);
+			outputMap.put("admin", admin);
 			String output = gson.toJson(outputMap);
 			response.getWriter().append(output);
 		}

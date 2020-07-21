@@ -8,26 +8,50 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.imageio.ImageIO;
 import javax.servlet.ServletContext;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 
 
 
 public class DatabaseConnector
 {
-	private String totalQuery = "SELECT * FROM `dataCollectionServer`.`MouseInput` INNER JOIN `WindowDetails` ON `MouseInput`.`username` = `WindowDetails`.`username` AND `MouseInput`.`user` = `WindowDetails`.`user` AND `MouseInput`.`pid` = `WindowDetails`.`pid` AND `MouseInput`.`start` = `WindowDetails`.`start` AND `MouseInput`.`xid` = `WindowDetails`.`xid` AND `MouseInput`.`timeChanged` = `WindowDetails`.`timeChanged` INNER JOIN `Window` ON `Window`.`username` = `WindowDetails`.`username` AND `Window`.`user` = `WindowDetails`.`user` AND `Window`.`pid` = `WindowDetails`.`pid` AND `Window`.`start` = `WindowDetails`.`start` AND `Window`.`xid` = `WindowDetails`.`xid` INNER JOIN `ProcessAttributes` ON `WindowDetails`.`username` = `ProcessAttributes`.`username` AND `WindowDetails`.`user` = `ProcessAttributes`.`user` AND `WindowDetails`.`pid` = `ProcessAttributes`.`pid` AND `WindowDetails`.`start` = `ProcessAttributes`.`start` AND `WindowDetails`.`timeChanged` = `ProcessAttributes`.`timestamp` INNER JOIN `Process` ON `Window`.`username` = `Process`.`username` AND `Window`.`user` = `Process`.`user` AND `Window`.`pid` = `Process`.`pid` AND `Window`.`start` = `Process`.`start` ORDER BY `MouseInput`.`username`, `MouseInput`.`inputTime`, `MouseInput`.`timeChanged`, `MouseInput`.`pid`, `MouseInput`.`xid`";
-	private String userQuery = "SELECT * FROM `dataCollectionServer`.`User`";
+	private String totalQuery = "SELECT *, 'keyboard' AS `fromInput`, `MouseInput`.`xLoc` AS `xLoc`, `MouseInput`.`yLoc` AS `yLoc`, `KeyboardInput`.`type` AS `type`, `KeyboardInput`.`button` AS `button`, `KeyboardInput`.`inputTime` AS `overallTime`, `KeyboardInput`.`timeChanged` AS `overallTimeChanged`, `Window`.`username` AS `overallUser`, `Window`.`session`  AS `overallSession`, `Window`.`pid` AS `overallPid`, `Window`.`xid` AS `overallXid` FROM `openDataCollectionServer`.`KeyboardInput`\n" + 
+			"LEFT JOIN\n" + 
+			"`openDataCollectionServer`.`MouseInput` ON `KeyboardInput`.`username` = `MouseInput`.`username` AND `KeyboardInput`.`session` = `MouseInput`.`session` AND `KeyboardInput`.`event` = `MouseInput`.`event` AND `KeyboardInput`.`adminEmail` = `MouseInput`.`adminEmail` AND `KeyboardInput`.`inputTime` = `MouseInput`.`inputTime`\n" + 
+			"INNER JOIN `WindowDetails` ON `KeyboardInput`.`username` = `WindowDetails`.`username` AND `KeyboardInput`.`session` = `WindowDetails`.`session` AND `KeyboardInput`.`event` = `WindowDetails`.`event` AND `KeyboardInput`.`adminEmail` = `WindowDetails`.`adminEmail` AND `KeyboardInput`.`user` = `WindowDetails`.`user` AND `KeyboardInput`.`pid` = `WindowDetails`.`pid` AND `KeyboardInput`.`start` = `WindowDetails`.`start` AND `KeyboardInput`.`xid` = `WindowDetails`.`xid` AND `KeyboardInput`.`timeChanged` = `WindowDetails`.`timeChanged`\n" + 
+			"INNER JOIN `Window` ON `Window`.`username` = `WindowDetails`.`username` AND `Window`.`session` = `WindowDetails`.`session` AND `Window`.`event` = `WindowDetails`.`event` AND `Window`.`adminEmail` = `WindowDetails`.`adminEmail` AND `Window`.`user` = `WindowDetails`.`user` AND `Window`.`pid` = `WindowDetails`.`pid` AND `Window`.`start` = `WindowDetails`.`start` AND `Window`.`xid` = `WindowDetails`.`xid`\n" + 
+			"INNER JOIN `ProcessAttributes` ON `WindowDetails`.`username` = `ProcessAttributes`.`username` AND `WindowDetails`.`session` = `ProcessAttributes`.`session` AND `WindowDetails`.`event` = `ProcessAttributes`.`event` AND `WindowDetails`.`adminEmail` = `ProcessAttributes`.`adminEmail` AND `WindowDetails`.`user` = `ProcessAttributes`.`user` AND `WindowDetails`.`pid` = `ProcessAttributes`.`pid` AND `WindowDetails`.`start` = `ProcessAttributes`.`start` AND `WindowDetails`.`timeChanged` = `ProcessAttributes`.`timestamp`\n" + 
+			"INNER JOIN `Process` ON `Window`.`username` = `Process`.`username` AND `Window`.`session` = `Process`.`session` AND `Window`.`event` = `Process`.`event` AND `Window`.`adminEmail` = `Process`.`adminEmail` AND `Window`.`user` = `Process`.`user` AND `Window`.`pid` = `Process`.`pid` AND `Window`.`start` = `Process`.`start`\n" + 
+			"UNION\n" + 
+			"SELECT *, 'mouse' AS `fromInput`, `MouseInput`.`xLoc` AS `xLoc`, `MouseInput`.`yLoc` AS `yLoc`, `MouseInput`.`type` AS `type`, `KeyboardInput`.`button` AS `button`, `MouseInput`.`inputTime` AS `overallTime`, `MouseInput`.`timeChanged` AS `overallTimeChanged`, `Window`.`username` AS `overallUser`, `Window`.`session`  AS `overallSession`, `Window`.`pid` AS `overallPid`, `Window`.`xid` AS `overallXid` FROM `openDataCollectionServer`.`MouseInput`\n" + 
+			"LEFT JOIN\n" + 
+			"`openDataCollectionServer`.`KeyboardInput` ON `KeyboardInput`.`username` = `MouseInput`.`username` AND `KeyboardInput`.`session` = `MouseInput`.`session` AND `KeyboardInput`.`event` = `MouseInput`.`event` AND `KeyboardInput`.`adminEmail` = `MouseInput`.`adminEmail` AND `KeyboardInput`.`inputTime` = `MouseInput`.`inputTime`\n" + 
+			"INNER JOIN `WindowDetails` ON `MouseInput`.`username` = `WindowDetails`.`username` AND `MouseInput`.`session` = `WindowDetails`.`session` AND `MouseInput`.`event` = `WindowDetails`.`event` AND `MouseInput`.`adminEmail` = `WindowDetails`.`adminEmail` AND `MouseInput`.`user` = `WindowDetails`.`user` AND `MouseInput`.`pid` = `WindowDetails`.`pid` AND `MouseInput`.`start` = `WindowDetails`.`start` AND `MouseInput`.`xid` = `WindowDetails`.`xid` AND `MouseInput`.`timeChanged` = `WindowDetails`.`timeChanged`\n" + 
+			"INNER JOIN `Window` ON `Window`.`username` = `WindowDetails`.`username` AND `Window`.`session` = `WindowDetails`.`session` AND `Window`.`event` = `WindowDetails`.`event` AND `Window`.`adminEmail` = `WindowDetails`.`adminEmail` AND `Window`.`user` = `WindowDetails`.`user` AND `Window`.`pid` = `WindowDetails`.`pid` AND `Window`.`start` = `WindowDetails`.`start` AND `Window`.`xid` = `WindowDetails`.`xid`\n" + 
+			"INNER JOIN `ProcessAttributes` ON `WindowDetails`.`username` = `ProcessAttributes`.`username` AND `WindowDetails`.`session` = `ProcessAttributes`.`session` AND `WindowDetails`.`event` = `ProcessAttributes`.`event` AND `WindowDetails`.`adminEmail` = `ProcessAttributes`.`adminEmail` AND `WindowDetails`.`user` = `ProcessAttributes`.`user` AND `WindowDetails`.`pid` = `ProcessAttributes`.`pid` AND `WindowDetails`.`start` = `ProcessAttributes`.`start` AND `WindowDetails`.`timeChanged` = `ProcessAttributes`.`timestamp`\n" + 
+			"INNER JOIN `Process` ON `Window`.`username` = `Process`.`username` AND `Window`.`session` = `Process`.`session` AND `Window`.`event` = `Process`.`event` AND `Window`.`adminEmail` = `Process`.`adminEmail` AND `Window`.`user` = `Process`.`user` AND `Window`.`pid` = `Process`.`pid` AND `Window`.`start` = `Process`.`start`" + 
+			"WHERE `Window`.`event` = ? AND `Window`.`adminEmail` = ?\n" + 
+			"ORDER BY `overallUser`, `overallSession`, `overallTime`, `overallTimeChanged`, `overallPid`, `overallXid`";
+	private String userQuery = "SELECT * FROM `openDataCollectionServer`.`User` WHERE `event` = ? AND `adminEmail` = ?";
 	
-	private String taskQuery = "SELECT * FROM `dataCollectionServer`.`Task` INNER JOIN `TaskEvent` ON `Task`.`username` = `TaskEvent`.`username` AND `Task`.`taskName` = `TaskEvent`.`taskName` ORDER BY `TaskEvent`.`username`, `TaskEvent`.`eventTime`";
+	private String taskQuery = "SELECT * FROM `openDataCollectionServer`.`Task` INNER JOIN `TaskEvent` ON `Task`.`username` = `TaskEvent`.`username` AND `Task`.`event` = `TaskEvent`.`event` AND `Task`.`adminEmail` = `TaskEvent`.`adminEmail` AND `Task`.`taskName` = `TaskEvent`.`taskName` WHERE `Task`.`event` = ? AND `Task`.`adminEmail` = ? ORDER BY `TaskEvent`.`username`, `TaskEvent`.`eventTime`";
 	
-	private String imageQuery = "SELECT * FROM `dataCollectionServer`.`Screenshot` WHERE `username` = ? ORDER BY abs(UNIX_TIMESTAMP(?) - UNIX_TIMESTAMP(`taken`)) LIMIT 1";
+	private String imageQuery = "SELECT * FROM `openDataCollectionServer`.`Screenshot` WHERE `username` = ? AND `session` = ? AND `event` = ? AND `adminEmail` = ? ORDER BY abs(UNIX_TIMESTAMP(?) - UNIX_TIMESTAMP(`taken`)) LIMIT 1";
+	
+	private String allImageQuery = "SELECT * FROM `openDataCollectionServer`.`Screenshot` WHERE `event` = ? AND `adminEmail` = ? ORDER BY `taken`";
+	
 	private TestingConnectionSource mySource;
 	
 	private String databaseName = "dataserver";
@@ -110,17 +134,18 @@ public class DatabaseConnector
 	{
 		ArrayList myReturn = new ArrayList();
 		
-		HashMap prevNode = null;
-		HashMap curNode = null;
-		HashMap lastNode = null;
+		ConcurrentHashMap prevNode = null;
+		ConcurrentHashMap curNode = null;
+		ConcurrentHashMap lastNode = null;
 		String userName = "";
+		String sessionName = "";
 		
 		for(int x=0; x<fullData.size(); x++)
 		{
-			curNode = (HashMap) fullData.get(x);
+			curNode = (ConcurrentHashMap) fullData.get(x);
 			if(prevNode != null)
 			{
-				if(!curNode.get("Username").equals(userName))
+				if(!(curNode.get("Username").equals(userName) && curNode.get("Session").equals(sessionName)))
 				{
 					prevNode.put("End Time MS", lastNode.get("Event Time MS"));
 				}
@@ -130,6 +155,7 @@ public class DatabaseConnector
 				myReturn.add(curNode);
 				prevNode = curNode;
 				userName = (String) prevNode.get("Username");
+				sessionName = (String) prevNode.get("Session");
 				
 			}
 			lastNode = curNode;
@@ -143,26 +169,28 @@ public class DatabaseConnector
 	{
 		ArrayList myReturn = new ArrayList();
 		
-		HashMap prevNode = null;
+		ConcurrentHashMap prevNode = null;
 		
-		HashMap curNode = null;
+		ConcurrentHashMap curNode = null;
 		
-		HashMap lastNode = null;
+		ConcurrentHashMap lastNode = null;
 		
 		String userName = "";
+		String sessionName = "";
 		
 		for(int x=0; x<fullData.size(); x++)
 		{
-			curNode = (HashMap) fullData.get(x);
+			curNode = (ConcurrentHashMap) fullData.get(x);
 			if(prevNode != null)
 			{
-				if(!curNode.get("Username").equals(userName))
+				if(!(curNode.get("Username").equals(userName) && curNode.get("Session").equals(sessionName)))
 				{
 					prevNode.put("End Time", lastNode.get("Input Time"));
 					prevNode.put("End Time MS", lastNode.get("Input Time MS"));
 					myReturn.add(curNode);
 					prevNode = curNode;
 					userName = (String) prevNode.get("Username");
+					sessionName = (String) prevNode.get("Session");
 				}
 				else if(!prevNode.get("XID").equals(curNode.get("XID")))
 				{
@@ -180,9 +208,11 @@ public class DatabaseConnector
 				myReturn.add(curNode);
 				prevNode = curNode;
 				userName = (String) prevNode.get("Username");
+				sessionName = (String) prevNode.get("Session");
 			}
 			lastNode = curNode;
 			userName = (String) curNode.get("Username");
+			sessionName = (String) curNode.get("Session");
 		}
 		
 		prevNode.put("End Time", curNode.get("Input Time"));
@@ -196,7 +226,7 @@ public class DatabaseConnector
 	{
 		for(int x=0; x<input.size(); x++)
 		{
-			HashMap curMap = (HashMap) input.get(x);
+			ConcurrentHashMap curMap = (ConcurrentHashMap) input.get(x);
 			curMap.put("Start Time MS", ((Date) curMap.get("Start Time")).getTime());
 			curMap.put("Input Time MS", ((Date) curMap.get("Input Time")).getTime());
 			if(curMap.containsKey("End Time"))
@@ -212,20 +242,195 @@ public class DatabaseConnector
 	{
 		for(int x=0; x<input.size(); x++)
 		{
-			HashMap curMap = (HashMap) input.get(x);
+			ConcurrentHashMap curMap = (ConcurrentHashMap) input.get(x);
 			curMap.put("Event Time MS", ((Date) curMap.get("Event Time")).getTime());
 		}
 		
 		return input;
 	}
 	
+	public ConcurrentHashMap mergeMaps(ConcurrentHashMap a, ConcurrentHashMap b)
+	{
+		Iterator bIterator = b.entrySet().iterator();
+		while(bIterator.hasNext())
+		{
+			Map.Entry bEntry = (Entry) bIterator.next();
+			if(!a.containsKey(bEntry.getKey()))
+			{
+				a.put(bEntry.getKey(), bEntry.getValue());
+			}
+			else
+			{
+				if(a.get(bEntry.getKey()) instanceof ConcurrentHashMap && bEntry.getValue() instanceof ConcurrentHashMap)
+				{
+					a.put(bEntry.getKey(), mergeMaps((ConcurrentHashMap)a.get(bEntry.getKey()), (ConcurrentHashMap)bEntry.getValue()));
+				}
+			}
+		}
+		return a;
+	}
+	
+	public ConcurrentHashMap normalizeAllTime(ConcurrentHashMap userMap)
+	{
+		long universalMin = Long.MAX_VALUE;
+		long universalMax = Long.MIN_VALUE;
+		ConcurrentHashMap userMinMap = new ConcurrentHashMap();
+		ConcurrentHashMap userMaxMap = new ConcurrentHashMap();
+		ConcurrentHashMap sessionMinMap = new ConcurrentHashMap();
+		ConcurrentHashMap sessionMaxMap = new ConcurrentHashMap();
+		
+		Iterator userIterator = userMap.entrySet().iterator();
+		while(userIterator.hasNext())
+		{
+			Map.Entry userEntry = (Entry) userIterator.next();
+			ConcurrentHashMap sessionMap = (ConcurrentHashMap) userEntry.getValue();
+			String userName = (String) userEntry.getKey();
+			//System.out.println(userName);
+			Iterator sessionIterator = sessionMap.entrySet().iterator();
+			while(sessionIterator.hasNext())
+			{
+				Map.Entry sessionEntry = (Entry) sessionIterator.next();
+				String sessionName = (String) sessionEntry.getKey();
+				//System.out.println(sessionName);
+				ConcurrentHashMap dataMap = (ConcurrentHashMap) sessionEntry.getValue();
+				Iterator dataIterator = dataMap.entrySet().iterator();
+				while(dataIterator.hasNext())
+				{
+					Map.Entry dataEntry = (Entry) dataIterator.next();
+					ArrayList dataList = (ArrayList) dataEntry.getValue();
+					//System.out.println(dataEntry.getKey());
+					for(int x=0; x<dataList.size(); x++)
+					{
+						ConcurrentHashMap curData = (ConcurrentHashMap) dataList.get(x);
+						Iterator fieldIterator = curData.entrySet().iterator();
+						while(fieldIterator.hasNext())
+						{
+							Map.Entry fieldEntry = (Entry) fieldIterator.next();
+							if(fieldEntry.getValue() instanceof Date)
+							{
+								//System.out.println("Date: " + fieldEntry.getKey());
+								curData.put(fieldEntry.getKey() + " MS", ((Date) fieldEntry.getValue()).getTime());
+								//System.out.println("Converted");
+								long thisTime = (long) curData.get(fieldEntry.getKey() + " MS");
+								//System.out.println("Got converted");
+								if(universalMin > thisTime)
+								{
+									//System.out.println("New universal min");
+									universalMin = thisTime;
+								}
+								if(universalMax < thisTime)
+								{
+									//System.out.println("New universal max");
+									universalMax = thisTime;
+								}
+								
+								if(userMinMap.containsKey(userName))
+								{
+									if((long)userMinMap.get(userName) > thisTime)
+									{
+										userMinMap.put(userName, thisTime);
+									}
+									if((long)userMaxMap.get(userName) < thisTime)
+									{
+										userMaxMap.put(userName, thisTime);
+									}
+								}
+								else
+								{
+									userMinMap.put(userName, thisTime);
+									userMaxMap.put(userName, thisTime);
+								}
+								//System.out.println("User map updated");
+								
+								
+								if(!sessionMinMap.containsKey(userName))
+								{
+									sessionMinMap.put(userName, new ConcurrentHashMap());
+									sessionMaxMap.put(userName, new ConcurrentHashMap());
+								}
+								ConcurrentHashMap userSessionMinMap = (ConcurrentHashMap) sessionMinMap.get(userName);
+								ConcurrentHashMap userSessionMaxMap = (ConcurrentHashMap) sessionMaxMap.get(userName);
+								
+								if(userSessionMinMap.containsKey(sessionName))
+								{
+									if((long)userSessionMinMap.get(sessionName) > thisTime)
+									{
+										userSessionMinMap.put(sessionName, thisTime);
+									}
+									if((long)userSessionMaxMap.get(sessionName) < thisTime)
+									{
+										userSessionMaxMap.put(sessionName, thisTime);
+									}
+								}
+								else
+								{
+									userSessionMinMap.put(sessionName, thisTime);
+									userSessionMaxMap.put(sessionName, thisTime);
+								}
+								//System.out.println("Session map updated");
+							}
+						}
+					}
+				}
+			}
+		}
+		//Gson gson = new GsonBuilder().create();
+		//System.out.println(gson.toJson(sessionMinMap));
+		//System.out.println(gson.toJson(sessionMaxMap));
+		//if(true)
+		//{
+		//	return userMap;
+		//}
+		userIterator = userMap.entrySet().iterator();
+		while(userIterator.hasNext())
+		{
+			Map.Entry userEntry = (Entry) userIterator.next();
+			ConcurrentHashMap sessionMap = (ConcurrentHashMap) userEntry.getValue();
+			String userName = (String) userEntry.getKey();
+			//System.out.println("Second iteraton " + userName);
+			Iterator sessionIterator = sessionMap.entrySet().iterator();
+			while(sessionIterator.hasNext())
+			{
+				Map.Entry sessionEntry = (Entry) sessionIterator.next();
+				String sessionName = (String) sessionEntry.getKey();
+				//System.out.println("Second iteraton " + sessionName);
+				ConcurrentHashMap dataMap = (ConcurrentHashMap) sessionEntry.getValue();
+				Iterator dataIterator = dataMap.entrySet().iterator();
+				while(dataIterator.hasNext())
+				{
+					Map.Entry dataEntry = (Entry) dataIterator.next();
+					ArrayList dataList = (ArrayList) dataEntry.getValue();
+					for(int x=0; x<dataList.size(); x++)
+					{
+						ConcurrentHashMap curData = (ConcurrentHashMap) dataList.get(x);
+						Iterator fieldIterator = curData.entrySet().iterator();
+						while(fieldIterator.hasNext())
+						{
+							Map.Entry fieldEntry = (Entry) fieldIterator.next();
+							if(fieldEntry.getValue() instanceof Date)
+							{
+								curData.put(fieldEntry.getKey() + " MS Universal", ((Date) fieldEntry.getValue()).getTime() - universalMin);
+								curData.put(fieldEntry.getKey() + " MS User", ((Date) fieldEntry.getValue()).getTime() - (long)userMinMap.get(userName));
+								ConcurrentHashMap userSessionMinMap = (ConcurrentHashMap) sessionMinMap.get(userName);
+								curData.put(fieldEntry.getKey() + " MS Session", ((Date) fieldEntry.getValue()).getTime() - (long)userSessionMinMap.get(sessionName));
+								
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		return userMap;
+	}
+	
 	public ArrayList normalizeTimeTasks(ArrayList input)
 	{
-		HashMap userMinMap = new HashMap();
-		HashMap userMaxMap = new HashMap();
+		ConcurrentHashMap userMinMap = new ConcurrentHashMap();
+		ConcurrentHashMap userMaxMap = new ConcurrentHashMap();
 		for(int x=0; x<input.size(); x++)
 		{
-			HashMap curMap = (HashMap) input.get(x);
+			ConcurrentHashMap curMap = (ConcurrentHashMap) input.get(x);
 			if(userMinMap.containsKey(curMap.get("Username")))
 			{
 				if((long)userMinMap.get(curMap.get("Username")) > (long)curMap.get("Event Time MS"))
@@ -246,7 +451,7 @@ public class DatabaseConnector
 		
 		for(int x=0; x<input.size(); x++)
 		{
-			HashMap curMap = (HashMap) input.get(x);
+			ConcurrentHashMap curMap = (ConcurrentHashMap) input.get(x);
 			curMap.put("Event Time MS", (long)curMap.get("Event Time MS") - (long)userMinMap.get(curMap.get("Username")));
 		}
 		
@@ -255,11 +460,11 @@ public class DatabaseConnector
 	
 	public ArrayList normalizeTime(ArrayList input)
 	{
-		HashMap userMinMap = new HashMap();
-		HashMap userMaxMap = new HashMap();
+		ConcurrentHashMap userMinMap = new ConcurrentHashMap();
+		ConcurrentHashMap userMaxMap = new ConcurrentHashMap();
 		for(int x=0; x<input.size(); x++)
 		{
-			HashMap curMap = (HashMap) input.get(x);
+			ConcurrentHashMap curMap = (ConcurrentHashMap) input.get(x);
 			if(userMinMap.containsKey(curMap.get("Username")))
 			{
 				if((long)userMinMap.get(curMap.get("Username")) > (long)curMap.get("Start Time MS"))
@@ -280,7 +485,7 @@ public class DatabaseConnector
 		
 		for(int x=0; x<input.size(); x++)
 		{
-			HashMap curMap = (HashMap) input.get(x);
+			ConcurrentHashMap curMap = (ConcurrentHashMap) input.get(x);
 			curMap.put("Start Time MS", (long)curMap.get("Start Time MS") - (long)userMinMap.get(curMap.get("Username")));
 			curMap.put("Input Time MS", (long)curMap.get("Input Time MS") - (long)userMinMap.get(curMap.get("Username")));
 			if(curMap.containsKey("End Time"))
@@ -298,7 +503,7 @@ public class DatabaseConnector
 		
 		for(int x=0; x <input.size(); x++)
 		{
-			HashMap curMap = (HashMap) input.get(x);
+			ConcurrentHashMap curMap = (ConcurrentHashMap) input.get(x);
 			String jsonString = "\n\t\t{";
 			if(x > 0)
 			{
@@ -339,7 +544,7 @@ public class DatabaseConnector
 	}
 	
 	
-	public ArrayList getUsers()
+	public ArrayList getUsers(String event, String admin)
 	{
 		ArrayList myReturn = new ArrayList();
 		
@@ -352,11 +557,14 @@ public class DatabaseConnector
 		try
 		{
 			PreparedStatement myStatement = myConnector.prepareStatement(userQuery);
+			myStatement.setString(1, event);
+			myStatement.setString(2, admin);
 			ResultSet myResults = myStatement.executeQuery();
 			while(myResults.next())
 			{
-				HashMap nextRow = new HashMap();
+				ConcurrentHashMap nextRow = new ConcurrentHashMap();
 				nextRow.put("Username", myResults.getString("username"));
+				nextRow.put("Session", myResults.getString("session"));
 				myReturn.add(nextRow);
 			}
 			stmt = myStatement;
@@ -376,7 +584,7 @@ public class DatabaseConnector
 		return myReturn;
 	}
 	
-	public ArrayList getTasks()
+	public ArrayList getTasks(String event, String admin)
 	{
 		ArrayList myReturn = new ArrayList();
 		
@@ -389,12 +597,15 @@ public class DatabaseConnector
 		try
 		{
 			PreparedStatement myStatement = myConnector.prepareStatement(taskQuery);
+			myStatement.setString(1, event);
+			myStatement.setString(2, admin);
 			ResultSet myResults = myStatement.executeQuery();
 			while(myResults.next())
 			{
-				HashMap nextRow = new HashMap();
+				ConcurrentHashMap nextRow = new ConcurrentHashMap();
 				
 				nextRow.put("Username", myResults.getString("username"));
+				nextRow.put("Session", myResults.getString("session"));
 				nextRow.put("Task Name", myResults.getString("taskName"));
 				nextRow.put("Completion", myResults.getString("completion"));
 				nextRow.put("Event Time", myResults.getTimestamp("eventTime"));
@@ -419,7 +630,143 @@ public class DatabaseConnector
 		return convertTimeTask(myReturn);
 	}
 	
-	public ArrayList getCollectedData()
+	public ConcurrentHashMap getTasksHierarchy(String event, String admin)
+	{
+		ConcurrentHashMap myReturn = new ConcurrentHashMap();
+		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
+		Connection myConnector = mySource.getDatabaseConnection();
+		conn = myConnector;
+		try
+		{
+			PreparedStatement myStatement = myConnector.prepareStatement(taskQuery);
+			myStatement.setString(1, event);
+			myStatement.setString(2, admin);
+			ResultSet myResults = myStatement.executeQuery();
+			while(myResults.next())
+			{
+				ConcurrentHashMap nextRow = new ConcurrentHashMap();
+				
+				nextRow.put("Username", myResults.getString("username"));
+				String userName = myResults.getString("username");
+				nextRow.put("Session", myResults.getString("session"));
+				String sessionName = myResults.getString("session");
+				nextRow.put("Task Name", myResults.getString("taskName"));
+				nextRow.put("Completion", myResults.getString("completion"));
+				nextRow.put("Event Time", myResults.getTimestamp("eventTime"));
+				nextRow.put("Event", myResults.getString("event"));
+				
+				if(!myReturn.containsKey(userName))
+				{
+					myReturn.put(userName, new ConcurrentHashMap());
+				}
+				ConcurrentHashMap userMap = (ConcurrentHashMap) myReturn.get(userName);
+				
+				if(!userMap.containsKey(sessionName))
+				{
+					userMap.put(sessionName, new ConcurrentHashMap());
+				}
+				ConcurrentHashMap sessionMap = (ConcurrentHashMap) userMap.get(sessionName);
+				
+				if(!sessionMap.containsKey("events"))
+				{
+					sessionMap.put("events", new ArrayList());
+				}
+				ArrayList eventList = (ArrayList) sessionMap.get("events");
+				
+				eventList.add(nextRow);
+				//myReturn.add(nextRow);
+			}
+			stmt = myStatement;
+			rset = myResults;
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+            try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
+		
+		return myReturn;
+	}
+	
+	public ConcurrentHashMap getScreenshotsHierarchy(String event, String admin)
+	{
+		ConcurrentHashMap myReturn = new ConcurrentHashMap();
+		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
+		Connection myConnector = mySource.getDatabaseConnection();
+		conn = myConnector;
+		try
+		{
+			PreparedStatement myStatement = myConnector.prepareStatement(allImageQuery);
+			myStatement.setString(1, event);
+			myStatement.setString(2, admin);
+			ResultSet myResults = myStatement.executeQuery();
+			while(myResults.next())
+			{
+				ConcurrentHashMap nextRow = new ConcurrentHashMap();
+				
+				nextRow.put("Username", myResults.getString("username"));
+				String userName = myResults.getString("username");
+				nextRow.put("Session", myResults.getString("session"));
+				String sessionName = myResults.getString("session");
+				
+				nextRow.put("Taken", myResults.getTimestamp("taken"));
+				
+				byte[] image = myResults.getBytes("screenshot");
+				String imageEncoded = Base64.getEncoder().encodeToString(image);
+				nextRow.put("Screenshot", imageEncoded);
+				
+				if(!myReturn.containsKey(userName))
+				{
+					myReturn.put(userName, new ConcurrentHashMap());
+				}
+				ConcurrentHashMap userMap = (ConcurrentHashMap) myReturn.get(userName);
+				
+				if(!userMap.containsKey(sessionName))
+				{
+					userMap.put(sessionName, new ConcurrentHashMap());
+				}
+				ConcurrentHashMap sessionMap = (ConcurrentHashMap) userMap.get(sessionName);
+				
+				if(!sessionMap.containsKey("screenshots"))
+				{
+					sessionMap.put("screenshots", new ArrayList());
+				}
+				ArrayList eventList = (ArrayList) sessionMap.get("screenshots");
+				
+				eventList.add(nextRow);
+				//myReturn.add(nextRow);
+			}
+			stmt = myStatement;
+			rset = myResults;
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+            try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
+		
+		return myReturn;
+	}
+	
+	public ArrayList getCollectedData(String event, String admin)
 	{
 		ArrayList myReturn = new ArrayList();
 		
@@ -432,14 +779,20 @@ public class DatabaseConnector
 		try
 		{
 			PreparedStatement myStatement = myConnector.prepareStatement(totalQuery);
+			myStatement.setString(1, event);
+			myStatement.setString(2, admin);
 			ResultSet myResults = myStatement.executeQuery();
 			while(myResults.next())
 			{
-				HashMap nextRow = new HashMap();
+				ConcurrentHashMap nextRow = new ConcurrentHashMap();
+				
+				
 				
 				String userName = myResults.getString("username");
 				nextRow.put("Username", userName);
 				
+				String sessionName = myResults.getString("session");
+				nextRow.put("Session", sessionName);
 				
 				String user = myResults.getString("user");
 				nextRow.put("User", user);
@@ -485,15 +838,30 @@ public class DatabaseConnector
 				String secondClass = myResults.getString("secondClass");
 				nextRow.put("Window Class 2", secondClass);
 				
-				
-				String type = myResults.getString("type");
-				nextRow.put("Input Type", type);
-				int xLoc = myResults.getInt("xLoc");
-				nextRow.put("Input Location X", xLoc);
-				int yLoc = myResults.getInt("yLoc");
-				nextRow.put("Input Location Y", yLoc);
-				Date inputTime = myResults.getTimestamp("inputTime");
-				nextRow.put("Input Time", inputTime);
+				if(myResults.getString("fromInput").equals("mouse"))
+				{
+					String source = myResults.getString("fromInput");
+					nextRow.put("Input Source", source);
+					String type = myResults.getString("type");
+					nextRow.put("Input Type", type);
+					int xLoc = myResults.getInt("xLoc");
+					nextRow.put("Input Location X", xLoc);
+					int yLoc = myResults.getInt("yLoc");
+					nextRow.put("Input Location Y", yLoc);
+					Date inputTime = myResults.getTimestamp("overallTime");
+					nextRow.put("Input Time", inputTime);
+				}
+				else if(myResults.getString("fromInput").equals("keyboard"))
+				{
+					String source = myResults.getString("fromInput");
+					nextRow.put("Input Source", source);
+					String type = myResults.getString("type");
+					nextRow.put("Input Type", type);
+					String button = myResults.getString("button");
+					nextRow.put("Button", type);
+					Date inputTime = myResults.getTimestamp("overallTime");
+					nextRow.put("Input Time", inputTime);
+				}
 				
 				
 				int x = myResults.getInt("x");
@@ -512,24 +880,24 @@ public class DatabaseConnector
 				
 				
 				/*
-				HashMap userMap;
+				ConcurrentHashMap userMap;
 				if(myReturn.containsKey(userName))
 				{
-					userMap = (HashMap) myReturn.get(userName);
+					userMap = (ConcurrentHashMap) myReturn.get(userName);
 				}
 				else
 				{
-					userMap = new HashMap();
+					userMap = new ConcurrentHashMap();
 				}
 				
-				HashMap processMap;
+				ConcurrentHashMap processMap;
 				if(userMap.containsKey(processKey))
 				{
-					processMap = (HashMap) userMap.get(processKey);
+					processMap = (ConcurrentHashMap) userMap.get(processKey);
 				}
 				else
 				{
-					processMap = new HashMap();
+					processMap = new ConcurrentHashMap();
 				}
 				
 				processMap.put("command", command);
@@ -556,10 +924,196 @@ public class DatabaseConnector
             try { if (conn != null) conn.close(); } catch(Exception e) { }
         }
 		
-		return convertTime(myReturn);
+		return myReturn;
 	}
 	
-	public byte[] getScreenshot(String username, String myTimestamp)
+	public ConcurrentHashMap getCollectedDataHierarchy(String event, String admin)
+	{
+		ConcurrentHashMap myReturn = new ConcurrentHashMap();
+		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
+		Connection myConnector = mySource.getDatabaseConnection();
+		conn = myConnector;
+		try
+		{
+			PreparedStatement myStatement = myConnector.prepareStatement(totalQuery);
+			myStatement.setString(1, event);
+			myStatement.setString(2, admin);
+			ResultSet myResults = myStatement.executeQuery();
+			while(myResults.next())
+			{
+				ConcurrentHashMap nextRow = new ConcurrentHashMap();
+				
+				
+				
+				String userName = myResults.getString("username");
+				nextRow.put("Username", userName);
+				
+				ConcurrentHashMap userMap = null;
+				if(!myReturn.containsKey(userName))
+				{
+					userMap = new ConcurrentHashMap();
+					myReturn.put(userName, userMap);
+				}
+				userMap = (ConcurrentHashMap) myReturn.get(userName);
+				
+				String sessionName = myResults.getString("session");
+				nextRow.put("Session", sessionName);
+				
+				ConcurrentHashMap sessionMap = null;
+				if(!userMap.containsKey(sessionName))
+				{
+					//System.out.println("Adding " + userName + ":" + sessionName);
+					sessionMap = new ConcurrentHashMap();
+					userMap.put(sessionName, sessionMap);
+				}
+				sessionMap = (ConcurrentHashMap) userMap.get(sessionName);
+				
+				ArrayList ioList = null;
+				if(!sessionMap.containsKey("io"))
+				{
+					ioList = new ArrayList();
+					sessionMap.put("io", ioList);
+				}
+				ioList = (ArrayList) sessionMap.get("io");
+				
+				String user = myResults.getString("user");
+				nextRow.put("User", user);
+				String pid = myResults.getString("pid");
+				nextRow.put("PID", pid);
+				String start = myResults.getString("start");
+				nextRow.put("Start", start);
+				//ArrayList processKey = new ArrayList();
+				//processKey.add(user);
+				//processKey.add(pid);
+				//processKey.add(start);
+				
+				String command = myResults.getString("command");
+				nextRow.put("Command", command);
+				
+				
+				Date timeChanged = myResults.getTimestamp("timeChanged");
+				nextRow.put("Start Time", timeChanged);
+				
+				double cpu = myResults.getDouble("cpu");
+				nextRow.put("CPU", cpu);
+				double mem = myResults.getDouble("mem");
+				nextRow.put("Memory Use", mem);
+				double vsz = myResults.getLong("vsz");
+				nextRow.put("VSZ", vsz);
+				double rss = myResults.getLong("rss");
+				nextRow.put("RSS", rss);
+				String tty = myResults.getString("tty");
+				nextRow.put("TTY", tty);
+				String stat = myResults.getString("stat");
+				nextRow.put("Stat", stat);
+				String time = myResults.getString("time");
+				nextRow.put("Time", time);
+				
+				
+				String xid = myResults.getString("xid");
+				nextRow.put("XID", xid);
+				
+				String name = myResults.getString("name");
+				nextRow.put("Window Name", name);
+				String firstClass = myResults.getString("firstClass");
+				nextRow.put("Window Class 1", firstClass);
+				String secondClass = myResults.getString("secondClass");
+				nextRow.put("Window Class 2", secondClass);
+				
+				if(myResults.getString("fromInput").equals("mouse"))
+				{
+					String source = myResults.getString("fromInput");
+					nextRow.put("Input Source", source);
+					String type = myResults.getString("type");
+					nextRow.put("Input Type", type);
+					int xLoc = myResults.getInt("xLoc");
+					nextRow.put("Input Location X", xLoc);
+					int yLoc = myResults.getInt("yLoc");
+					nextRow.put("Input Location Y", yLoc);
+					Date inputTime = myResults.getTimestamp("overallTime");
+					nextRow.put("Input Time", inputTime);
+				}
+				else if(myResults.getString("fromInput").equals("keyboard"))
+				{
+					String source = myResults.getString("fromInput");
+					nextRow.put("Input Source", source);
+					String type = myResults.getString("type");
+					nextRow.put("Input Type", type);
+					String button = myResults.getString("button");
+					nextRow.put("Button", type);
+					Date inputTime = myResults.getTimestamp("overallTime");
+					nextRow.put("Input Time", inputTime);
+				}
+				
+				
+				int x = myResults.getInt("x");
+				nextRow.put("Window Location X", x);
+				int y = myResults.getInt("y");
+				nextRow.put("Window Location Y", y);
+				int width = myResults.getInt("width");
+				nextRow.put("Window Width", width);
+				int height = myResults.getInt("height");
+				nextRow.put("Window Height", height);
+				
+				
+				
+				ioList.add(nextRow);
+				
+				
+				
+				/*
+				ConcurrentHashMap userMap;
+				if(myReturn.containsKey(userName))
+				{
+					userMap = (ConcurrentHashMap) myReturn.get(userName);
+				}
+				else
+				{
+					userMap = new ConcurrentHashMap();
+				}
+				
+				ConcurrentHashMap processMap;
+				if(userMap.containsKey(processKey))
+				{
+					processMap = (ConcurrentHashMap) userMap.get(processKey);
+				}
+				else
+				{
+					processMap = new ConcurrentHashMap();
+				}
+				
+				processMap.put("command", command);
+				
+				
+				
+				
+				
+				userMap.put(processKey, processMap);
+				myReturn.put(userMap, userMap);
+				*/
+			}
+			stmt = myStatement;
+			rset = myResults;
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+            try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
+		
+		return myReturn;
+	}
+	
+	public byte[] getScreenshot(String username, String myTimestamp, String event, String admin)
 	{
 		byte[] myReturn = null;
 		
@@ -574,6 +1128,8 @@ public class DatabaseConnector
 			PreparedStatement myStatement = myConnector.prepareStatement(imageQuery);
 			myStatement.setString(1, username);
 			myStatement.setString(2, myTimestamp);
+			myStatement.setString(3, event);
+			myStatement.setString(4, admin);
 			//myStatement.setString(3, myTimestamp);
 			//System.err.println(myStatement.toString());
 			ResultSet myResults = myStatement.executeQuery();

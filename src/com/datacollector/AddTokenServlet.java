@@ -45,6 +45,7 @@ public class AddTokenServlet extends HttpServlet {
 		
 		String username = request.getParameter("username");
 		String event = request.getParameter("event");
+		String admin = request.getParameter("admin");
 		String token = request.getParameter("token");
 		String mode = request.getParameter("mode");
 		String verify = request.getParameter("verifier");
@@ -72,7 +73,7 @@ public class AddTokenServlet extends HttpServlet {
 		
 		Connection dbConn = myConnectionSource.getDatabaseConnection();
 		
-		String eventQuery = "SELECT * FROM `Event` INNER JOIN `EventContact` ON `Event`.`event` = `EventContact`.`event` WHERE `Event`.`event` = ?";
+		String eventQuery = "SELECT * FROM `Event` INNER JOIN `EventContact` ON `Event`.`event` = `EventContact`.`event` WHERE `Event`.`event` = ? AND `Event`.`adminEmail` = ?";
 		
 		String desc = "";
 		String start = "";
@@ -84,6 +85,7 @@ public class AddTokenServlet extends HttpServlet {
 		{
 			PreparedStatement queryStmt = dbConn.prepareStatement(eventQuery);
 			queryStmt.setString(1, event);
+			queryStmt.setString(2, admin);
 			ResultSet myResults = queryStmt.executeQuery();
 			if(!myResults.next())
 			{
@@ -112,7 +114,7 @@ public class AddTokenServlet extends HttpServlet {
 			return;
 		}
 		
-		String query = "INSERT INTO `UploadToken` (`event`, `username`, `token`, `continuous`) VALUES (?, ?, ?, ?);";
+		String query = "INSERT INTO `UploadToken` (`event`, `username`, `token`, `continuous`, `adminEmail`) VALUES (?, ?, ?, ?, ?);";
 		try
 		{
 			PreparedStatement toInsert = dbConn.prepareStatement(query);
@@ -120,6 +122,7 @@ public class AddTokenServlet extends HttpServlet {
 			toInsert.setString(2, username);
 			toInsert.setString(3, token);
 			toInsert.setInt(4, isContinuous);
+			toInsert.setString(5, admin);
 			toInsert.execute();
 		}
 		catch (SQLException e)

@@ -49,7 +49,7 @@ public class UploadData extends HttpServlet
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
 		System.out.println("Got a request");
-		System.out.println("On server: " + ((double)request.getParameter("uploadData").length()) / 1000000.0);
+		System.out.println("With size: " + ((double)request.getParameter("uploadData").length()) / 1000000.0);
 		byte[] compressed = Base64.getDecoder().decode(request.getParameter("uploadData"));
 		ByteArrayInputStream input = new ByteArrayInputStream(compressed);
 		GZIPInputStream ungzip = new GZIPInputStream(input);
@@ -80,6 +80,7 @@ public class UploadData extends HttpServlet
 		String username = (String) fromJSON.get("username");
 		String token = (String) fromJSON.get("token");
 		String event = (String) fromJSON.get("event");
+		String admin = (String) fromJSON.get("admin");
 		
 		Connection conn = null;
         Statement stmt = null;
@@ -101,18 +102,23 @@ public class UploadData extends HttpServlet
 			Connection dbConn = myConnectionSource.getDatabaseConnectionNoTimeout();
 			conn = dbConn;
 			
-			String query = "SELECT * FROM `UploadToken` INNER JOIN `Event` ON `UploadToken`.`event` = `Event`.`event`  WHERE `username` = ? AND `token` = ? AND `UploadToken`.`event` = ?";
+			String query = "SELECT * FROM `UploadToken` INNER JOIN `Event` ON `UploadToken`.`event` = `Event`.`event`  WHERE `username` = ? AND `token` = ? AND `UploadToken`.`event` = ? AND `UploadToken`.`adminEmail` = ?";
 			
 			PreparedStatement toInsert = dbConn.prepareStatement(query);
 			stmt = toInsert;
 			toInsert.setString(1, username);
 			toInsert.setString(2, token);
 			toInsert.setString(3, event);
+			toInsert.setString(4, admin);
 			ResultSet myResults = toInsert.executeQuery();
 			rset = myResults;
 			if(!myResults.next())
 			{
-				System.out.println("no such token");
+				System.out.println("no such token: " + username + ", " + event + ", " + admin + ", " + token);
+				HashMap outputMap = new HashMap();
+				outputMap.put("result", "nokay");
+				String toWrite = gson.toJson(outputMap);
+				response.getWriter().append(toWrite);
 				return;
 			}
 			else
@@ -123,6 +129,10 @@ public class UploadData extends HttpServlet
 				if(!isActive && !isContinuous)
 				{
 					System.out.println("inactive");
+					HashMap outputMap = new HashMap();
+					outputMap.put("result", "nokay");
+					String toWrite = gson.toJson(outputMap);
+					response.getWriter().append(toWrite);
 					return;
 				}
 				else if(isContinuous)
@@ -131,6 +141,10 @@ public class UploadData extends HttpServlet
 					if(curDate.after(endDate))
 					{
 						System.out.println("after end date");
+						HashMap outputMap = new HashMap();
+						outputMap.put("result", "nokay");
+						String toWrite = gson.toJson(outputMap);
+						response.getWriter().append(toWrite);
 						return;
 					}
 				}
@@ -182,7 +196,7 @@ public class UploadData extends HttpServlet
 						first = false;
 					}
 					userInsert = totalQuery.toString();
-					System.out.println(userInsert);
+					//System.out.println(userInsert);
 					//System.out.println(userList);
 					
 					PreparedStatement insertStatement = dbConn.prepareStatement(userInsert);
@@ -190,13 +204,34 @@ public class UploadData extends HttpServlet
 					stmt = insertStatement;
 					
 					int curEnt = 1;
+					boolean broken = false;
 					for(Map entry : userList)
 					{
 						if(!entry.get("username").equals(username))
 						{
-							System.out.println("Invalid: " + entry.get("username") + ", " + username);
+							System.out.println("Invalid user: " + entry.get("username") + ", " + username);
+							broken = true;
+							break;
 						}
-						for(String key : masterKeySet)
+						//else if(!entry.get("session").equals(session))
+						//{
+						//	System.out.println("Invalid session: " + entry.get("username") + ", " + username);
+						//	broken = true;
+						//	break;
+						//}
+						else if(!entry.get("event").equals(event))
+						{
+							System.out.println("Invalid event: " + entry.get("username") + ", " + username);
+							broken = true;
+							break;
+						}
+						else if(!entry.get("adminEmail").equals(admin))
+						{
+							System.out.println("Invalid adminEmail: " + entry.get("username") + ", " + username);
+							broken = true;
+							break;
+						}
+						else for(String key : masterKeySet)
 						{
 							System.out.println(entry.get(key).getClass());
 							insertStatement.setString(curEnt, "" + entry.get(key));
@@ -204,32 +239,37 @@ public class UploadData extends HttpServlet
 						}
 					}
 					
-					insertStatement.execute();
+					if(!broken)
+					{
+						insertStatement.execute();
+					}
 					insertStatement.close();
 				}
 				
-				insertInto("Screenshot", fromJSON, dbConn, username);
-				insertInto("Process", fromJSON, dbConn, username);
-				insertInto("ProcessArgs", fromJSON, dbConn, username);
-				insertInto("ProcessAttributes", fromJSON, dbConn, username);
-				insertInto("Window", fromJSON, dbConn, username);
-				insertInto("WindowDetails", fromJSON, dbConn, username);
-				insertInto("MouseInput", fromJSON, dbConn, username);
-				insertInto("KeyboardInput", fromJSON, dbConn, username);
-				insertInto("Task", fromJSON, dbConn, username);
-				insertInto("TaskEvent", fromJSON, dbConn, username);
+				insertInto("Screenshot", fromJSON, dbConn, username, event, admin);
+				insertInto("Process", fromJSON, dbConn, username, event, admin);
+				insertInto("ProcessArgs", fromJSON, dbConn, username, event, admin);
+				insertInto("ProcessAttributes", fromJSON, dbConn, username, event, admin);
+				insertInto("Window", fromJSON, dbConn, username, event, admin);
+				insertInto("WindowDetails", fromJSON, dbConn, username, event, admin);
+				insertInto("MouseInput", fromJSON, dbConn, username, event, admin);
+				insertInto("KeyboardInput", fromJSON, dbConn, username, event, admin);
+				insertInto("Task", fromJSON, dbConn, username, event, admin);
+				insertInto("TaskEvent", fromJSON, dbConn, username, event, admin);
 				
 				double totalDoneTmp = (Double) fromJSON.get("totalDone");
 				double totalToDoTmp = (Double) fromJSON.get("totalToDo");
 				int totalDone = (int)totalDoneTmp;
 				int totalToDo = (int)totalToDoTmp;
 				
-				String updateNumQuery = "UPDATE `UploadToken` SET `framesUploaded` = ?, `framesRemaining` = ? WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ?";
+				String updateNumQuery = "UPDATE `UploadToken` SET `framesUploaded` = ?, `framesRemaining` = ? WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ? AND `UploadToken`.`adminEmail` = ? AND `UploadToken`.`event` = ?";
 				PreparedStatement toUpdate = dbConn.prepareStatement(updateNumQuery);
 				toUpdate.setInt(1, totalDone);
 				toUpdate.setInt(2, totalToDo);
 				toUpdate.setString(3, username);
 				toUpdate.setString(4, token);
+				toUpdate.setString(5, admin);
+				toUpdate.setString(6, event);
 				toUpdate.execute();
 				stmt = toUpdate;
 				stmt.close();
@@ -244,12 +284,19 @@ public class UploadData extends HttpServlet
 					stmt = toInactive;
 					stmt.close();
 				}
+				//dbConn.commit();
+				dbConn.close();
 			}
 			if (conn != null) conn.close();
 		}
 		catch(Exception e)
 		{
+			HashMap outputMap = new HashMap();
+			outputMap.put("result", "nokay");
+			String toWrite = gson.toJson(outputMap);
+			response.getWriter().append(toWrite);
 			e.printStackTrace();
+			return;
 		}
 		finally
 		{
@@ -262,11 +309,13 @@ public class UploadData extends HttpServlet
 		System.out.println("Done: " + fromJSON.get("totalDone") + "/" + fromJSON.get("totalToDo"));
 		
 		
-		
-		response.getWriter().append("Served at: ").append(request.getContextPath());
+		HashMap outputMap = new HashMap();
+		outputMap.put("result", "ok");
+		String toWrite = gson.toJson(outputMap);
+		response.getWriter().append(toWrite);
 	}
 	
-	public void insertInto(String table, Map fromJSON, Connection dbConn, String username) throws Exception
+	public void insertInto(String table, Map fromJSON, Connection dbConn, String username, String eventname, String adminemail) throws Exception
 	{
 		if(fromJSON.containsKey(table) && ((List)fromJSON.get(table)).size() > 0)
 		{
@@ -324,7 +373,17 @@ public class UploadData extends HttpServlet
 			{
 				if(!entry.get("username").equals(username))
 				{
-					System.out.println("Invalid: " + entry.get("username") + ", " + username);
+					System.out.println("Invalid username: " + entry.get("username") + ", " + username);
+					return;
+				}
+				if(!entry.get("event").equals(eventname))
+				{
+					System.out.println("Invalid event: " + entry.get("event") + ", " + username);
+					return;
+				}
+				if(!entry.get("adminEmail").equals(adminemail))
+				{
+					System.out.println("Invalid adminEmail: " + entry.get("adminEmail") + ", " + username);
 					return;
 				}
 				for(String key : masterKeySet)
@@ -346,7 +405,7 @@ public class UploadData extends HttpServlet
 			
 			insertStatement.execute();
 			insertStatement.close();
-			dbConn.close();
+			//dbConn.close();
 		}
 	}
 
