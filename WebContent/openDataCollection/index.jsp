@@ -119,7 +119,7 @@ if(myConnector==null)
 TestingConnectionSource myConnectionSource = myConnector.getConnectionSource();
 
 Connection dbConn = myConnectionSource.getDatabaseConnection();
-String query = "SELECT * FROM `openDataCollectionServer`.`Event` WHERE `adminEmail` = ?";
+String query = "SELECT * FROM `openDataCollectionServer`.`Event` WHERE `adminEmail` = ? AND `publicEvent` = 1";
 try
 {
 	PreparedStatement queryStmt = dbConn.prepareStatement(query);

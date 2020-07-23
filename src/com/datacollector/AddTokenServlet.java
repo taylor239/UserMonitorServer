@@ -17,7 +17,7 @@ import javax.servlet.http.HttpSession;
 /**
  * Servlet implementation class AddTokenServlet
  */
-@WebServlet(name = "AddToken", urlPatterns = { "/AddToken" })
+@WebServlet(name = "AddToken", urlPatterns = { "/openDataCollection/AddToken" })
 public class AddTokenServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
@@ -89,6 +89,7 @@ public class AddTokenServlet extends HttpServlet {
 			ResultSet myResults = queryStmt.executeQuery();
 			if(!myResults.next())
 			{
+				System.out.println("Event not found to add token " + event + ", " + admin);
 				return;
 			}
 			desc = myResults.getString("description");

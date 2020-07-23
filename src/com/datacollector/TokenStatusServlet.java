@@ -20,7 +20,7 @@ import com.google.gson.GsonBuilder;
 /**
  * Servlet implementation class TokenStatusServlet
  */
-@WebServlet("/TokenStatus")
+@WebServlet("/openDataCollection/TokenStatus")
 public class TokenStatusServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        

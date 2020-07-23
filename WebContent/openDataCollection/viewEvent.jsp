@@ -639,7 +639,7 @@ catch(Exception e)
 	<p>
 	This is the address participants' data collection will upload to.  The default value is to this server.  If you deploy this server elsewhere or want to run a custom server to receive the data, change this value, otherwise leave it as the default and the data will be available on this server.
 	</p>
-	<input type="text" id="eventserver" name="eventserver" value="<%=serverName %>" form="createform" value="http://revenge.cs.arizona.edu/DataCollectorServer/UploadData">
+	<input type="text" id="eventserver" name="eventserver" value="<%=serverName %>" form="createform" value="ws://revenge.cs.arizona.edu/DataCollectorServer/UploadData">
 	</td>
 	</tr>
 	<tr>

@@ -20,7 +20,7 @@ import com.google.gson.GsonBuilder;
 /**
  * Servlet implementation class TokenStatusServlet
  */
-@WebServlet("/UserEventStatus")
+@WebServlet("/openDataCollection/UserEventStatus")
 public class UserEventStatusServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
@@ -60,7 +60,7 @@ public class UserEventStatusServlet extends HttpServlet {
 			
 			Connection dbConn = myConnectionSource.getDatabaseConnection();
 			
-			String eventQuery = "SELECT * FROM `Event` INNER JOIN `EventContact` ON `Event`.`event` = `EventContact`.`event` WHERE `Event`.`event` = ? `Event`.`adminEmail` = ?";
+			String eventQuery = "SELECT * FROM `Event` INNER JOIN `EventContact` ON `Event`.`event` = `EventContact`.`event` WHERE `Event`.`event` = ? AND `Event`.`adminEmail` = ?";
 			
 			String desc = "";
 			String start = "";
@@ -71,11 +71,14 @@ public class UserEventStatusServlet extends HttpServlet {
 			try
 			{
 				PreparedStatement queryStmt = dbConn.prepareStatement(eventQuery);
+				System.out.println(event);
+				System.out.println(admin);
 				queryStmt.setString(1, event);
 				queryStmt.setString(2, admin);
 				ResultSet myResults = queryStmt.executeQuery();
 				if(!myResults.next())
 				{
+					System.out.println("No event results");
 					return;
 				}
 				desc = myResults.getString("description");

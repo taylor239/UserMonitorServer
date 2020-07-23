@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-    pageEncoding="UTF-8" import="org.apache.commons.lang3.StringEscapeUtils, java.util.ArrayList, com.datacollector.*, java.sql.*"%>
+    pageEncoding="UTF-8" import="org.apache.commons.lang3.StringEscapeUtils, java.net.*, java.util.ArrayList, com.datacollector.*, java.sql.*"%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -115,7 +115,7 @@ Event Ends: <%=end %>
 <script>
 function updateLink()
 {
-	document.getElementById('installScriptLink').href='../installDataCollection.sh?event=<%=event %>&admin=<%=admin %>&username=' + document.getElementById('tokenform').value + '&devicetype=' + document.getElementById('devicetypeform').value;
+	document.getElementById('installScriptLink').href='./installDataCollection.sh?event=<%=java.net.URLEncoder.encode(event, "UTF-8") %>&admin=<%=java.net.URLEncoder.encode(admin, "UTF-8") %>&username=' + document.getElementById('tokenform').value + '&devicetype=' + document.getElementById('devicetypeform').value;
 }
 </script>
 <h2>Instructions</h2>
@@ -165,7 +165,7 @@ Linux for security competitions, as it has handy tools for these problems.</li>
 token is entered in the field above.  <b>If you have navigated back to this page and
 your token is already entered, please re-enter it to ensure your browser has updated
 the link below properly.</b></li>
-<li>Download <a id="installScriptLink" href="../installDataCollection.sh?event=<%=event %>" download>this script</a>.</li>
+<li>Download <a id="installScriptLink" href="./installDataCollection.sh?event=<%=java.net.URLEncoder.encode(event, "UTF-8") %>" download>this script</a>.</li>
 <li>Enable execution of the script.  How to do this is operating system specific.
 On most Linux distributions, you can do this by right clicking the file in the file system interface,
 select "properties" or something similar, and find an execution option under "permissions".</li>
@@ -185,7 +185,7 @@ If you would like to have your data collected thus far removed as well, contact
 the system admins, listed below.
 </p>
 <ol>
-<li>On your virtual machine, download <a href="../stopDataCollection.sh" download>this script</a>.</li>
+<li>On your virtual machine, download <a href="./stopDataCollection.sh" download>this script</a>.</li>
 <li>Enable execution of the downloaded script.</li>
 <li>Open a terminal in the folder with the downloaded script and enter the following: <br/>
 <span style="font-family: Courier New,Courier,Lucida Sans Typewriter,Lucida Typewriter,monospace;"><b>sudo ./stopDataCollection.sh.sh</b></span></li>

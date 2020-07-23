@@ -21,7 +21,7 @@ import com.google.gson.GsonBuilder;
 /**
  * Servlet implementation class GetUploadListServelet
  */
-@WebServlet("/GetUploadList")
+@WebServlet("/openDataCollection/GetUploadList")
 public class GetUploadListServelet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        

@@ -21,7 +21,7 @@ import com.google.gson.Gson;
 /**
  * Servlet implementation class InstallScriptServlet
  */
-@WebServlet("/installDataCollection.sh")
+@WebServlet("/openDataCollection/installDataCollection.sh")
 public class InstallScriptServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
@@ -44,6 +44,8 @@ public class InstallScriptServlet extends HttpServlet {
 		String curEvent = request.getParameter("event");
 		String curAdmin = request.getParameter("admin");
 		String curDevice = request.getParameter("devicetype");
+		
+		
 		
 		String osPrefix = "";
 		
@@ -82,11 +84,14 @@ public class InstallScriptServlet extends HttpServlet {
 			
 			String eventQuery = "SELECT * FROM `Event` WHERE `Event`.`event` = ? AND `Event`.`adminEmail` = ?";
 			PreparedStatement queryStmt = dbConn.prepareStatement(eventQuery);
+			System.out.println(curEvent);
+			System.out.println(curAdmin);
 			queryStmt.setString(1, curEvent);
 			queryStmt.setString(2, curAdmin);
 			ResultSet myResults = queryStmt.executeQuery();
 			if(!myResults.next())
 			{
+				System.out.println("No event");
 				return;
 			}
 			password = myResults.getString("password");
@@ -112,7 +117,10 @@ public class InstallScriptServlet extends HttpServlet {
 		try
 		{
 			myNewToken = UUID.randomUUID().toString();
-			String verifierURL = "http://localhost:8080/DataCollectorServer/UserEventStatus?username=" + curEmail + "&event=" + curEvent + "&verifier=" + password + "&admin=" + curAdmin;
+			//String args = java.net.URLEncoder.encode("username=" + curEmail + "&event=" + curEvent + "&verifier=" + password + "&admin=" + curAdmin, "UTF-8");
+			String args = "username=" + curEmail + "&event=" + java.net.URLEncoder.encode(curEvent, "UTF-8") + "&verifier=" + password + "&admin=" + curAdmin + "&token=" + java.net.URLEncoder.encode(myNewToken, "UTF-8");
+			String verifierURL = "http://localhost:8080/DataCollectorServer/openDataCollection/UserEventStatus?" + args;
+			System.out.println(verifierURL);
 			URL myURL = new URL(verifierURL);
 			InputStream in = myURL.openStream();
 			String reply = org.apache.commons.io.IOUtils.toString(in);
@@ -128,7 +136,10 @@ public class InstallScriptServlet extends HttpServlet {
 			while(!foundOK)
 			{
 				myNewToken = UUID.randomUUID().toString();
-				verifierURL = "http://localhost:8080/DataCollectorServer/TokenStatus?username=" + curEmail + "&event=" + curEvent + "&token=" + myNewToken + "&verifier=" + password + "&admin=" + curAdmin;
+				//args = java.net.URLEncoder.encode("username=" + curEmail + "&event=" + curEvent + "&verifier=" + password + "&admin=" + curAdmin, "UTF-8");
+				args = "username=" + curEmail + "&event=" + java.net.URLEncoder.encode(curEvent, "UTF-8") + "&verifier=" + password + "&admin=" + curAdmin + "&token=" + java.net.URLEncoder.encode(myNewToken, "UTF-8");
+				verifierURL = "http://localhost:8080/DataCollectorServer/openDataCollection/TokenStatus?" + args;
+				System.out.println(verifierURL);
 				myURL = new URL(verifierURL);
 				in = myURL.openStream();
 				reply = org.apache.commons.io.IOUtils.toString(in);
@@ -140,8 +151,9 @@ public class InstallScriptServlet extends HttpServlet {
 					foundOK = true;
 				}
 			}
-			
-			String addTokenURL = "http://localhost:8080/DataCollectorServer/AddToken?username=" + curEmail + "&event=" + curEvent + "&token=" + myNewToken + "&admin=" + curAdmin + "&mode=continuous&verifier=" + password;
+			args = "username=" + curEmail + "&event=" + java.net.URLEncoder.encode(curEvent, "UTF-8") + "&token=" + java.net.URLEncoder.encode(myNewToken, "UTF-8") + "&admin=" + curAdmin + "&mode=continuous&verifier=" + password;
+			System.out.println("http://localhost:8080/DataCollectorServer/openDataCollection/AddToken?" + args);
+			String addTokenURL = "http://localhost:8080/DataCollectorServer/openDataCollection/AddToken?" + args;
 			myURL = new URL(addTokenURL);
 			in = myURL.openStream();
 			reply = org.apache.commons.io.IOUtils.toString(in);
@@ -173,8 +185,8 @@ public class InstallScriptServlet extends HttpServlet {
 			+ "\n" 
 			+ "\necho \"\"" 
 			+ "\n" 
-			+ "\necho \"http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/index.jsp\"" 
-			+ "\necho \"http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/event.jsp?event=" + curEvent + "\"" 
+			+ "\necho \"http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/openDataCollection/index.jsp\"" 
+			+ "\necho \"http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/openDataCollection/event.jsp?event=" + curEvent + "\"" 
 			+ "\n" 
 			+ "\necho \"\"" 
 			+ "\n" 
@@ -226,19 +238,19 @@ public class InstallScriptServlet extends HttpServlet {
 			+ "\nsudo apt-get -y install tomcat9" 
 			+ "\n\nservice mysql start"
 			+ "\nmkdir -p /opt/dataCollector/" 
-			+ "\n\nwget http://" + serverName + ":" + port + "/DataCollectorServer/endpointSoftware/dataCollection.sql -O /opt/dataCollector/dataCollection.sql"
+			+ "\n\nwget http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/endpointSoftware/dataCollection.sql -O /opt/dataCollector/dataCollection.sql"
 			+ "\n\nmariadb -u root < /opt/dataCollector/dataCollection.sql"
 			+ "\nmariadb -u root -e \"CREATE USER 'dataCollector'@'localhost' IDENTIFIED BY '" + mariaPassword + "';\""
 			+ "\nmariadb -u root -e \"GRANT USAGE ON *.* TO 'dataCollector'@'localhost' REQUIRE NONE WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0;\""
 			+ "\nmariadb -u root -e \"GRANT ALL PRIVILEGES ON dataCollection.* TO 'dataCollector'@'localhost';\""
 			+ "\n"
-			+ "\nwget http://" + serverName + ":" + port + "/DataCollectorServer/endpointSoftware/CybercraftDataCollectionConnector.war -O /var/lib/tomcat8/webapps/CybercraftDataCollectionConnector.war"
-			+ "\nwget http://" + serverName + ":" + port + "/DataCollectorServer/endpointSoftware/CybercraftDataCollectionConnector.war -O /var/lib/tomcat9/webapps/CybercraftDataCollectionConnector.war"
+			+ "\nwget http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/endpointSoftware/CybercraftDataCollectionConnector.war -O /var/lib/tomcat8/webapps/CybercraftDataCollectionConnector.war"
+			+ "\nwget http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/endpointSoftware/CybercraftDataCollectionConnector.war -O /var/lib/tomcat9/webapps/CybercraftDataCollectionConnector.war"
 			+ "\n"
 			+ "\n# Copy jar to install dir" 
 			+ "\n" 
 			+ "\n#mv ./DataCollector.jar /opt/dataCollector/" 
-			+ "\nwget http://" + serverName + ":" + port + "/DataCollectorServer/endpointSoftware/DataCollector.jar -O /opt/dataCollector/DataCollector.jar" 
+			+ "\nwget http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/endpointSoftware/DataCollector.jar -O /opt/dataCollector/DataCollector.jar" 
 			+ "\nchmod +777 /opt/dataCollector/DataCollector.jar" 
 			+ "\nchmod +x /opt/dataCollector/DataCollector.jar" 
 			+ "\n" 
@@ -251,8 +263,8 @@ public class InstallScriptServlet extends HttpServlet {
 			+ "\nwhile true;" 
 			+ "\ndo" 
 			+ "\npkill -f \"/usr/bin/java -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar\"" 
-			//+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
-			+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + " -adminemail " + curAdmin + ":" + port + " -event " + curEvent + " " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " >> /opt/dataCollector/log.log 2>&1" 
+			//+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/openDataCollection/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
+			+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -adminemail " + curAdmin + " -event " + curEvent + " " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " >> /opt/dataCollector/log.log 2>&1" 
 			+ "\necho \"Got a crash: $(date)\" >> /opt/dataCollector/log.log" 
 			+ "\nsleep 2" 
 			+ "\ndone" 
@@ -294,18 +306,18 @@ public class InstallScriptServlet extends HttpServlet {
 			/*
 			+ "\n\nservice mysql start"
 			+ "\nmkdir -p /opt/dataCollector/" 
-			+ "\n\nwget http://" + serverName + ":" + port + "/DataCollectorServer/endpointSoftware/dataCollection.sql -O /opt/dataCollector/dataCollection.sql"
+			+ "\n\nwget http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/endpointSoftware/dataCollection.sql -O /opt/dataCollector/dataCollection.sql"
 			+ "\n\nmariadb -u root < /opt/dataCollector/dataCollection.sql"
 			+ "\nmariadb -u root -e \"CREATE USER 'dataCollector'@'localhost' IDENTIFIED BY '" + mariaPassword + "';\""
 			+ "\nmariadb -u root -e \"GRANT USAGE ON *.* TO 'dataCollector'@'localhost' REQUIRE NONE WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0;\""
 			+ "\nmariadb -u root -e \"GRANT ALL PRIVILEGES ON dataCollection.* TO 'dataCollector'@'localhost';\""
 			+ "\n"
-			+ "\nwget http://" + serverName + ":" + port + "/DataCollectorServer/endpointSoftware/CybercraftDataCollectionConnector.war -O /var/lib/tomcat8/webapps/CybercraftDataCollectionConnector.war"
+			+ "\nwget http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/endpointSoftware/CybercraftDataCollectionConnector.war -O /var/lib/tomcat8/webapps/CybercraftDataCollectionConnector.war"
 			+ "\n"
 			+ "\n# Copy jar to install dir" 
 			+ "\n" 
 			+ "\n#mv ./DataCollector.jar /opt/dataCollector/" 
-			+ "\nwget http://" + serverName + ":" + port + "/DataCollectorServer/endpointSoftware/DataCollector.jar -O /opt/dataCollector/DataCollector.jar" 
+			+ "\nwget http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/endpointSoftware/DataCollector.jar -O /opt/dataCollector/DataCollector.jar" 
 			+ "\nchmod +777 /opt/dataCollector/DataCollector.jar" 
 			+ "\nchmod +x /opt/dataCollector/DataCollector.jar" 
 			+ "\n" 
@@ -318,7 +330,7 @@ public class InstallScriptServlet extends HttpServlet {
 			+ "\nwhile true;" 
 			+ "\ndo" 
 			+ "\npkill -f \"/usr/bin/java -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar\"" 
-			//+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
+			//+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/openDataCollection/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
 			+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " >> /opt/dataCollector/log.log 2>&1" 
 			+ "\necho \"Got a crash: $(date)\" >> /opt/dataCollector/log.log" 
 			+ "\nsleep 2" 
@@ -363,8 +375,8 @@ public class InstallScriptServlet extends HttpServlet {
 					+ "\n" 
 					+ "\necho \"\"" 
 					+ "\n" 
-					+ "\necho \"http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/index.jsp\"" 
-					+ "\necho \"http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/event.jsp?event=" + curEvent + "\"" 
+					+ "\necho \"http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/openDataCollection/index.jsp\"" 
+					+ "\necho \"http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/openDataCollection/event.jsp?event=" + curEvent + "\"" 
 					+ "\n" 
 					+ "\necho \"\"" 
 					+ "\n" 
@@ -399,18 +411,18 @@ public class InstallScriptServlet extends HttpServlet {
 					+ "\nsudo systemctl enable tomcat.service"
 					+ "\n"
 					+ "\nmkdir -p /opt/dataCollector/" 
-					+ "\n\nwget http://" + serverName + ":" + port + "/DataCollectorServer/endpointSoftware/dataCollection.sql -O /opt/dataCollector/dataCollection.sql"
+					+ "\n\nwget http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/endpointSoftware/dataCollection.sql -O /opt/dataCollector/dataCollection.sql"
 					+ "\n\nmariadb -u root < /opt/dataCollector/dataCollection.sql"
 					+ "\nmariadb -u root -e \"CREATE USER 'dataCollector'@'localhost' IDENTIFIED BY '" + mariaPassword + "';\""
 					+ "\nmariadb -u root -e \"GRANT USAGE ON *.* TO 'dataCollector'@'localhost' REQUIRE NONE WITH MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0;\""
 					+ "\nmariadb -u root -e \"GRANT ALL PRIVILEGES ON dataCollection.* TO 'dataCollector'@'localhost';\""
 					+ "\n"
-					+ "\nwget http://" + serverName + ":" + port + "/DataCollectorServer/endpointSoftware/CybercraftDataCollectionConnector.war -O /var/lib/tomcat8/webapps/CybercraftDataCollectionConnector.war"
+					+ "\nwget http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/endpointSoftware/CybercraftDataCollectionConnector.war -O /var/lib/tomcat8/webapps/CybercraftDataCollectionConnector.war"
 					+ "\n"
 					+ "\n# Copy jar to install dir" 
 					+ "\n" 
 					+ "\n#mv ./DataCollector.jar /opt/dataCollector/" 
-					+ "\nwget http://" + serverName + ":" + port + "/DataCollectorServer/endpointSoftware/DataCollector.jar -O /opt/dataCollector/DataCollector.jar" 
+					+ "\nwget http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/endpointSoftware/DataCollector.jar -O /opt/dataCollector/DataCollector.jar" 
 					+ "\nchmod +777 /opt/dataCollector/DataCollector.jar" 
 					+ "\nchmod +x /opt/dataCollector/DataCollector.jar" 
 					+ "\n" 
@@ -423,7 +435,7 @@ public class InstallScriptServlet extends HttpServlet {
 					+ "\nservice tomcat8 start"
 					+ "\nservice tomcat9 start"
 					+ "\npkill -f \"/usr/bin/java -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar\"" 
-					//+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
+					//+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/openDataCollection/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
 					+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curEmail + " -server " + serverName + ":" + port + " -event " + curEvent + " " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " >> /opt/dataCollector/log.log 2>&1" 
 					+ "\necho \"Got a crash: $(date)\" >> /opt/dataCollector/log.log" 
 					+ "\nsleep 2" 
