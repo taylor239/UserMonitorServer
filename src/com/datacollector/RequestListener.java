@@ -17,7 +17,7 @@ public class RequestListener implements ServletRequestListener {
 
     @Override
     public void requestInitialized(ServletRequestEvent sre) {
-        ((HttpServletRequest) sre.getServletRequest()).getSession();
+        ((HttpServletRequest) sre.getServletRequest()).getSession().setMaxInactiveInterval(86400);
     }
 
 }

@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.GZIPInputStream;
 
 import javax.servlet.http.HttpSession;
@@ -40,7 +41,7 @@ public class UploadDataWebsocket
 		this.wsSession = session;
 		this.httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
 		System.out.println("Got new data upload");
-		session.setMaxTextMessageBufferSize(200826410);
+		session.setMaxTextMessageBufferSize(400826410);
 	}
 	
 	@OnClose
@@ -52,6 +53,8 @@ public class UploadDataWebsocket
 	@OnMessage
 	public void incoming(String message, Session session)
 	{
+		long remainingSize = 0;
+		
 		System.out.println("Got message:");
 		System.out.println(message.length());
 		if(message.equals("end"))
@@ -274,23 +277,105 @@ public class UploadDataWebsocket
 					insertStatement.close();
 				}
 				
-				insertInto("Screenshot", fromJSON, dbConn, username, event, admin);
-				insertInto("Process", fromJSON, dbConn, username, event, admin);
-				insertInto("ProcessArgs", fromJSON, dbConn, username, event, admin);
-				insertInto("ProcessAttributes", fromJSON, dbConn, username, event, admin);
-				insertInto("Window", fromJSON, dbConn, username, event, admin);
-				insertInto("WindowDetails", fromJSON, dbConn, username, event, admin);
-				insertInto("MouseInput", fromJSON, dbConn, username, event, admin);
-				insertInto("KeyboardInput", fromJSON, dbConn, username, event, admin);
-				insertInto("Task", fromJSON, dbConn, username, event, admin);
-				insertInto("TaskEvent", fromJSON, dbConn, username, event, admin);
+				long totalSize = 0;
+				List<Map> userList = (List) fromJSON.get("Screenshot");
+				totalSize += userList.size();
+				userList = (List) fromJSON.get("Process");
+				totalSize += userList.size();
+				userList = (List) fromJSON.get("ProcessArgs");
+				totalSize += userList.size();
+				userList = (List) fromJSON.get("ProcessAttributes");
+				totalSize += userList.size();
+				userList = (List) fromJSON.get("Window");
+				totalSize += userList.size();
+				userList = (List) fromJSON.get("WindowDetails");
+				totalSize += userList.size();
+				userList = (List) fromJSON.get("MouseInput");
+				totalSize += userList.size();
+				userList = (List) fromJSON.get("KeyboardInput");
+				totalSize += userList.size();
+				userList = (List) fromJSON.get("Task");
+				totalSize += userList.size();
+				userList = (List) fromJSON.get("TaskEvent");
+				totalSize += userList.size();
 				
-				double totalDoneTmp = (Double) fromJSON.get("totalDone");
-				double totalToDoTmp = (Double) fromJSON.get("totalToDo");
-				int totalDone = (int)totalDoneTmp;
-				int totalToDo = (int)totalToDoTmp;
+				String updateNumQuery = "UPDATE `UploadToken` SET `framesRemaining` = `framesRemaining` + ? WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ? AND `UploadToken`.`adminEmail` = ? AND `UploadToken`.`event` = ?";
+				PreparedStatement toUpdate = dbConn.prepareStatement(updateNumQuery);
+				toUpdate.setLong(1, totalSize);
+				toUpdate.setString(2, username);
+				toUpdate.setString(3, token);
+				toUpdate.setString(4, admin);
+				toUpdate.setString(5, event);
+				toUpdate.execute();
+				toUpdate.close();
 				
-				String updateNumQuery = "UPDATE `UploadToken` SET `framesUploaded` = ?, `framesRemaining` = ? WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ? AND `UploadToken`.`adminEmail` = ? AND `UploadToken`.`event` = ?";
+				String updateUploadedQuery = "UPDATE `UploadToken` SET `framesUploaded` = `framesUploaded` + ?, `framesRemaining` = `framesRemaining` - ?, `lastAltered` = CURRENT_TIMESTAMP WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ? AND `UploadToken`.`adminEmail` = ? AND `UploadToken`.`event` = ?";
+				toUpdate = dbConn.prepareStatement(updateUploadedQuery);
+				
+				toUpdate.setString(3, username);
+				toUpdate.setString(4, token);
+				toUpdate.setString(5, admin);
+				toUpdate.setString(6, event);
+				
+				remainingSize = totalSize;
+				long curLong = insertInto("Screenshot", fromJSON, dbConn, username, event, admin);
+				toUpdate.setLong(1, curLong);
+				toUpdate.setLong(2, curLong);
+				remainingSize -= curLong;
+				toUpdate.execute();
+				curLong = (insertInto("Process", fromJSON, dbConn, username, event, admin));
+				toUpdate.setLong(1, curLong);
+				toUpdate.setLong(2, curLong);
+				remainingSize -= curLong;
+				toUpdate.execute();
+				curLong = (insertInto("ProcessArgs", fromJSON, dbConn, username, event, admin));
+				toUpdate.setLong(1, curLong);
+				toUpdate.setLong(2, curLong);
+				remainingSize -= curLong;
+				toUpdate.execute();
+				curLong = (insertInto("ProcessAttributes", fromJSON, dbConn, username, event, admin));
+				toUpdate.setLong(1, curLong);
+				toUpdate.setLong(2, curLong);
+				remainingSize -= curLong;
+				toUpdate.execute();
+				curLong = (insertInto("Window", fromJSON, dbConn, username, event, admin));
+				toUpdate.setLong(1, curLong);
+				toUpdate.setLong(2, curLong);
+				remainingSize -= curLong;
+				toUpdate.execute();
+				curLong = (insertInto("WindowDetails", fromJSON, dbConn, username, event, admin));
+				toUpdate.setLong(1, curLong);
+				toUpdate.setLong(2, curLong);
+				remainingSize -= curLong;
+				toUpdate.execute();
+				curLong = (insertInto("MouseInput", fromJSON, dbConn, username, event, admin));
+				toUpdate.setLong(1, curLong);
+				toUpdate.setLong(2, curLong);
+				remainingSize -= curLong;
+				toUpdate.execute();
+				curLong = (insertInto("KeyboardInput", fromJSON, dbConn, username, event, admin));
+				toUpdate.setLong(1, curLong);
+				toUpdate.setLong(2, curLong);
+				remainingSize -= curLong;
+				toUpdate.execute();
+				curLong = (insertInto("Task", fromJSON, dbConn, username, event, admin));
+				toUpdate.setLong(1, curLong);
+				toUpdate.setLong(2, curLong);
+				remainingSize -= curLong;
+				toUpdate.execute();
+				curLong = (insertInto("TaskEvent", fromJSON, dbConn, username, event, admin));
+				toUpdate.setLong(1, curLong);
+				toUpdate.setLong(2, curLong);
+				remainingSize -= curLong;
+				toUpdate.execute();
+				
+				toUpdate.close();
+				//double totalDoneTmp = (Double) fromJSON.get("totalDone");
+				//double totalToDoTmp = (Double) fromJSON.get("totalToDo");
+				//int totalDone = (int)totalDoneTmp;
+				//int totalToDo = (int)totalToDoTmp;
+				
+				/*String updateNumQuery = "UPDATE `UploadToken` SET `framesUploaded` = ?, `framesRemaining` = ? WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ? AND `UploadToken`.`adminEmail` = ? AND `UploadToken`.`event` = ?";
 				PreparedStatement toUpdate = dbConn.prepareStatement(updateNumQuery);
 				toUpdate.setInt(1, totalDone);
 				toUpdate.setInt(2, totalToDo);
@@ -312,13 +397,43 @@ public class UploadDataWebsocket
 					stmt = toInactive;
 					stmt.close();
 				}
+				*/
 				//dbConn.commit();
 				dbConn.close();
 			}
 			if (conn != null) conn.close();
+			
 		}
 		catch(Exception e)
 		{
+			try
+			{
+				Class.forName("com.mysql.jdbc.Driver");
+				//HttpSession session = request.getSession(true);
+				DatabaseConnector myConnector=(DatabaseConnector)httpSession.getAttribute("connector");
+				if(myConnector==null)
+				{
+					myConnector=new DatabaseConnector(httpSession.getServletContext());
+					httpSession.setAttribute("connector", myConnector);
+				}
+				TestingConnectionSource myConnectionSource = myConnector.getConnectionSource();
+				
+				Connection dbConn = myConnectionSource.getDatabaseConnectionNoTimeout();
+				String updateUploadedQuery = "UPDATE `UploadToken` SET `framesAborted` = `framesAborted` + ?, `framesRemaining` = `framesRemaining` - ?, `lastAltered` = CURRENT_TIMESTAMP WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ? AND `UploadToken`.`adminEmail` = ? AND `UploadToken`.`event` = ?";
+				PreparedStatement toUpdate = dbConn.prepareStatement(updateUploadedQuery);
+				
+				toUpdate.setLong(1, remainingSize);
+				toUpdate.setLong(2, remainingSize);
+				toUpdate.setString(3, username);
+				toUpdate.setString(4, token);
+				toUpdate.setString(5, admin);
+				toUpdate.setString(6, event);
+			}
+			catch(Exception e2)
+			{
+				e2.printStackTrace();
+			}
+			
 			HashMap outputMap = new HashMap();
 			outputMap.put("result", "nokay");
 			String toWrite = gson.toJson(outputMap);
@@ -339,7 +454,7 @@ public class UploadDataWebsocket
         }
 		
 		System.out.println(new Date());
-		System.out.println("Done: " + fromJSON.get("totalDone") + "/" + fromJSON.get("totalToDo"));
+		//System.out.println("Done: " + fromJSON.get("totalDone") + "/" + fromJSON.get("totalToDo"));
 		
 		
 		HashMap outputMap = new HashMap();
@@ -366,8 +481,9 @@ public class UploadDataWebsocket
 		*/
 	}
 	
-	public void insertInto(String table, Map fromJSON, Connection dbConn, String username, String eventname, String adminemail) throws Exception
+	public long insertInto(String table, Map fromJSON, Connection dbConn, String username, String eventname, String adminemail) throws Exception
 	{
+		long toReturn = 0;
 		if(fromJSON.containsKey(table) && ((List)fromJSON.get(table)).size() > 0)
 		{
 			List<Map> userList = (List) fromJSON.get(table);
@@ -377,9 +493,27 @@ public class UploadDataWebsocket
 			String headings = "(";
 			String values = "(";
 			boolean first = true;
+			
+			ConcurrentHashMap secureHeadingMap = new ConcurrentHashMap();
+			String columnNamesQuery = "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='openDataCollectionServer' AND `TABLE_NAME`=?";
+			PreparedStatement columnNamesStatement = dbConn.prepareStatement(columnNamesQuery);
+			columnNamesStatement.setString(1, table);
+			ResultSet colNameSet = columnNamesStatement.executeQuery();
+			while(colNameSet.next())
+			{
+				secureHeadingMap.put(colNameSet.getString(1), "");
+			}
+			columnNamesStatement.close();
+			
 			Set<String> masterKeySet = firstUser.keySet();
 			for(String heading : masterKeySet)
 			{
+				if(!secureHeadingMap.containsKey(heading))
+				{
+					System.out.println("No such column in " + table + ": " + heading);
+					masterKeySet.remove(heading);
+					continue;
+				}
 				if(first)
 				{
 					
@@ -425,18 +559,19 @@ public class UploadDataWebsocket
 				if(!entry.get("username").equals(username))
 				{
 					System.out.println("Invalid username: " + entry.get("username") + ", " + username);
-					return;
+					return 0;
 				}
 				if(!entry.get("event").equals(eventname))
 				{
 					System.out.println("Invalid event: " + entry.get("event") + ", " + username);
-					return;
+					return 0;
 				}
 				if(!entry.get("adminEmail").equals(adminemail))
 				{
 					System.out.println("Invalid adminEmail: " + entry.get("adminEmail") + ", " + username);
-					return;
+					return 0;
 				}
+				toReturn++;
 				for(String key : masterKeySet)
 				{
 					//System.out.println(entry.get(key).getClass());
@@ -458,6 +593,7 @@ public class UploadDataWebsocket
 			insertStatement.close();
 			//dbConn.close();
 		}
+		return toReturn;
 	}
 	
 	@OnError
