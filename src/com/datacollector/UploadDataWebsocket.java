@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,8 +39,26 @@ public class UploadDataWebsocket
 	@OnOpen
 	public void start(Session session, EndpointConfig config)
 	{
-		this.wsSession = session;
-		this.httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
+		wsSession = session;
+		Set<Session> curSessions = wsSession.getOpenSessions();
+		Iterator<Session> sessionIter = curSessions.iterator();
+		while(sessionIter.hasNext())
+		{
+			Session curSession = sessionIter.next();
+			if(!curSession.equals(session))
+			{
+				try
+				{
+					curSession.close();
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
 		System.out.println("Got new data upload");
 		session.setMaxTextMessageBufferSize(400826410);
 	}
@@ -175,7 +194,7 @@ public class UploadDataWebsocket
 						HashMap outputMap = new HashMap();
 						outputMap.put("result", "nokay");
 						String toWrite = gson.toJson(outputMap);
-						session.getBasicRemote().sendText(toWrite);
+						session.getBasicRemote().sendText(toWrite); session.close();
 						return;
 					}
 				}
