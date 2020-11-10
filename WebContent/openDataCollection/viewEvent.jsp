@@ -430,7 +430,10 @@ catch(Exception e)
 	<tr>
 	<td>
 	<h4>
-	<a href="jsonExport.json?event=<%=eventName %>&datasources=io,events">JSON Export</a>
+	<a href="logExport.json?event=<%=eventName %>&datasources=io,processes,windows,events">Log JSON Export</a>
+	</h4>
+	<h4>
+	<a href="jsonExport.json?event=<%=eventName %>&datasources=io,processes,windows,events">Category JSON Export</a>
 	</h4>
 	<p>
 	Note that this link can be customized with parameters for various purposes.  "email" and "password" can be passed to log you in as you do the export, which is helpful for uses which do no manage a session.
@@ -441,6 +444,8 @@ catch(Exception e)
 		<b>"datasources"</b> will tell the server which pieces of data you would like.  Possible comma separated values include:
 			<ul>
 				<li><b>io:</b> enabled in default link; includes keyboard and mouse input and associated window information.</li>
+				<li><b>processes:</b> enabled in default link; contains background process information.</li>
+				<li><b>windows:</b> enabled in default link; contains active (foreground) window information.</li>
 				<li><b>events:</b> enabled in default link; contains task completion information.</li>
 				<li><b>screenshots:</b> disabled in default link; has base64 encoded screenshots.</li>
 			</ul>

@@ -87,12 +87,23 @@ public class DataExportJson extends HttpServlet {
 			
 			String toSelect = request.getParameter("datasources");
 			
+			String usersToSelect = request.getParameter("users");
 			
 			//ArrayList dataList = myConnector.getCollectedData(eventName, admin);
 			ConcurrentHashMap headMap = new ConcurrentHashMap();
 			if(toSelect.contains("io"))
 			{
 				ConcurrentHashMap dataMap = myConnector.getCollectedDataHierarchy(eventName, admin);
+				headMap = myConnector.mergeMaps(headMap, dataMap);
+			}
+			if(toSelect.contains("processes"))
+			{
+				ConcurrentHashMap dataMap = myConnector.getProcessDataHierarchy(eventName, admin);
+				headMap = myConnector.mergeMaps(headMap, dataMap);
+			}
+			if(toSelect.contains("windows"))
+			{
+				ConcurrentHashMap dataMap = myConnector.getWindowDataHierarchy(eventName, admin);
 				headMap = myConnector.mergeMaps(headMap, dataMap);
 			}
 			if(toSelect.contains("events"))

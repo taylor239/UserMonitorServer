@@ -46,11 +46,15 @@ public class DatabaseConnector
 			"ORDER BY `overallUser`, `overallSession`, `overallTime`, `overallTimeChanged`, `overallPid`, `overallXid`";
 	private String userQuery = "SELECT * FROM `openDataCollectionServer`.`User` WHERE `event` = ? AND `adminEmail` = ?";
 	
-	private String taskQuery = "SELECT * FROM `openDataCollectionServer`.`Task` INNER JOIN `TaskEvent` ON `Task`.`username` = `TaskEvent`.`username` AND `Task`.`event` = `TaskEvent`.`event` AND `Task`.`adminEmail` = `TaskEvent`.`adminEmail` AND `Task`.`taskName` = `TaskEvent`.`taskName` WHERE `Task`.`event` = ? AND `Task`.`adminEmail` = ? ORDER BY `TaskEvent`.`username`, `TaskEvent`.`eventTime`";
+	private String taskQuery = "SELECT * FROM `openDataCollectionServer`.`Task` LEFT JOIN `TaskEvent` ON `Task`.`username` = `TaskEvent`.`username` AND `Task`.`event` = `TaskEvent`.`event` AND `Task`.`adminEmail` = `TaskEvent`.`adminEmail` AND `Task`.`taskName` = `TaskEvent`.`taskName` WHERE `Task`.`event` = ? AND `Task`.`adminEmail` = ? ORDER BY `TaskEvent`.`username`, `TaskEvent`.`eventTime`";
 	
 	private String imageQuery = "SELECT * FROM `openDataCollectionServer`.`Screenshot` WHERE `username` = ? AND `session` = ? AND `event` = ? AND `adminEmail` = ? ORDER BY abs(UNIX_TIMESTAMP(?) - UNIX_TIMESTAMP(`taken`)) LIMIT 1";
 	
 	private String allImageQuery = "SELECT * FROM `openDataCollectionServer`.`Screenshot` WHERE `event` = ? AND `adminEmail` = ? ORDER BY `taken`";
+	
+	private String allProcessQuery = "SELECT * FROM `Process` LEFT JOIN `ProcessAttributes` ON `Process`.`event` = `ProcessAttributes`.`event` AND `Process`.`adminEmail` = `ProcessAttributes`.`adminEmail` AND `Process`.`username` = `ProcessAttributes`.`username` AND `Process`.`session` = `ProcessAttributes`.`session` AND `Process`.`user` = `ProcessAttributes`.`user` AND `Process`.`pid` = `ProcessAttributes`.`pid` AND `Process`.`start` = `ProcessAttributes`.`start` WHERE `ProcessAttributes`.`event` = ? AND `ProcessAttributes`.`adminEmail` = ? ORDER BY `ProcessAttributes`.`insertTimestamp` ASC";
+	
+	private String allWindowQuery = "SELECT * FROM `Window` LEFT JOIN `WindowDetails`ON `Window`.`event` = `WindowDetails`.`event` AND `Window`.`adminEmail` = `WindowDetails`.`adminEmail` AND `Window`.`username` = `WindowDetails`.`username` AND `Window`.`session` = `WindowDetails`.`session` AND `Window`.`user` = `WindowDetails`.`user` AND `Window`.`pid` = `WindowDetails`.`pid` AND `Window`.`start` = `WindowDetails`.`start` AND `Window`.`xid` = `WindowDetails`.`xid` WHERE `WindowDetails`.`event` = ? AND `WindowDetails`.`adminEmail` = ? ORDER BY `WindowDetails`.`timeChanged` ASC";
 	
 	private TestingConnectionSource mySource;
 	
@@ -657,6 +661,7 @@ public class DatabaseConnector
 				nextRow.put("Task Name", myResults.getString("taskName"));
 				nextRow.put("Completion", myResults.getString("completion"));
 				nextRow.put("Event Time", myResults.getTimestamp("eventTime"));
+				nextRow.put("Index", myResults.getTimestamp("eventTime"));
 				nextRow.put("Event", myResults.getString("event"));
 				
 				if(!myReturn.containsKey(userName))
@@ -723,6 +728,7 @@ public class DatabaseConnector
 				String sessionName = myResults.getString("session");
 				
 				nextRow.put("Taken", myResults.getTimestamp("taken"));
+				nextRow.put("Index", myResults.getTimestamp("taken"));
 				
 				byte[] image = myResults.getBytes("screenshot");
 				String imageEncoded = Base64.getEncoder().encodeToString(image);
@@ -745,6 +751,162 @@ public class DatabaseConnector
 					sessionMap.put("screenshots", new ArrayList());
 				}
 				ArrayList eventList = (ArrayList) sessionMap.get("screenshots");
+				
+				eventList.add(nextRow);
+				//myReturn.add(nextRow);
+			}
+			stmt = myStatement;
+			rset = myResults;
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+            try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
+		
+		return myReturn;
+	}
+	
+	public ConcurrentHashMap getProcessDataHierarchy(String event, String admin)
+	{
+		ConcurrentHashMap myReturn = new ConcurrentHashMap();
+		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
+		Connection myConnector = mySource.getDatabaseConnection();
+		conn = myConnector;
+		try
+		{
+			PreparedStatement myStatement = myConnector.prepareStatement(allProcessQuery);
+			myStatement.setString(1, event);
+			myStatement.setString(2, admin);
+			ResultSet myResults = myStatement.executeQuery();
+			while(myResults.next())
+			{
+				ConcurrentHashMap nextRow = new ConcurrentHashMap();
+				
+				nextRow.put("Username", myResults.getString("username"));
+				String userName = myResults.getString("username");
+				nextRow.put("Session", myResults.getString("session"));
+				String sessionName = myResults.getString("session");
+				
+				nextRow.put("SnapTime", myResults.getTimestamp("insertTimestamp"));
+				nextRow.put("Index", myResults.getTimestamp("insertTimestamp"));
+				
+				nextRow.put("User", myResults.getString("user"));
+				nextRow.put("PID", myResults.getString("pid"));
+				nextRow.put("Start", myResults.getString("start"));
+				nextRow.put("Command", myResults.getString("command"));
+				nextRow.put("CPU", myResults.getString("cpu"));
+				nextRow.put("Mem", myResults.getString("mem"));
+				nextRow.put("VSZ", myResults.getString("vsz"));
+				nextRow.put("RSS", myResults.getString("rss"));
+				nextRow.put("TTY", myResults.getString("tty"));
+				nextRow.put("Stat", myResults.getString("stat"));
+				nextRow.put("Time", myResults.getString("time"));
+				
+				if(!myReturn.containsKey(userName))
+				{
+					myReturn.put(userName, new ConcurrentHashMap());
+				}
+				ConcurrentHashMap userMap = (ConcurrentHashMap) myReturn.get(userName);
+				
+				if(!userMap.containsKey(sessionName))
+				{
+					userMap.put(sessionName, new ConcurrentHashMap());
+				}
+				ConcurrentHashMap sessionMap = (ConcurrentHashMap) userMap.get(sessionName);
+				
+				if(!sessionMap.containsKey("processes"))
+				{
+					sessionMap.put("processes", new ArrayList());
+				}
+				ArrayList eventList = (ArrayList) sessionMap.get("processes");
+				
+				eventList.add(nextRow);
+				//myReturn.add(nextRow);
+			}
+			stmt = myStatement;
+			rset = myResults;
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+            try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
+		
+		return myReturn;
+	}
+	
+	public ConcurrentHashMap getWindowDataHierarchy(String event, String admin)
+	{
+		ConcurrentHashMap myReturn = new ConcurrentHashMap();
+		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
+		Connection myConnector = mySource.getDatabaseConnection();
+		conn = myConnector;
+		try
+		{
+			PreparedStatement myStatement = myConnector.prepareStatement(allWindowQuery);
+			myStatement.setString(1, event);
+			myStatement.setString(2, admin);
+			ResultSet myResults = myStatement.executeQuery();
+			while(myResults.next())
+			{
+				ConcurrentHashMap nextRow = new ConcurrentHashMap();
+				
+				nextRow.put("Username", myResults.getString("username"));
+				String userName = myResults.getString("username");
+				nextRow.put("Session", myResults.getString("session"));
+				String sessionName = myResults.getString("session");
+				
+				nextRow.put("ChangeTime", myResults.getTimestamp("timeChanged"));
+				nextRow.put("Index", myResults.getTimestamp("timeChanged"));
+				
+				nextRow.put("User", myResults.getString("user"));
+				nextRow.put("PID", myResults.getString("pid"));
+				nextRow.put("Start", myResults.getString("start"));
+				nextRow.put("XID", myResults.getString("xid"));
+				nextRow.put("FirstClass", myResults.getString("firstClass"));
+				nextRow.put("X", myResults.getString("x"));
+				nextRow.put("Y", myResults.getString("y"));
+				nextRow.put("Width", myResults.getString("width"));
+				nextRow.put("Height", myResults.getString("height"));
+				nextRow.put("Name", myResults.getString("name"));
+				
+				
+				if(!myReturn.containsKey(userName))
+				{
+					myReturn.put(userName, new ConcurrentHashMap());
+				}
+				ConcurrentHashMap userMap = (ConcurrentHashMap) myReturn.get(userName);
+				
+				if(!userMap.containsKey(sessionName))
+				{
+					userMap.put(sessionName, new ConcurrentHashMap());
+				}
+				ConcurrentHashMap sessionMap = (ConcurrentHashMap) userMap.get(sessionName);
+				
+				if(!sessionMap.containsKey("windows"))
+				{
+					sessionMap.put("windows", new ArrayList());
+				}
+				ArrayList eventList = (ArrayList) sessionMap.get("windows");
 				
 				eventList.add(nextRow);
 				//myReturn.add(nextRow);
@@ -850,6 +1012,7 @@ public class DatabaseConnector
 					nextRow.put("Input Location Y", yLoc);
 					Date inputTime = myResults.getTimestamp("overallTime");
 					nextRow.put("Input Time", inputTime);
+					nextRow.put("Index", inputTime);
 				}
 				else if(myResults.getString("fromInput").equals("keyboard"))
 				{
@@ -861,6 +1024,7 @@ public class DatabaseConnector
 					nextRow.put("Button", type);
 					Date inputTime = myResults.getTimestamp("overallTime");
 					nextRow.put("Input Time", inputTime);
+					nextRow.put("Index", inputTime);
 				}
 				
 				
@@ -1012,6 +1176,7 @@ public class DatabaseConnector
 				nextRow.put("Stat", stat);
 				String time = myResults.getString("time");
 				nextRow.put("Time", time);
+				nextRow.put("Index", time);
 				
 				
 				String xid = myResults.getString("xid");
@@ -1036,6 +1201,7 @@ public class DatabaseConnector
 					nextRow.put("Input Location Y", yLoc);
 					Date inputTime = myResults.getTimestamp("overallTime");
 					nextRow.put("Input Time", inputTime);
+					nextRow.put("Index", inputTime);
 				}
 				else if(myResults.getString("fromInput").equals("keyboard"))
 				{
@@ -1047,6 +1213,7 @@ public class DatabaseConnector
 					nextRow.put("Button", type);
 					Date inputTime = myResults.getTimestamp("overallTime");
 					nextRow.put("Input Time", inputTime);
+					nextRow.put("Index", inputTime);
 				}
 				
 				
