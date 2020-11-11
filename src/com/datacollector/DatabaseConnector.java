@@ -556,7 +556,7 @@ public class DatabaseConnector
         Statement stmt = null;
         ResultSet rset = null;
 		
-		Connection myConnector = mySource.getDatabaseConnection();
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
 		conn = myConnector;
 		try
 		{
@@ -573,6 +573,10 @@ public class DatabaseConnector
 			}
 			stmt = myStatement;
 			rset = myResults;
+			
+			rset.close();
+			stmt.close();
+			conn.close();
 		}
 		catch(Exception e)
 		{
@@ -596,7 +600,7 @@ public class DatabaseConnector
         Statement stmt = null;
         ResultSet rset = null;
 		
-		Connection myConnector = mySource.getDatabaseConnection();
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
 		conn = myConnector;
 		try
 		{
@@ -619,6 +623,10 @@ public class DatabaseConnector
 			}
 			stmt = myStatement;
 			rset = myResults;
+			
+			rset.close();
+			stmt.close();
+			conn.close();
 		}
 		catch(Exception e)
 		{
@@ -642,7 +650,7 @@ public class DatabaseConnector
         Statement stmt = null;
         ResultSet rset = null;
 		
-		Connection myConnector = mySource.getDatabaseConnection();
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
 		conn = myConnector;
 		try
 		{
@@ -687,6 +695,10 @@ public class DatabaseConnector
 			}
 			stmt = myStatement;
 			rset = myResults;
+			
+			rset.close();
+			stmt.close();
+			conn.close();
 		}
 		catch(Exception e)
 		{
@@ -710,7 +722,7 @@ public class DatabaseConnector
         Statement stmt = null;
         ResultSet rset = null;
 		
-		Connection myConnector = mySource.getDatabaseConnection();
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
 		conn = myConnector;
 		try
 		{
@@ -757,6 +769,10 @@ public class DatabaseConnector
 			}
 			stmt = myStatement;
 			rset = myResults;
+			
+			rset.close();
+			stmt.close();
+			conn.close();
 		}
 		catch(Exception e)
 		{
@@ -780,7 +796,7 @@ public class DatabaseConnector
         Statement stmt = null;
         ResultSet rset = null;
 		
-		Connection myConnector = mySource.getDatabaseConnection();
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
 		conn = myConnector;
 		try
 		{
@@ -835,6 +851,10 @@ public class DatabaseConnector
 			}
 			stmt = myStatement;
 			rset = myResults;
+			
+			rset.close();
+			stmt.close();
+			conn.close();
 		}
 		catch(Exception e)
 		{
@@ -858,7 +878,7 @@ public class DatabaseConnector
         Statement stmt = null;
         ResultSet rset = null;
 		
-		Connection myConnector = mySource.getDatabaseConnection();
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
 		conn = myConnector;
 		try
 		{
@@ -883,6 +903,7 @@ public class DatabaseConnector
 				nextRow.put("Start", myResults.getString("start"));
 				nextRow.put("XID", myResults.getString("xid"));
 				nextRow.put("FirstClass", myResults.getString("firstClass"));
+				nextRow.put("SecondClass", myResults.getString("secondClass"));
 				nextRow.put("X", myResults.getString("x"));
 				nextRow.put("Y", myResults.getString("y"));
 				nextRow.put("Width", myResults.getString("width"));
@@ -913,6 +934,10 @@ public class DatabaseConnector
 			}
 			stmt = myStatement;
 			rset = myResults;
+			
+			rset.close();
+			stmt.close();
+			conn.close();
 		}
 		catch(Exception e)
 		{
@@ -936,7 +961,7 @@ public class DatabaseConnector
         Statement stmt = null;
         ResultSet rset = null;
 		
-		Connection myConnector = mySource.getDatabaseConnection();
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
 		conn = myConnector;
 		try
 		{
@@ -1076,6 +1101,10 @@ public class DatabaseConnector
 			}
 			stmt = myStatement;
 			rset = myResults;
+			
+			rset.close();
+			stmt.close();
+			conn.close();
 		}
 		catch(SQLException e)
 		{
@@ -1099,7 +1128,7 @@ public class DatabaseConnector
         Statement stmt = null;
         ResultSet rset = null;
 		
-		Connection myConnector = mySource.getDatabaseConnection();
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
 		conn = myConnector;
 		try
 		{
@@ -1185,9 +1214,9 @@ public class DatabaseConnector
 				String name = myResults.getString("name");
 				nextRow.put("Window Name", name);
 				String firstClass = myResults.getString("firstClass");
-				nextRow.put("Window Class 1", firstClass);
+				nextRow.put("FirstClass", firstClass);
 				String secondClass = myResults.getString("secondClass");
-				nextRow.put("Window Class 2", secondClass);
+				nextRow.put("SecondClass", secondClass);
 				
 				if(myResults.getString("fromInput").equals("mouse"))
 				{
@@ -1265,6 +1294,10 @@ public class DatabaseConnector
 			}
 			stmt = myStatement;
 			rset = myResults;
+			
+			rset.close();
+			stmt.close();
+			conn.close();
 		}
 		catch(SQLException e)
 		{
@@ -1308,6 +1341,10 @@ public class DatabaseConnector
 			}
 			stmt = myStatement;
 			rset = myResults;
+			
+			rset.close();
+			stmt.close();
+			conn.close();
 		}
 		catch(Exception e)
 		{

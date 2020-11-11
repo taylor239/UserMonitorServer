@@ -65,21 +65,37 @@ public class DataExportLog extends HttpServlet {
 				{
 					String password = request.getParameter("password");
 					String loginQuery = "SELECT * FROM `openDataCollectionServer`.`Admin` WHERE `adminEmail` = ? AND `adminPassword` = ?";
+					
+					PreparedStatement outerStmt = null;
+					ResultSet outerSet = null;
+					
 					try
 					{
 						PreparedStatement queryStmt = dbConn.prepareStatement(loginQuery);
+						outerStmt = queryStmt;
 						queryStmt.setString(1, adminEmail);
 						queryStmt.setString(2, password);
 						ResultSet myResults = queryStmt.executeQuery();
+						outerSet = myResults;
 						if(myResults.next())
 						{
 							session.setAttribute("admin", myResults.getString("adminEmail"));
 							session.setAttribute("adminName", myResults.getString("name"));
 						}
+						
+						myResults.close();
+						queryStmt.close();
+						dbConn.close();
 					}
 					catch(Exception e)
 					{
 						e.printStackTrace();
+					}
+					finally
+					{
+						try { if (outerSet != null) outerSet.close(); } catch(Exception e) { }
+			            try { if (outerStmt != null) outerStmt.close(); } catch(Exception e) { }
+			            try { if (dbConn != null) dbConn.close(); } catch(Exception e) { }
 					}
 				}
 			}

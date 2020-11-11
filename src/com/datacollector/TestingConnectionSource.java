@@ -35,6 +35,8 @@ public class TestingConnectionSource implements Runnable
 	static Thread closeThread;
 	static boolean running = true;
 	
+	private static int minTimeout = 60000;
+	
 	//public TestingConnectionSource()
 	//{
 		/*
@@ -175,7 +177,7 @@ public class TestingConnectionSource implements Runnable
         //
         PoolableConnectionFactory poolableConnectionFactory =
             new PoolableConnectionFactory(connectionFactory, null);
-        poolableConnectionFactory.setMaxConnLifetimeMillis(120000);
+        poolableConnectionFactory.setMaxConnLifetimeMillis(minTimeout * 2);
 
         //
         // Now we'll need a ObjectPool that serves as the
@@ -208,7 +210,7 @@ public class TestingConnectionSource implements Runnable
 		{
 			try
 			{
-				Thread.sleep(10000);
+				Thread.sleep(minTimeout);
 				if(toClose != null)
 				{
 					for(Map.Entry<Object,Object> entry : toClose.entrySet())
