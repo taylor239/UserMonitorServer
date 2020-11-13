@@ -7,9 +7,15 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -22,14 +28,14 @@ import com.google.gson.GsonBuilder;
 /**
  * Servlet implementation class DataExportJson
  */
-@WebServlet("/openDataCollection/jsonExport.json")
-public class DataExportJson extends HttpServlet {
+@WebServlet("/openDataCollection/zipExport.zip")
+public class DataExportZip extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
     /**
      * @see HttpServlet#HttpServlet()
      */
-    public DataExportJson() {
+    public DataExportZip() {
         super();
         // TODO Auto-generated constructor stub
     }
@@ -121,8 +127,10 @@ public class DataExportJson extends HttpServlet {
 				//userSelectList.add("%");
 			}
 			
+			
 			//ArrayList dataList = myConnector.getCollectedData(eventName, admin);
 			ConcurrentHashMap headMap = new ConcurrentHashMap();
+			ConcurrentHashMap fileWriteMap = new ConcurrentHashMap();
 			if(toSelect.contains("keystrokes"))
 			{
 				ConcurrentHashMap dataMap = myConnector.getKeystrokesHierarchy(eventName, admin, userSelectList);
@@ -150,8 +158,11 @@ public class DataExportJson extends HttpServlet {
 			}
 			if(toSelect.contains("screenshots"))
 			{
-				ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, false);
+				ConcurrentHashMap screenshotPair = myConnector.getScreenshotsHierarchyBinary(eventName, admin, userSelectList);
+				ConcurrentHashMap screenshotMap = (ConcurrentHashMap) screenshotPair.get("json");
+				ConcurrentHashMap screenshotMapBinary = (ConcurrentHashMap) screenshotPair.get("binary");
 				headMap = myConnector.mergeMaps(headMap, screenshotMap);
+				fileWriteMap = myConnector.mergeMaps(fileWriteMap, screenshotMapBinary);
 			}
 			if(toSelect.contains("screenshotindices"))
 			{
@@ -165,13 +176,49 @@ public class DataExportJson extends HttpServlet {
 			Gson gson = new GsonBuilder().create();
 			String output = gson.toJson(headMap);
 			
+			System.out.println("Zipping");
+			
+			ServletOutputStream out=response.getOutputStream();
+			
+			ZipOutputStream zipOut = new ZipOutputStream(out);
+			
+			ZipEntry jsonFile = new ZipEntry("jsonExport.json");
+			
 			System.out.println("Sending");
 			
-			response.getWriter().append(output);
+			zipOut.putNextEntry(jsonFile);
+			zipOut.write(output.getBytes());
+			zipOut.closeEntry();
+			//response.getWriter().append(output);
+			
+			System.out.println("Adding files");
+			//System.out.println(fileWriteMap);
+			ArrayList filesToAdd = myConnector.toDirMap(fileWriteMap, "");
+			for(int x=0; x<filesToAdd.size(); x++)
+			{
+				//System.out.println(filesToAdd.get(x));
+				ConcurrentHashMap curFile = (ConcurrentHashMap) filesToAdd.get(x);
+				String filePath = (String) curFile.get("filePath");
+				ArrayList filesInPath = (ArrayList) curFile.get("file");
+				for(int y=0; y<filesInPath.size(); y++)
+				{
+					ConcurrentHashMap thisFile = (ConcurrentHashMap) filesInPath.get(y);
+					byte[] toOutput = (byte[]) thisFile.get("Screenshot");
+					String fileName = filePath + "/" + thisFile.get("Index").toString();
+					ZipEntry finalFile = new ZipEntry(fileName);
+					zipOut.putNextEntry(finalFile);
+					zipOut.write(toOutput);
+					zipOut.closeEntry();
+				}
+			}
+			
+			zipOut.close();
+			out.close();
+			System.out.println("Done");
 		}
 		catch(Exception e)
 		{
-			
+			e.printStackTrace();
 		}
 	}
 

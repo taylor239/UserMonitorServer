@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -105,7 +106,22 @@ public class DataExportLog extends HttpServlet {
 			
 			String toSelect = request.getParameter("datasources");
 			
+			ArrayList userSelectList = new ArrayList();
+			
 			String usersToSelect = request.getParameter("users");
+			
+			System.out.println("Exporting: " + toSelect + " for " + usersToSelect);
+			
+			if(usersToSelect != null && !usersToSelect.isEmpty() && !usersToSelect.equals("null"))
+			{
+				String[] userSelectArray = usersToSelect.split(",");
+				Collections.addAll(userSelectList, userSelectArray);
+				System.out.println(userSelectList);
+			}
+			else
+			{
+				//userSelectList.add("%");
+			}
 			
 			ArrayList dataTypes = new ArrayList();
 			
@@ -114,31 +130,43 @@ public class DataExportLog extends HttpServlet {
 			if(toSelect.contains("events"))
 			{
 				dataTypes.add("events");
-				ConcurrentHashMap eventMap = myConnector.getTasksHierarchy(eventName, admin);
+				ConcurrentHashMap eventMap = myConnector.getTasksHierarchy(eventName, admin, userSelectList);
 				headMap = myConnector.mergeMaps(headMap, eventMap);
 			}
 			if(toSelect.contains("windows"))
 			{
 				dataTypes.add("windows");
-				ConcurrentHashMap dataMap = myConnector.getWindowDataHierarchy(eventName, admin);
+				ConcurrentHashMap dataMap = myConnector.getWindowDataHierarchy(eventName, admin, userSelectList);
 				headMap = myConnector.mergeMaps(headMap, dataMap);
 			}
 			if(toSelect.contains("processes"))
 			{
 				dataTypes.add("processes");
-				ConcurrentHashMap dataMap = myConnector.getProcessDataHierarchy(eventName, admin);
+				ConcurrentHashMap dataMap = myConnector.getProcessDataHierarchy(eventName, admin, userSelectList);
 				headMap = myConnector.mergeMaps(headMap, dataMap);
 			}
-			if(toSelect.contains("io"))
+			if(toSelect.contains("keystrokes"))
 			{
-				dataTypes.add("io");
-				ConcurrentHashMap dataMap = myConnector.getCollectedDataHierarchy(eventName, admin);
+				dataTypes.add("keystrokes");
+				ConcurrentHashMap dataMap = myConnector.getKeystrokesHierarchy(eventName, admin, userSelectList);
+				headMap = myConnector.mergeMaps(headMap, dataMap);
+			}
+			if(toSelect.contains("mouse"))
+			{
+				dataTypes.add("mouse");
+				ConcurrentHashMap dataMap = myConnector.getMouseHierarchy(eventName, admin, userSelectList);
 				headMap = myConnector.mergeMaps(headMap, dataMap);
 			}
 			if(toSelect.contains("screenshots"))
 			{
 				dataTypes.add("screenshots");
-				ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin);
+				ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, false);
+				headMap = myConnector.mergeMaps(headMap, screenshotMap);
+			}
+			if(toSelect.contains("screenshotindices"))
+			{
+				dataTypes.add("screenshots");
+				ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, true);
 				headMap = myConnector.mergeMaps(headMap, screenshotMap);
 			}
 			headMap = myConnector.normalizeAllTime(headMap);
@@ -179,10 +207,16 @@ public class DataExportLog extends HttpServlet {
 				}
 			}
 			
+			System.out.println("Encoding to JSON");
+			
 			Gson gson = new GsonBuilder().create();
 			String output = gson.toJson(finalMap);
+			
+			System.out.println("Sending");
+			
 			response.getWriter().append(output);
 			
+			System.out.println("Done");
 			//Gson gson = new GsonBuilder().create();
 			//String output = gson.toJson(headMap);
 			//response.getWriter().append(output);

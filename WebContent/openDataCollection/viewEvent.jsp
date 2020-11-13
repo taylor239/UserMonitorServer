@@ -430,24 +430,37 @@ catch(Exception e)
 	<tr>
 	<td>
 	<h4>
-	<a href="logExport.json?event=<%=eventName %>&datasources=io,processes,windows,events">Log JSON Export</a>
-	</h4>
-	<h4>
-	<a href="jsonExport.json?event=<%=eventName %>&datasources=io,processes,windows,events">Category JSON Export</a>
+	<a href="logExport.json?event=<%=eventName %>&datasources=keystrokes,mouse,processes,windows,events">Log JSON Export</a>
 	</h4>
 	<p>
-	Note that this link can be customized with parameters for various purposes.  "email" and "password" can be passed to log you in as you do the export, which is helpful for uses which do no manage a session.
+	A JSON export structured so that each users' sessions have a single, merged timeline with all of the data categories in a single, time ordered array.
+	</p>
+	<h4>
+	<a href="jsonExport.json?event=<%=eventName %>&datasources=keystrokes,mouse,processes,windows,events">Category JSON Export</a>
+	</h4>
+	<p>
+	A JSON export structured so that each users' sessions have separate arrays for each data type.
+	</p>
+	<h4>
+	<a href="zipExport.zip?event=<%=eventName %>&datasources=keystrokes,mouse,processes,windows,events,screenshots">Zip Export</a>
+	</h4>
+	<p>
+	A zip version of the categorical export which, additionally, has image files and relative paths to them in the json for screenshots if "screenshots" is specified.
+	</p>
+	<p>
+	Note that these links can be customized with parameters for various purposes.  "email" and "password" can be passed to log you in as you do the export, which is helpful for uses which do no manage a session.
 	Additionally, different parameters can be used to filter and limit the data set, allowing for smaller data size.  Those parameters are as follows:
 	</p>
 	<ul>
 		<li>
 		<b>"datasources"</b> will tell the server which pieces of data you would like.  Possible comma separated values include:
 			<ul>
-				<li><b>io:</b> enabled in default link; includes keyboard and mouse input and associated window information.</li>
+				<li><b>keystrokes:</b> enabled in default link; includes keyboard input and associated window information.</li>
+				<li><b>mouse:</b> enabled in default link; includes mouse input and associated window information.</li>
 				<li><b>processes:</b> enabled in default link; contains background process information.</li>
 				<li><b>windows:</b> enabled in default link; contains active (foreground) window information.</li>
 				<li><b>events:</b> enabled in default link; contains task completion information.</li>
-				<li><b>screenshots:</b> disabled in default link; has base64 encoded screenshots.</li>
+				<li><b>screenshots:</b> disabled in default link; has base64 encoded screenshots.  <b>screenshotindices</b> can also be specified which includes the index data but not the actual encoded image.</li>
 			</ul>
 		</li>
 		<li>
