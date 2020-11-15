@@ -737,11 +737,13 @@ public class DatabaseConnector
 				String userName = myResults.getString("username");
 				//nextRow.put("Session", myResults.getString("session"));
 				String sessionName = myResults.getString("session");
-				nextRow.put("Task Name", myResults.getString("taskName"));
+				nextRow.put("TaskName", myResults.getString("taskName"));
 				nextRow.put("Completion", myResults.getString("completion"));
-				nextRow.put("Event Time", myResults.getTimestamp("eventTime"));
+				nextRow.put("EventTime", myResults.getTimestamp("eventTime"));
 				nextRow.put("Index", myResults.getTimestamp("eventTime"));
-				nextRow.put("Event", myResults.getString("event"));
+				//nextRow.put("Event", myResults.getString("event"));
+				
+				nextRow.put("Description", myResults.getString("eventDescription"));
 				
 				if(!myReturn.containsKey(userName))
 				{
