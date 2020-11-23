@@ -171,6 +171,8 @@ public class DataExportZip extends HttpServlet {
 			}
 			headMap = myConnector.normalizeAllTime(headMap);
 			
+			
+			
 			System.out.println("Encoding to JSON");
 			
 			Gson gson = new GsonBuilder().create();

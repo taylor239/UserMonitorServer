@@ -1059,7 +1059,10 @@ public class DatabaseConnector
 				nextRow.put("Stat", myResults.getString("stat"));
 				nextRow.put("Time", myResults.getString("time"));
 				
-				nextRow.put("Arguments", myResults.getString("arguments"));
+				if(myResults.getObject("arguments") != null)
+				{
+					nextRow.put("Arguments", myResults.getString("arguments"));
+				}
 				
 				if(!myReturn.containsKey(userName))
 				{

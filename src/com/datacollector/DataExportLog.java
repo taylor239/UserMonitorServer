@@ -10,8 +10,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -24,7 +27,7 @@ import com.google.gson.GsonBuilder;
 /**
  * Servlet implementation class DataExportJson
  */
-@WebServlet("/openDataCollection/logExport.json")
+@WebServlet(name="LogExport", urlPatterns= {"/openDataCollection/logExport.json", "/openDataCollection/logExport.zip"})
 public class DataExportLog extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
@@ -39,7 +42,8 @@ public class DataExportLog extends HttpServlet {
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+	{
 		try
 		{
 			Class.forName("com.mysql.jdbc.Driver");
@@ -106,9 +110,17 @@ public class DataExportLog extends HttpServlet {
 			
 			String toSelect = request.getParameter("datasources");
 			
+			String normalize = request.getParameter("normalize");
+			
+			//boolean zip = request.getParameter("zip") != null && request.getParameter("zip").equals("true");
+			//boolean zip = false;
+			boolean zip = request.getRequestURI().contains(".zip");
+			
 			ArrayList userSelectList = new ArrayList();
 			
 			String usersToSelect = request.getParameter("users");
+			
+			ConcurrentHashMap fileWriteMap = new ConcurrentHashMap();
 			
 			System.out.println("Exporting: " + toSelect + " for " + usersToSelect);
 			
@@ -159,9 +171,21 @@ public class DataExportLog extends HttpServlet {
 			}
 			if(toSelect.contains("screenshots"))
 			{
-				dataTypes.add("screenshots");
-				ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, false);
-				headMap = myConnector.mergeMaps(headMap, screenshotMap);
+				if(zip)
+				{
+					dataTypes.add("screenshots");
+					ConcurrentHashMap screenshotPair = myConnector.getScreenshotsHierarchyBinary(eventName, admin, userSelectList);
+					ConcurrentHashMap screenshotMap = (ConcurrentHashMap) screenshotPair.get("json");
+					ConcurrentHashMap screenshotMapBinary = (ConcurrentHashMap) screenshotPair.get("binary");
+					headMap = myConnector.mergeMaps(headMap, screenshotMap);
+					fileWriteMap = myConnector.mergeMaps(fileWriteMap, screenshotMapBinary);
+				}
+				else
+				{
+					dataTypes.add("screenshots");
+					ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, false);
+					headMap = myConnector.mergeMaps(headMap, screenshotMap);
+				}
 			}
 			if(toSelect.contains("screenshotindices"))
 			{
@@ -174,47 +198,132 @@ public class DataExportLog extends HttpServlet {
 			//System.out.println("Exporting " + headMap.size());
 			//System.out.println(dataTypes);
 			
-			HashMap finalMap = new HashMap();
+			ConcurrentHashMap finalMap = new ConcurrentHashMap();
+			ArrayList finalList = new ArrayList();
 			
-			Iterator userIterator = headMap.entrySet().iterator();
-			while(userIterator.hasNext())
+			if(normalize != null && !normalize.equals("none"))
 			{
-				Entry userEntry = (Entry) userIterator.next();
-				String curUser = (String) userEntry.getKey();
-				//System.out.println("User: " + curUser);
-				//System.out.println(userEntry.getValue().getClass());
-				ConcurrentHashMap sessionMap = (ConcurrentHashMap) userEntry.getValue();
-				//System.out.println(sessionMap.size());
-				Iterator sessionIterator = (Iterator) sessionMap.entrySet().iterator();
-				while(sessionIterator.hasNext())
+				System.out.println("Normalizing data");
+				ArrayList userList = new ArrayList();
+				Iterator userIterator = headMap.entrySet().iterator();
+				while(userIterator.hasNext())
 				{
-					Entry sessionEntry = (Entry) sessionIterator.next();
-					String curSession = (String) sessionEntry.getKey();
-					//System.out.println("Sess: " + curSession);
-					//System.out.println(sessionEntry.getValue().getClass());
-					ConcurrentHashMap dataMap = (ConcurrentHashMap) sessionEntry.getValue();
-					ArrayList timelineList = toTimeline(dataMap, dataTypes);
-					
-					HashMap finalUserMap = new HashMap();
-					if(finalMap.containsKey(curUser))
+					Entry userEntry = (Entry) userIterator.next();
+					String curUser = (String) userEntry.getKey();
+					userList.add(curUser);
+					ArrayList sessionList = new ArrayList();
+					//System.out.println("User: " + curUser);
+					//System.out.println(userEntry.getValue().getClass());
+					ConcurrentHashMap sessionMap = (ConcurrentHashMap) userEntry.getValue();
+					//System.out.println(sessionMap.size());
+					Iterator sessionIterator = (Iterator) sessionMap.entrySet().iterator();
+					while(sessionIterator.hasNext())
 					{
-						finalUserMap = (HashMap) finalMap.get(curUser);
+						Entry sessionEntry = (Entry) sessionIterator.next();
+						String curSession = (String) sessionEntry.getKey();
+						sessionList.add(curSession);
+						//System.out.println("Sess: " + curSession);
+						//System.out.println(sessionEntry.getValue().getClass());
+						ConcurrentHashMap dataMap = (ConcurrentHashMap) sessionEntry.getValue();
+						ArrayList timelineList = toTimeline(dataMap, dataTypes, "DataType");
+						
+						ConcurrentHashMap finalUserMap = new ConcurrentHashMap();
+						if(finalMap.containsKey(curUser))
+						{
+							finalUserMap = (ConcurrentHashMap) finalMap.get(curUser);
+						}
+						
+						finalUserMap.put(curSession, timelineList);
+						
+						finalMap.put(curUser, finalUserMap);
 					}
-					
-					finalUserMap.put(curSession, timelineList);
-					
-					finalMap.put(curUser, finalUserMap);
+					if(normalize.equals("session") || normalize.equals("user"))
+					{
+						System.out.println("Normalizing session");
+						ConcurrentHashMap finalUserMap = new ConcurrentHashMap();
+						if(finalMap.containsKey(curUser))
+						{
+							finalUserMap = (ConcurrentHashMap) finalMap.get(curUser);
+						}
+						ArrayList timelineList = toTimeline(finalUserMap, sessionList, "Session");
+						finalMap.put(curUser, timelineList);
+					}
 				}
+				if(normalize.equals("user"))
+				{
+					System.out.println("Normalizing user");
+					finalList = toTimeline(finalMap, userList, "User");
+				}
+				
+			}
+			else
+			{
+				finalMap = headMap;
 			}
 			
 			System.out.println("Encoding to JSON");
 			
 			Gson gson = new GsonBuilder().create();
-			String output = gson.toJson(finalMap);
+			String output = "";
+			if(normalize.equals("user"))
+			{
+				output = gson.toJson(finalList);
+			}
+			else
+			{
+				output = gson.toJson(finalMap);
+			}
 			
-			System.out.println("Sending");
+			if(zip)
+			{
+				System.out.println("Zipping");
+				
+				ServletOutputStream out=response.getOutputStream();
+				
+				ZipOutputStream zipOut = new ZipOutputStream(out);
+				
+				ZipEntry jsonFile = new ZipEntry("jsonExport.json");
+				
+				System.out.println("Sending");
+				
+				zipOut.putNextEntry(jsonFile);
+				zipOut.write(output.getBytes());
+				zipOut.closeEntry();
+				//response.getWriter().append(output);
+				
+				System.out.println("Adding files");
+				//System.out.println(fileWriteMap);
+				ArrayList filesToAdd = myConnector.toDirMap(fileWriteMap, "");
+				for(int x=0; x<filesToAdd.size(); x++)
+				{
+					//System.out.println(filesToAdd.get(x));
+					ConcurrentHashMap curFile = (ConcurrentHashMap) filesToAdd.get(x);
+					String filePath = (String) curFile.get("filePath");
+					ArrayList filesInPath = (ArrayList) curFile.get("file");
+					for(int y=0; y<filesInPath.size(); y++)
+					{
+						ConcurrentHashMap thisFile = (ConcurrentHashMap) filesInPath.get(y);
+						byte[] toOutput = (byte[]) thisFile.get("Screenshot");
+						String fileName = filePath + "/" + thisFile.get("Index").toString();
+						ZipEntry finalFile = new ZipEntry(fileName);
+						zipOut.putNextEntry(finalFile);
+						zipOut.write(toOutput);
+						zipOut.closeEntry();
+					}
+				}
+				
+				zipOut.close();
+				out.close();
+			}
+			else
+			{
+				System.out.println("Sending");
+				
+				response.getWriter().append(output);
+				response.getWriter().close();
+			}
 			
-			response.getWriter().append(output);
+			
 			
 			System.out.println("Done");
 			//Gson gson = new GsonBuilder().create();
@@ -227,7 +336,7 @@ public class DataExportLog extends HttpServlet {
 		}
 	}
 	
-	public ArrayList toTimeline(ConcurrentHashMap dataMap, ArrayList dataTypes)
+	public ArrayList toTimeline(ConcurrentHashMap dataMap, ArrayList dataTypes, String dataLabel)
 	{
 		//System.out.println(dataMap);
 		//System.out.println(dataTypes);
@@ -274,7 +383,7 @@ public class DataExportLog extends HttpServlet {
 			initList = (ArrayList) dataMap.get(dataTypes.get(curSource));
 			curMap = (ConcurrentHashMap) initList.get(0);
 			initList.remove(0);
-			curMap.put("DataType", dataTypes.get(curSource));
+			curMap.put(dataLabel, dataTypes.get(curSource));
 			myReturn.add(curMap);
 			
 			if(initList.isEmpty())

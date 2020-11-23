@@ -430,28 +430,31 @@ catch(Exception e)
 	<tr>
 	<td>
 	<h4>
-	<a href="logExport.json?event=<%=eventName %>&datasources=keystrokes,mouse,processes,windows,events">Log JSON Export</a>
+	<a href="logExport.json?event=<%=eventName %>&datasources=keystrokes,mouse,processes,windows,events&normalize=none">Log JSON Export</a>
 	</h4>
 	<p>
-	A JSON export structured so that each users' sessions have a single, merged timeline with all of the data categories in a single, time ordered array.
+	A JSON export of the data, structured according to the "normalize" argument as described below.
 	</p>
 	<h4>
-	<a href="jsonExport.json?event=<%=eventName %>&datasources=keystrokes,mouse,processes,windows,events">Category JSON Export</a>
+	<a href="logExport.zip?event=<%=eventName %>&datasources=keystrokes,mouse,processes,windows,events,screenshots&normalize=none">Zip Export</a>
 	</h4>
 	<p>
-	A JSON export structured so that each users' sessions have separate arrays for each data type.
-	</p>
-	<h4>
-	<a href="zipExport.zip?event=<%=eventName %>&datasources=keystrokes,mouse,processes,windows,events,screenshots">Zip Export</a>
-	</h4>
-	<p>
-	A zip version of the categorical export which, additionally, has image files and relative paths to them in the json for screenshots if "screenshots" is specified.
+	A zip version of the export which, additionally, has image files and relative paths to them in the json for screenshots if "screenshots" is specified.
 	</p>
 	<p>
 	Note that these links can be customized with parameters for various purposes.  "email" and "password" can be passed to log you in as you do the export, which is helpful for uses which do no manage a session.
 	Additionally, different parameters can be used to filter and limit the data set, allowing for smaller data size.  Those parameters are as follows:
 	</p>
 	<ul>
+		<li>
+		<b>"normalize"</b> determines the format of the data export.
+			<ul>
+			<li><b>none</b> categorizes the data first based on the user, second based on the user session, and third based on data type.  The data within a single type is sorted according to its index.</li>
+			<li><b>data</b></li> merges all of the data categories in <b>none</b>, sorted according to time.
+			<li><b>session</b> merges all sessions in <b>data</b>, sorted according to time.</li>
+			<li><b>user</b> merges all users in <b>session</b>, sorted according to time.</li>
+			</ul>
+		</li>
 		<li>
 		<b>"datasources"</b> will tell the server which pieces of data you would like.  Possible comma separated values include:
 			<ul>
