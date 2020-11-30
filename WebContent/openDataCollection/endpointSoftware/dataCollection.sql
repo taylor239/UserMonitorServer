@@ -49,7 +49,7 @@ CREATE TABLE `User` (
   `adminEmail` varchar(100) NOT NULL DEFAULT 'cgtboy1988@yahoo.com',
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
-  `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `insertTimestamp` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   PRIMARY KEY (`event`, `username`,`session`,`adminEmail`) USING BTREE,
   CONSTRAINT `User_ibfk_1` FOREIGN KEY (`event`, `adminEmail`) REFERENCES `Event` (`event`, `adminEmail`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -71,11 +71,11 @@ CREATE TABLE `KeyboardInput` (
   `pid` varchar(10) NOT NULL,
   `start` varchar(10) NOT NULL,
   `xid` varchar(10) NOT NULL,
-  `timeChanged` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `timeChanged` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   `button` varchar(10) NOT NULL,
   `type` varchar(10) NOT NULL,
-  `inputTime` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `inputTime` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
+  `insertTimestamp` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   PRIMARY KEY (`event`, `username`,`session`,`user`,`pid`,`start`,`xid`,`timeChanged`,`inputTime`,`type`,`adminEmail`) USING BTREE,
   CONSTRAINT `KeyboardInput_ibfk_1` FOREIGN KEY (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) REFERENCES `WindowDetails` (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -89,7 +89,7 @@ DROP TABLE IF EXISTS `LastTransfer`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `LastTransfer` (
-  `lastTransfer` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  `lastTransfer` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3) ON UPDATE UTC_TIMESTAMP(3),
   PRIMARY KEY (`lastTransfer`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -110,12 +110,12 @@ CREATE TABLE `MouseInput` (
   `pid` varchar(10) NOT NULL,
   `start` varchar(10) NOT NULL,
   `xid` varchar(10) NOT NULL,
-  `timeChanged` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `timeChanged` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   `type` varchar(10) NOT NULL,
   `xLoc` int(11) NOT NULL,
   `yLoc` int(11) NOT NULL,
-  `inputTime` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `inputTime` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
+  `insertTimestamp` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   PRIMARY KEY (`event`, `username`,`session`,`user`,`pid`,`start`,`xid`,`timeChanged`,`inputTime`,`adminEmail`) USING BTREE,
   CONSTRAINT `MouseInput_ibfk_1` FOREIGN KEY (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) REFERENCES `WindowDetails` (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`, `xid`, `timeChanged`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -137,7 +137,7 @@ CREATE TABLE `Process` (
   `pid` varchar(10) NOT NULL,
   `start` varchar(10) NOT NULL,
   `command` text NOT NULL,
-  `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `insertTimestamp` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   PRIMARY KEY (`event`, `username`,`session`,`user`,`pid`,`start`,`adminEmail`) USING BTREE,
   CONSTRAINT `Process_ibfk_1` FOREIGN KEY (`event`, `adminEmail`, `username`, `session`) REFERENCES `User` (`event`, `adminEmail`, `username`, `session`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -160,7 +160,7 @@ CREATE TABLE `ProcessArgs` (
   `start` varchar(10) NOT NULL,
   `numbered` int(11) NOT NULL,
   `arg` text NOT NULL,
-  `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `insertTimestamp` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   PRIMARY KEY (`event`, `username`,`session`,`user`,`pid`,`start`,`numbered`,`adminEmail`) USING BTREE,
   CONSTRAINT `ProcessArgs_ibfk_1` FOREIGN KEY (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`) REFERENCES `Process` (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -188,8 +188,8 @@ CREATE TABLE `ProcessAttributes` (
   `tty` varchar(10) NOT NULL,
   `stat` varchar(10) NOT NULL,
   `time` varchar(10) NOT NULL,
-  `timestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `timestamp` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
+  `insertTimestamp` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   PRIMARY KEY (`event`, `username`,`session`,`user`,`pid`,`start`,`timestamp`,`adminEmail`) USING BTREE,
   CONSTRAINT `ProcessAttributes_ibfk_1` FOREIGN KEY (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`) REFERENCES `Process` (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -207,9 +207,9 @@ CREATE TABLE `Screenshot` (
   `adminEmail` varchar(100) NOT NULL DEFAULT 'cgtboy1988@yahoo.com',
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
-  `taken` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `taken` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   `screenshot` longblob NOT NULL,
-  `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `insertTimestamp` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   PRIMARY KEY (`event`, `username`,`session`,`taken`,`adminEmail`) USING BTREE,
   CONSTRAINT `Screenshot_ibfk_1` FOREIGN KEY (`event`, `adminEmail`, `username`, `session`) REFERENCES `User` (`event`, `adminEmail`, `username`, `session`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -229,8 +229,8 @@ CREATE TABLE `Task` (
   `session` varchar(50) NOT NULL,
   `taskName` varchar(50) NOT NULL,
   `completion` double NOT NULL,
-  `startTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-  `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `startTimestamp` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3) ON UPDATE UTC_TIMESTAMP(3),
+  `insertTimestamp` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   PRIMARY KEY (`event`, `username`,`session`,`taskName`,`startTimestamp`,`adminEmail`) USING BTREE,
   CONSTRAINT `Task_ibfk_1` FOREIGN KEY (`event`, `adminEmail`, `username`, `session`) REFERENCES `User` (`event`, `adminEmail`, `username`, `session`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -249,10 +249,10 @@ CREATE TABLE `TaskEvent` (
   `username` varchar(50) NOT NULL,
   `session` varchar(50) NOT NULL,
   `taskName` varchar(50) NOT NULL,
-  `eventTime` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `eventTime` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   `eventDescription` varchar(20) NOT NULL,
   `startTimestamp` timestamp(3) NOT NULL DEFAULT '1970-01-01 07:00:01.000',
-  `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `insertTimestamp` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   PRIMARY KEY (`event`, `username`,`session`,`taskName`,`eventTime`,`startTimestamp`,`adminEmail`) USING BTREE,
   KEY `event` (`event`, `adminEmail`,`username`,`session`,`taskName`,`startTimestamp`),
   CONSTRAINT `TaskEvent_ibfk_1` FOREIGN KEY (`event`, `adminEmail`, `username`, `session`, `taskName`, `startTimestamp`) REFERENCES `Task` (`event`, `adminEmail`, `username`, `session`, `taskName`, `startTimestamp`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -274,7 +274,7 @@ CREATE TABLE `UploadToken` (
   `framesUploaded` int(11) NOT NULL DEFAULT '0',
   `framesRemaining` int(11) NOT NULL DEFAULT '0',
   `active` tinyint(4) NOT NULL DEFAULT '1',
-  `lastAltered` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `lastAltered` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   `continuous` tinyint(4) NOT NULL DEFAULT '0',
   PRIMARY KEY (`event`, `username`,`token`,`adminEmail`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -298,7 +298,7 @@ CREATE TABLE `Window` (
   `xid` varchar(10) NOT NULL,
   `firstClass` varchar(20) NOT NULL,
   `secondClass` varchar(20) NOT NULL,
-  `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `insertTimestamp` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   PRIMARY KEY (`event`, `username`,`session`,`user`,`pid`,`start`,`xid`,`adminEmail`) USING BTREE,
   CONSTRAINT `Window_ibfk_1` FOREIGN KEY (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`) REFERENCES `Process` (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -325,8 +325,8 @@ CREATE TABLE `WindowDetails` (
   `width` int(11) NOT NULL,
   `height` int(11) NOT NULL,
   `name` text NOT NULL,
-  `timeChanged` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  `insertTimestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `timeChanged` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
+  `insertTimestamp` timestamp(3) NOT NULL DEFAULT UTC_TIMESTAMP(3),
   PRIMARY KEY (`event`, `username`,`session`,`user`,`pid`,`start`,`xid`,`timeChanged`,`adminEmail`) USING BTREE,
   CONSTRAINT `WindowDetails_ibfk_1` FOREIGN KEY (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`, `xid`) REFERENCES `Window` (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`, `xid`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

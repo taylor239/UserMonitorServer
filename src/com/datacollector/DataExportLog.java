@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -120,6 +121,8 @@ public class DataExportLog extends HttpServlet {
 			
 			String usersToSelect = request.getParameter("users");
 			
+			boolean toFix = request.getParameter("fix") != null && request.getParameter("fix").equals("true");
+			
 			ConcurrentHashMap fileWriteMap = new ConcurrentHashMap();
 			
 			System.out.println("Exporting: " + toSelect + " for " + usersToSelect);
@@ -193,7 +196,16 @@ public class DataExportLog extends HttpServlet {
 				ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, true);
 				headMap = myConnector.mergeMaps(headMap, screenshotMap);
 			}
+			
+			if(toFix)
+			{
+				//System.out.println("Trying to fix timestamps");
+				//headMap = fixTime(headMap);
+			}
+			//System.out.println("Removing debug data");
+			//headMap = deInsert(headMap);
 			headMap = myConnector.normalizeAllTime(headMap);
+			
 			
 			//System.out.println("Exporting " + headMap.size());
 			//System.out.println(dataTypes);
@@ -336,7 +348,131 @@ public class DataExportLog extends HttpServlet {
 		}
 	}
 	
-	public ArrayList toTimeline(ConcurrentHashMap dataMap, ArrayList dataTypes, String dataLabel)
+	private ConcurrentHashMap fixTime(ConcurrentHashMap toFix)
+	{
+		Iterator userIterator = toFix.entrySet().iterator();
+		while(userIterator.hasNext())
+		{
+			Entry userEntry = (Entry) userIterator.next();
+			String curUser = (String) userEntry.getKey();
+			//System.out.println("User: " + curUser);
+			//System.out.println(userEntry.getValue().getClass());
+			ConcurrentHashMap sessionMap = (ConcurrentHashMap) userEntry.getValue();
+			//System.out.println(sessionMap.size());
+			Iterator sessionIterator = (Iterator) sessionMap.entrySet().iterator();
+			while(sessionIterator.hasNext())
+			{
+				Entry sessionEntry = (Entry) sessionIterator.next();
+				String curSession = (String) sessionEntry.getKey();
+				ConcurrentHashMap dataMap = (ConcurrentHashMap) sessionEntry.getValue();
+				long diff = 0;
+				long insertDiff = 0;
+				
+				if(dataMap.containsKey("events"))
+				{
+					ArrayList eventList = (ArrayList) dataMap.get("events");
+					if(!eventList.isEmpty())
+					{
+						ConcurrentHashMap firstRow = (ConcurrentHashMap) eventList.get(0);
+						Timestamp recordedTimeInit = (Timestamp) firstRow.get("EventTime");
+						Timestamp startTime = (Timestamp) firstRow.get("StartTime");
+						Timestamp insertTime = (Timestamp) firstRow.get("InsertTime");
+						diff = startTime.getTime() - recordedTimeInit.getTime();
+						insertDiff = startTime.getTime() - insertTime.getTime();
+						if(diff > 5000)
+						{
+							for(int x=0; x<eventList.size(); x++)
+							{
+								ConcurrentHashMap curRow = (ConcurrentHashMap) eventList.get(x);
+								Timestamp recordedTime = (Timestamp) curRow.get("EventTime");
+								if(recordedTime.getTime() == 0)
+								{
+									recordedTime = (Timestamp) curRow.get("InsertTime");
+									recordedTime = new Timestamp(recordedTime.getTime() + insertDiff);
+									curRow.put("EventTime", recordedTime);
+									curRow.put("Index", recordedTime);
+								}
+								else
+								{
+									recordedTime = new Timestamp(recordedTime.getTime() + diff);
+									curRow.put("EventTime", recordedTime);
+									curRow.put("Index", recordedTime);
+								}
+							}
+						}
+						//else
+						//{
+						//	recordedTimeInit = (Timestamp) firstRow.get("InsertTime");
+						//	startTime = (Timestamp) firstRow.get("StartTime");
+						//	diff = startTime.getTime() - recordedTimeInit.getTime();
+						//}
+					}
+					
+				}
+				if(dataMap.containsKey("processes"))
+				{
+					ArrayList eventList = (ArrayList) dataMap.get("processes");
+					for(int x=0; x<eventList.size(); x++)
+					{
+						ConcurrentHashMap curRow = (ConcurrentHashMap) eventList.get(x);
+						
+						Timestamp recordedTime = (Timestamp) curRow.get("InsertTime");
+						Timestamp indexTime = (Timestamp) curRow.get("Index");
+						if(indexTime.getTime() == 0)
+						{
+							recordedTime = new Timestamp(recordedTime.getTime() + insertDiff);
+							curRow.put("Index", recordedTime);
+							curRow.put("SnapTime", recordedTime);
+						}
+						
+					}
+					
+				}
+			}
+		}
+		
+		return toFix;
+	}
+	
+	private ConcurrentHashMap deInsert(ConcurrentHashMap toFix)
+	{
+		Iterator userIterator = toFix.entrySet().iterator();
+		while(userIterator.hasNext())
+		{
+			Entry userEntry = (Entry) userIterator.next();
+			String curUser = (String) userEntry.getKey();
+			//System.out.println("User: " + curUser);
+			//System.out.println(userEntry.getValue().getClass());
+			ConcurrentHashMap sessionMap = (ConcurrentHashMap) userEntry.getValue();
+			//System.out.println(sessionMap.size());
+			Iterator sessionIterator = (Iterator) sessionMap.entrySet().iterator();
+			while(sessionIterator.hasNext())
+			{
+				Entry sessionEntry = (Entry) sessionIterator.next();
+				String curSession = (String) sessionEntry.getKey();
+				ConcurrentHashMap dataMap = (ConcurrentHashMap) sessionEntry.getValue();
+				
+				Iterator dataIterator = (Iterator) dataMap.entrySet().iterator();
+				while(dataIterator.hasNext())
+				{
+					Entry dataEntry = (Entry) dataIterator.next();
+					ArrayList curDataList = (ArrayList) dataEntry.getValue();
+					for(int x=0; x<curDataList.size(); x++)
+					{
+						ConcurrentHashMap curRow = (ConcurrentHashMap) curDataList.get(x);
+						if(curRow.containsKey("InsertTime"))
+						{
+							curRow.remove("InsertTime");
+						}
+					}
+				}
+			}
+		}
+		
+		return toFix;
+	}
+	
+	private ArrayList toTimeline(ConcurrentHashMap dataMap, ArrayList dataTypes, String dataLabel)
 	{
 		//System.out.println(dataMap);
 		//System.out.println(dataTypes);
