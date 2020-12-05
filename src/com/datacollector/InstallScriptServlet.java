@@ -235,6 +235,7 @@ public class InstallScriptServlet extends HttpServlet {
 			+ "\nsudo apt-get -y install default-jre" 
 			//+ "\nsudo apt-get -y install mariadb-server" 
 			+ "\nsudo apt-get -y install mysql-server" 
+			+ "\nsudo apt-get -y install mariadb-server" 
 			+ "\nsudo apt-get -y install tomcat8"
 			+ "\nsudo apt-get -y install tomcat9" 
 			+ "\n\nsudo service mysql start"
