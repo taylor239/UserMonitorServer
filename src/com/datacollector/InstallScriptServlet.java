@@ -240,6 +240,7 @@ public class InstallScriptServlet extends HttpServlet {
 			+ "\nsudo apt-get -y install tomcat9" 
 			+ "\n\nsudo service mysql start"
 			
+			+ "\nsudo update-rc.d mysql enable"
 			//+ "\n\nsudo update-rc.d mysql defaults"
 			//+ "\n\nsudo rm /etc/init/mysql.override"
 			//+ "\n\nsudo /sbin/chkconfig mysqld on"
@@ -271,7 +272,7 @@ public class InstallScriptServlet extends HttpServlet {
 			//+ "\nservice mysql start" 
 			//+ "\nservice tomcat8 start"
 			//+ "\nservice tomcat9 start"
-			//+ "\nservice mysql start"
+			+ "\nservice mysql start"
 			+ "\nwhile true;" 
 			+ "\ndo" 
 			+ "\npkill -f \"/usr/bin/java -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar\"" 
