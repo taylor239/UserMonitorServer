@@ -52,7 +52,7 @@ public class InstallScriptServlet extends HttpServlet {
 		int screenshotTime = 120000;
 		if(curDevice.equals("debvm"))
 		{
-			screenshotTime = 60000;
+			screenshotTime = 15000;
 		}
 		else if(curDevice.equals("debrpi"))
 		{
