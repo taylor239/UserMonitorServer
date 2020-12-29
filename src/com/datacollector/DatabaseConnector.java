@@ -798,7 +798,7 @@ public class DatabaseConnector
 		return myReturn;
 	}
 	
-	public ConcurrentHashMap getScreenshotsHierarchy(String event, String admin, ArrayList usersToSelect, boolean onlyIndex)
+	public ConcurrentHashMap getScreenshotsHierarchy(String event, String admin, ArrayList usersToSelect, boolean onlyIndex, boolean base64)
 	{
 		ConcurrentHashMap myReturn = new ConcurrentHashMap();
 		
@@ -849,8 +849,15 @@ public class DatabaseConnector
 				if(!onlyIndex)
 				{
 					byte[] image = myResults.getBytes("screenshot");
-					String imageEncoded = Base64.getEncoder().encodeToString(image);
-					nextRow.put("Screenshot", imageEncoded);
+					if(base64)
+					{
+						String imageEncoded = Base64.getEncoder().encodeToString(image);
+						nextRow.put("Screenshot", imageEncoded);
+					}
+					else
+					{
+						nextRow.put("Screenshot", image);
+					}
 				}
 				
 				if(!myReturn.containsKey(userName))

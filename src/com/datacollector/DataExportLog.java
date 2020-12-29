@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -186,14 +187,41 @@ public class DataExportLog extends HttpServlet {
 				else
 				{
 					dataTypes.add("screenshots");
-					ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, false);
+					ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, false, true);
 					headMap = myConnector.mergeMaps(headMap, screenshotMap);
+				}
+			}
+			if(toSelect.contains("video"))
+			{
+				System.out.println("Getting screenshots for video");
+				dataTypes.add("video");
+				ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, false, false);
+				System.out.println("Normalizing time");
+				screenshotMap = myConnector.normalizeAllTime(screenshotMap);
+				System.out.println("Converting to video");
+				ConcurrentHashMap videoPair = toVideo(screenshotMap, zip);
+				System.out.println("Done encoding video");
+				System.out.println(videoPair.keySet());
+				if(zip)
+				{
+					ConcurrentHashMap videoMap = (ConcurrentHashMap) videoPair.get("json");
+					ConcurrentHashMap videoMapBinary = (ConcurrentHashMap) videoPair.get("binary");
+					
+					System.out.println(videoMap.keySet());
+					System.out.println(videoMapBinary.keySet());
+					
+					headMap = myConnector.mergeMaps(headMap, videoMap);
+					fileWriteMap = myConnector.mergeMaps(fileWriteMap, videoMapBinary);
+				}
+				else
+				{
+					headMap = myConnector.mergeMaps(headMap, videoPair);
 				}
 			}
 			if(toSelect.contains("screenshotindices"))
 			{
 				dataTypes.add("screenshots");
-				ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, true);
+				ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, true, true);
 				headMap = myConnector.mergeMaps(headMap, screenshotMap);
 			}
 			
@@ -315,7 +343,15 @@ public class DataExportLog extends HttpServlet {
 					for(int y=0; y<filesInPath.size(); y++)
 					{
 						ConcurrentHashMap thisFile = (ConcurrentHashMap) filesInPath.get(y);
-						byte[] toOutput = (byte[]) thisFile.get("Screenshot");
+						byte[] toOutput = null;
+						if(thisFile.containsKey("Screenshot"))
+						{
+							toOutput = (byte[]) thisFile.get("Screenshot");
+						}
+						if(thisFile.containsKey("Video"))
+						{
+							toOutput = (byte[]) thisFile.get("Video");
+						}
 						String fileName = filePath + "/" + thisFile.get("Index").toString();
 						ZipEntry finalFile = new ZipEntry(fileName);
 						zipOut.putNextEntry(finalFile);
@@ -470,6 +506,115 @@ public class DataExportLog extends HttpServlet {
 		}
 		
 		return toFix;
+	}
+	
+	private ConcurrentHashMap toVideo(ConcurrentHashMap screenshotMap, boolean toZip)
+	{
+		ConcurrentHashMap toReturn = new ConcurrentHashMap();
+		ConcurrentHashMap videoFiles = new ConcurrentHashMap();
+		ConcurrentHashMap videoEntrys = new ConcurrentHashMap();
+		Iterator userIterator = screenshotMap.entrySet().iterator();
+		while(userIterator.hasNext())
+		{
+			ConcurrentHashMap curUserMap = new ConcurrentHashMap();
+			ConcurrentHashMap curUserMapBinary = new ConcurrentHashMap();
+			Entry userEntry = (Entry) userIterator.next();
+			String curUser = (String) userEntry.getKey();
+			//System.out.println("User: " + curUser);
+			//System.out.println(userEntry.getValue().getClass());
+			ConcurrentHashMap sessionMap = (ConcurrentHashMap) userEntry.getValue();
+			//System.out.println(sessionMap.size());
+			Iterator sessionIterator = (Iterator) sessionMap.entrySet().iterator();
+			while(sessionIterator.hasNext())
+			{
+				ConcurrentHashMap curSessionMap = new ConcurrentHashMap();
+				ConcurrentHashMap curSessionMapBinary = new ConcurrentHashMap();
+				Entry sessionEntry = (Entry) sessionIterator.next();
+				String curSession = (String) sessionEntry.getKey();
+				ConcurrentHashMap dataMap = (ConcurrentHashMap) sessionEntry.getValue();
+				
+				System.out.println("Doing video for " + curUser + ", " + curSession);
+				
+				System.out.println(dataMap.keySet());
+				ArrayList screenshotEntries = (ArrayList) dataMap.get("screenshots");
+				System.out.println(screenshotEntries.size());
+				BufferedImageVideoEncoder myEncoder = new BufferedImageVideoEncoder();
+				
+				ArrayList outputList = new ArrayList();
+				ArrayList outputListBinary = new ArrayList();
+				
+				Object curStartDate = null;
+				ConcurrentHashMap curImage = (ConcurrentHashMap) screenshotEntries.get(0);
+				System.out.println(curImage.keySet());
+				System.out.println(curImage.get("Index"));
+				curStartDate = curImage.get("Index");
+				System.out.println(curStartDate);
+				System.out.println("First video");
+				for(int x=0; x<screenshotEntries.size(); x++)
+				{
+					System.out.println("Encoding image to video...");
+					curImage = (ConcurrentHashMap) screenshotEntries.get(x);
+					System.out.println("Checking if need for new video");
+					if(!myEncoder.addImage(curImage) || (x + 1) == screenshotEntries.size())
+					{
+						System.out.println("Needs new video or done with session, recording last");
+						ConcurrentHashMap dataEntryMap = new ConcurrentHashMap();
+						ConcurrentHashMap dataEntryMapBinary = new ConcurrentHashMap();
+						byte[] theData = myEncoder.getVideoBytes();
+						System.out.println("Adding dates");
+						dataEntryMap.put("Index", curStartDate);
+						dataEntryMap.put("Start", curStartDate);
+						System.out.println("Adding paths and data");
+						if(toZip)
+						{
+							dataEntryMapBinary.put("Index", (curStartDate.toString()).replaceAll(" ", "_") + ".mkv");
+							dataEntryMap.put("Path", (curStartDate.toString()).replaceAll(" ", "_") + ".mkv");
+							dataEntryMapBinary.put("Video", theData);
+						}
+						else
+						{
+							dataEntryMap.put("Video", Base64.getEncoder().encodeToString(theData));
+						}
+						dataEntryMap.put("End", curImage.get("Index"));
+						outputListBinary.add(dataEntryMapBinary);
+						outputList.add(dataEntryMap);
+						if(!((x + 1) == screenshotEntries.size()))
+						{
+							x--;
+							System.out.println("Next video in same session");
+						}
+						else
+						{
+							System.out.println("Next session");
+						}
+						curStartDate = curImage.get("Index");
+					}
+				}
+				
+				curSessionMap.put("video", outputList);
+				curSessionMapBinary.put("video", outputListBinary);
+				
+				//if(dataMap.containsKey("events"))
+				
+				curUserMap.put(curSession, curSessionMap);
+				curUserMapBinary.put(curSession, curSessionMapBinary);
+				
+				System.out.println("Done with session " + curUser + ", " + curSession);
+				
+			}
+			videoEntrys.put(curUser, curUserMap);
+			videoFiles.put(curUser, curUserMapBinary);
+		}
+		if(toZip)
+		{
+			toReturn.put("binary", videoFiles);
+			toReturn.put("json", videoEntrys);
+		}
+		else
+		{
+			return videoEntrys;
+		}
+		return toReturn;
 	}
 	
 	private ArrayList toTimeline(ConcurrentHashMap dataMap, ArrayList dataTypes, String dataLabel)
