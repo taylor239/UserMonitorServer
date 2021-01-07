@@ -1,177 +1,129 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<attributes>
 			<attribute name="module" value="true"/>
 			<attribute name="owner.project.facets" value="java"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jst.server.core.container/org.eclipse.jst.server.tomcat.runtimeTarget/Apache Tomcat v9.0">
+	<classpathentry exported="true" kind="con" path="org.eclipse.jst.server.core.container/org.eclipse.jst.server.tomcat.runtimeTarget/Apache Tomcat v9.0">
 		<attributes>
 			<attribute name="owner.project.facets" value="jst.web"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
-	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/annotations-api.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/catalina-ant.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/catalina-ha.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/catalina-ssi.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/catalina-storeconfig.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/catalina-tribes.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/catalina.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-dbcp2-2.6.0-javadoc.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-dbcp2-2.6.0-sources.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-dbcp2-2.6.0-test-sources.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-dbcp2-2.6.0-tests.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-dbcp2-2.6.0.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-fileupload-1.2.2.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-io-2.4-javadoc.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-io-2.4-sources.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-io-2.4-test-sources.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-io-2.4-tests.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-io-2.4.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-lang3-3.11-javadoc.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-lang3-3.11-sources.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-lang3-3.11-test-sources.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-lang3-3.11-tests.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-lang3-3.11.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-logging-1.2-javadoc.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-logging-1.2.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-pool2-2.6.2-javadoc.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-pool2-2.6.2-sources.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-pool2-2.6.2-test-sources.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-pool2-2.6.2-tests.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-pool2-2.6.2.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/dsn.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ecj-4.15.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/el-api.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/gson-2.8.0.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/imap.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/jasper-el.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/jasper.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/jaspic-api.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/jsp-api.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/mail.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/mailapi.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/mysql-connector-java-8.0.21.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/pop3.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/servlet-api.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/smtp.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-api.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-coyote.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-dbcp.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-cs.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-de.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-es.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-fr.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-ja.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-ko.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-pt-BR.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-ru.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-zh-CN.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-jdbc.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-jni.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-util-scan.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-util.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tomcat-websocket.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/websocket-api.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/velvet-video-0.5.1.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/jffi-1.3.1.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/jnr-ffi-2.1.9.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tools-0.7.0.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/velvet-video-natives-0.2.7.free.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/slf4j-log4j12-2.0.0-alpha1.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/log4j-api-2.14.0.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/log4j-core-2.14.0.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/log4j-1.2.17.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/slf4j-api-2.0.0-alpha1.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/classes"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-android-arm.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-android-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-android-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-android-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-linux-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-linux-armhf.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-linux-ppc64le.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-linux-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-linux-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-macosx-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-platform.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-windows-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-windows-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-android-arm.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-android-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-android-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-android-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-linux-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-linux-armhf.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-linux-ppc64le.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-linux-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-linux-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-macosx-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-platform.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-windows-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-windows-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flandmark-android-arm.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flandmark-android-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flandmark-android-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flandmark-android-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flandmark-linux-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flandmark-linux-armhf.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flandmark-linux-ppc64le.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flandmark-linux-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flandmark-linux-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flandmark-macosx-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flandmark-platform.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flandmark-windows-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flandmark-windows-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flandmark.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flycapture-linux-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flycapture-linux-armhf.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flycapture-linux-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flycapture-linux-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flycapture-platform.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flycapture-windows-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flycapture-windows-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flycapture.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javacpp-android-arm.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javacpp-android-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javacpp-android-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javacpp-android-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javacpp-ios-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javacpp-ios-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javacpp-linux-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javacpp-linux-armhf.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javacpp-linux-ppc64le.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javacpp-linux-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javacpp-linux-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javacpp-macosx-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javacpp-platform.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javacv-platform.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/leptonica-android-arm.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/leptonica-android-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/leptonica-android-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/leptonica-android-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/openblas-android-arm.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/openblas-android-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/openblas-android-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/openblas-android-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/openblas-ios-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/openblas-ios-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/opencv-android-arm.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/opencv-android-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/opencv-android-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/opencv-android-x86.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/opencv-ios-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/opencv-ios-x86_64.jar"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/annotations-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/catalina-ant.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/catalina-ha.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/catalina-ssi.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/catalina-storeconfig.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/catalina-tribes.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/catalina.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-dbcp2-2.6.0-javadoc.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-dbcp2-2.6.0-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-dbcp2-2.6.0-test-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-dbcp2-2.6.0-tests.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-dbcp2-2.6.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-fileupload-1.2.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-io-2.4-javadoc.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-io-2.4-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-io-2.4-test-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-io-2.4-tests.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-io-2.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-lang3-3.11-javadoc.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-lang3-3.11-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-lang3-3.11-test-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-lang3-3.11-tests.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-lang3-3.11.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-logging-1.2-javadoc.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-logging-1.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-pool2-2.6.2-javadoc.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-pool2-2.6.2-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-pool2-2.6.2-test-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-pool2-2.6.2-tests.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/commons-pool2-2.6.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/dsn.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/ecj-4.15.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/el-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/gson-2.8.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/imap.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/jasper-el.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/jasper.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/jaspic-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/jsp-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/mail.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/mailapi.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/mysql-connector-java-8.0.21.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/pop3.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/servlet-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/smtp.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-coyote.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-dbcp.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-cs.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-de.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-es.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-fr.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-ja.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-ko.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-pt-BR.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-ru.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-i18n-zh-CN.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-jdbc.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-jni.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-util-scan.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-util.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tomcat-websocket.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/websocket-api.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/jffi-1.3.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/jnr-ffi-2.1.9.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/tools-0.7.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/slf4j-log4j12-2.0.0-alpha1.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/log4j-api-2.14.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/log4j-core-2.14.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/log4j-1.2.17.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/slf4j-api-2.0.0-alpha1.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/classes"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-linux-arm64.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-linux-armhf.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-linux-ppc64le.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-linux-x86_64.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-linux-x86.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-platform.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-linux-arm64.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-linux-armhf.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-linux-ppc64le.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-linux-x86_64.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-linux-x86.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-platform.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/ffmpeg.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/flandmark-linux-arm64.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/flandmark-linux-armhf.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/flandmark-linux-ppc64le.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/flandmark-linux-x86_64.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/flandmark-linux-x86.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/flandmark-platform.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/flandmark.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/flycapture-linux-arm64.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/flycapture-linux-armhf.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/flycapture-linux-x86_64.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/flycapture-linux-x86.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/flycapture-platform.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/flycapture.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/javacpp-linux-arm64.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/javacpp-linux-armhf.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/javacpp-linux-ppc64le.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/javacpp-linux-x86_64.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/javacpp-linux-x86.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/javacpp-platform.jar"/>
+	<classpathentry exported="true" kind="lib" path="WebContent/WEB-INF/lib/javacv-platform.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
