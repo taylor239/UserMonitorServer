@@ -304,8 +304,8 @@ function fadeOutLightbox()
 	var visPadding = 20;
 	
 	var visWidth = containingTableRow.offsetWidth - visPadding;
-	var visHeight = windowHeight * .66666;
-	var bottomVisHeight = windowHeight * .33333;
+	var visHeight = windowHeight * .6;
+	var bottomVisHeight = windowHeight * .25;
 	var sidePadding = 24;
 	
 	var barHeight = visHeight / 10;
@@ -368,6 +368,8 @@ function fadeOutLightbox()
 		}
 	}
 	
+	var colorScale = d3.scaleOrdinal(d3.schemeCategory20);
+	var colorScaleAccent = d3.scaleOrdinal(d3["schemeAccent"]);
 	
 	
 	function start(needsUpdate)
@@ -378,8 +380,6 @@ function fadeOutLightbox()
 		}
 		lookupTable = {};
 		//Prepare data with sorting and finding mins, maxes
-		var colorScale = d3.scaleOrdinal(d3.schemeCategory20);
-		var colorScaleAccent = d3.scaleOrdinal(d3["schemeAccent"]);
 		
 		var curWindowNum = 0;
 		var windowColorNumber = {};
@@ -2020,8 +2020,8 @@ function fadeOutLightbox()
 			.attr("height", bottomVisHeight + "px")
 			.append("g");
 		
-		console.log(curProcessMap);
 		cpuSortedList = [];
+		var maxCPU = 0;
 		for(osUser in curProcessMap)
 		{
 			for(start in curProcessMap[osUser])
@@ -2031,6 +2031,14 @@ function fadeOutLightbox()
 					curProcList = curProcessMap[osUser][start][pid]
 					totalAverage = curProcList[curProcList.length-1]["Aggregate CPU"] / curProcList.length;
 					curProcList[0]["Average CPU"] = totalAverage;
+					for(entry in curProcList)
+					{
+						if(curProcList[entry]["CPU"] > maxCPU)
+						{
+							maxCPU = curProcList[entry]["CPU"];
+						}
+						curProcList[entry]["Hash"] = SHA256(pid + start + osUser);
+					}
 					cpuSortedList.push(curProcList);
 				}
 			}
@@ -2038,16 +2046,128 @@ function fadeOutLightbox()
 		
 		cpuSortedList.sort(function(a, b)
 		{
-			if(a[0]["Average CPU"] < b[0]["Average CPU"]) { return -1; }
-			if(a[0]["Average CPU"] > b[0]["Average CPU"]) { return 1; }
+			if(a[0]["Average CPU"] > b[0]["Average CPU"]) { return -1; }
+			if(a[0]["Average CPU"] < b[0]["Average CPU"]) { return 1; }
 			return 0;
 		})
 		
-		console.log(cpuSortedList);
 		
+		var cpuScale = d3.scaleLinear();
+		cpuScale.domain([0, maxCPU]);
+		cpuScale.range([bottomVisHeight, 0]);
 		
-		//newSVG.selectAll("circle")
-				
+		var timeScale;
+		if(timeMode == "Universal")
+		{
+			timeScale = theNormData["Time Scale"];
+		}
+		else if(timeMode == "User")
+		{
+			timeScale = theNormData[owningUser]["Time Scale"];
+		}
+		else
+		{
+			timeScale = theNormData[owningUser][owningSession]["Time Scale"];
+		}
+		
+		var finalProcList = [];
+		
+		var lineFormattedData = []
+		
+		for(entry in cpuSortedList)
+		{
+			for(subEntry in cpuSortedList[entry])
+			{
+				cpuSortedList[entry][subEntry]["Process Order"] = entry;
+			}
+			
+			name = cpuSortedList[entry][0]["User"] + cpuSortedList[entry][0]["Start"] + cpuSortedList[entry][0]["PID"];
+			value = cpuSortedList[entry];
+			lineEntry = {};
+			lineEntry["name"] = name;
+			lineEntry["values"] = value;
+			lineFormattedData.push(lineEntry);
+			
+			finalProcList = finalProcList.concat(cpuSortedList[entry]);
+		}
+		
+		cpuSortedList = cpuSortedList.reverse();
+		
+		finalProcList = finalProcList.reverse();
+		
+		var procPoints = newSVG.selectAll("circle")
+			.data(finalProcList)
+			.enter()
+			.append("circle")
+			.attr("cx", function(d, i)
+					{
+						if(timeMode == "Universal")
+						{
+							return xAxisPadding +  timeScale(d["Index MS Universal"]);
+						}
+						else if(timeMode == "User")
+						{
+							return xAxisPadding + timeScale(d["Index MS User"]);
+						}
+						else
+						{
+							return xAxisPadding +  timeScale(d["Index MS Session"]);
+						}
+					})
+			.attr("cy", function(d, i)
+					{
+						return cpuScale(d["CPU"]);
+					})
+			.attr("class", function(d, i)
+					{
+						return "process_" + d["Hash"];
+					})
+			.attr("r", bottomVisHeight / 50)
+			//.attr("r", 5)
+			.attr("fill", function(d, i)
+					{
+						return colorScale(d["Process Order"] % 20);
+					});
+		
+		var line = d3.line()
+				.x
+				(
+					function(d, i)
+					{
+						if(timeMode == "Universal")
+						{
+							return xAxisPadding +  timeScale(d["Index MS Universal"]);
+						}
+						else if(timeMode == "User")
+						{
+							return xAxisPadding + timeScale(d["Index MS User"]);
+						}
+						else
+						{
+							return xAxisPadding +  timeScale(d["Index MS Session"]);
+						}
+					}
+				)
+				.y
+				(
+					function(d, i)
+					{
+						return cpuScale(d["CPU"]);
+					}
+				)
+				.curve(d3.curveMonotoneX);
+		
+		var procLines = newSVG.selectAll("path")
+				.data(lineFormattedData)
+				.enter()
+				.append("path")
+				.attr('d', d => line(d.values))
+				.attr("fill", "none")
+				.style("stroke", function(d, i)
+						{
+							return colorScale(d["values"][0]["Process Order"] % 20);
+						});
+	
 	}
 	
 	function showWindow(username, session, type, timestamp)
