@@ -84,6 +84,16 @@ if(request.getParameter("email") != null)
 						</td>
 					</tr>
 					<tr>
+						<td colwidth="2">
+									Playback Speed
+						</td>
+					</tr>
+					<tr>
+						<td colwidth="2">
+									<input type="text" size="4" id="playbackSpeed" name="playbackSpeed" value="10">x
+						</td>
+					</tr>
+					<tr>
 						<td>
 							<div align="center">
 									Filters
@@ -675,7 +685,7 @@ function fadeOutLightbox()
 		//Get the SVG for the main viz timeline
 		svg = d3.selectAll("#mainVisualization")
 		.style("height", visHeight + "px")
-		.style('overflow', 'scroll')
+		.style('overflow-y', 'scroll')
 		.append("svg")
 		.attr("width", visWidth)
 		.attr("height", visHeight)
@@ -923,6 +933,10 @@ function fadeOutLightbox()
 				{
 					return colorScale(windowColorNumber[d["SecondClass"]]);
 				})
+		.attr("initFill", function(d, i)
+				{
+					return colorScale(windowColorNumber[d["SecondClass"]]);
+				})
 		.attr("opacity", 1)
 		.on("click", function(d, i)
 				{
@@ -942,7 +956,7 @@ function fadeOutLightbox()
 				})
 		.attr("class", function(d)
 			{
-				return "clickableBar " + "select_" + SHA256(d["SecondClass"]);
+				return "clickableBar " + "select_" + SHA256(d["SecondClass"]) + " " + "window_process_" + SHA256(d["User"] + d["Start"] + d["PID"]);
 			})
 		
 		//.classed("clickableBar", true)
@@ -1956,6 +1970,23 @@ function fadeOutLightbox()
 	
 	function clearWindow()
 	{
+		for(selection in curSelElements)
+		{
+			if(curSelElements[selection] && !(curSelElements[selection].empty()) && curSelElements[selection].attr("initFill"))
+			{
+				//curSelElements[selection].attr("fill", curSelElements[selection].attr("initFill"));
+				curSelElements[selection].attr("fill", function(){ return this.getAttribute("initFill"); });
+			}
+		}
+		curSelElements = [];
+		
+		if(curSelectProcess && curSelectProcess != null)
+		{
+			curLabel = d3.select("#process_legend_" + curSelectProcess[0]["Hash"])
+			curLabel.attr("fill", curLabel.attr("initFill"));
+		}
+		curSelectProcess = null;
+		
 		if(lastHighlighted)
 		{
 			d3.selectAll("." + lastHighlighted)
@@ -1974,6 +2005,7 @@ function fadeOutLightbox()
 		d3.select("#highlightDiv")
 			.selectAll("*")
 			.remove();
+		d3.select("#highlightDiv").style('overflow-y', 'auto').style("height", "auto")
 		//d3.select("#infoTable").append("tr").html("<td colspan=4><div align=\"center\">Details</div></td>");
 		
 		for(element in curHighlight)
@@ -2037,7 +2069,7 @@ function fadeOutLightbox()
 						{
 							maxCPU = curProcList[entry]["CPU"];
 						}
-						curProcList[entry]["Hash"] = SHA256(pid + start + osUser);
+						curProcList[entry]["Hash"] = SHA256(osUser + start + pid);
 					}
 					cpuSortedList.push(curProcList);
 				}
@@ -2123,8 +2155,13 @@ function fadeOutLightbox()
 						return "process_" + d["Hash"];
 					})
 			.attr("r", bottomVisHeight / 50)
+			.attr("initR", bottomVisHeight / 50)
 			//.attr("r", 5)
 			.attr("fill", function(d, i)
+					{
+						return colorScale(d["Process Order"] % 20);
+					})
+			.attr("initFill", function(d, i)
 					{
 						return colorScale(d["Process Order"] % 20);
 					});
@@ -2163,12 +2200,238 @@ function fadeOutLightbox()
 				.append("path")
 				.attr('d', d => line(d.values))
 				.attr("fill", "none")
+				.attr("class", function(d, i)
+						{
+							return "process_" + colorScale(d["values"][0]["Hash"] % 20);
+						})
+				.style("stroke-width", bottomVisHeight / 100)
+				.attr("initStrokeWidth", bottomVisHeight / 100)
 				.style("stroke", function(d, i)
 						{
 							return colorScale(d["values"][0]["Process Order"] % 20);
+						})
+				.attr("initStroke", function(d, i)
+						{
+							return colorScale(d["values"][0]["Process Order"] % 20);
 						});
-	
+		
+		var yAxis = d3.axisLeft().scale(cpuScale)
+		
+		var cpuAxis = newSVG.append("g")
+				.attr("transform", "translate(" + xAxisPadding + ", 0)")
+				.call(yAxis);
+		
+		var axisLabel = newSVG.append("g")
+				.append("text")
+				.attr("y", bottomVisHeight / 2 + "px")
+				.attr("x", xAxisPadding / 2 + "px")
+				//.attr("width", xAxisPadding + "px")
+				//.attr("height", bottomVisHeight + "px")
+				.attr("alignment-baseline", "central")
+				.attr("dominant-baseline", "middle")
+				.attr("text-anchor", "middle")
+				.text("% CPU");
+		
+		var visLabel = newSVG.append("g")
+		.append("text")
+		.attr("y", "0px")
+		.attr("x", xAxisPadding / 2 + "px")
+		//.attr("width", xAxisPadding + "px")
+		//.attr("height", bottomVisHeight + "px")
+		.attr("alignment-baseline", "hanging")
+		.attr("dominant-baseline", "hanging")
+		.attr("text-anchor", "middle")
+		.style("font-weight", "bolder")
+		.text("Processes");
+		
+		var highlightTable = d3.select("#highlightDiv").style('overflow-y', 'scroll').style("height", bottomVisHeight + "px");
+		
+		var legendSVGProcess = highlightTable
+				.append("svg")
+				.attr("width", "100%")
+				.attr("height", (legendHeight * cpuSortedList.length * 2 + legendHeight) + "px");
+		
+		
+		
+		legendSVGProcess = legendSVGProcess.append("g");
+		
+		var legendTitleProcess = legendSVGProcess.append("text")
+				.attr("x", "50%")
+				.attr("y", .5 * legendHeight)
+				.attr("alignment-baseline", "central")
+				.attr("dominant-baseline", "middle")
+				.attr("text-anchor", "middle")
+				//.attr("font-weight", "bolder")
+				.text("Processes:");
+		
+		cpuSortedList = cpuSortedList.reverse();
+		var legendProcess = legendSVGProcess.append("g")
+				.selectAll("rect")
+				.data(cpuSortedList)
+				.enter()
+				.append("rect")
+				.attr("x", 0)
+				.attr("width", "100%")
+				//.attr("width", legendWidth)
+				.attr("y", function(d, i)
+						{
+							return legendHeight * (2 * i + 1);
+						})
+				.attr("height", 2 * legendHeight)
+				.attr("stroke", "black")
+				.attr("stroke-width", 0)
+				.attr("initStrokeWidth", 0)
+				.attr("fill", function(d, i)
+						{
+							return colorScale(d[0]["Process Order"] % 20);
+						})
+				.attr("initFill", function(d, i)
+						{
+							return colorScale(d[0]["Process Order"] % 20);
+						})
+				.attr("id", function(d, i)
+						{
+							return "process_legend_" + d[0]["Hash"];
+						})
+				.on("click", function(d, i)
+				{
+					for(selection in curSelElements)
+					{
+						if(curSelElements[selection] && !(curSelElements[selection].empty()) && curSelElements[selection].attr("initFill"))
+						{
+							//curSelElements[selection].attr("fill", curSelElements[selection].attr("initFill"));
+							curSelElements[selection].attr("fill", function(){ return this.getAttribute("initFill"); });
+							curSelElements[selection].attr("r", function()
+								{
+									if(this.getAttribute("initR"))
+									{
+										return this.getAttribute("initR");
+									}
+									return 0;
+								});
+						}
+					}
+					curSelElements = [];
+					
+					if(curSelectProcess)
+					{
+						curLabel = d3.select("#process_legend_" + curSelectProcess[0]["Hash"])
+						curLabel.attr("fill", curLabel.attr("initFill"));
+					}
+					
+					curHash = d[0]["Hash"];
+					
+					windowBars = d3.selectAll(".window_process_" + d[0]["Hash"])
+					legendBars = d3.selectAll(".legend_" + d[0]["Hash"]);
+					processCircles = d3.selectAll(".process_" + d[0]["Hash"])
+					curLabel = d3.select("#process_legend_" + d[0]["Hash"])
+					
+					highlightColor = "#ffff00";
+					
+					windowBars.attr("fill", highlightColor);
+					legendBars.attr("fill", highlightColor);
+					processCircles.attr("fill", highlightColor).attr("r", bottomVisHeight / 25);
+					curLabel.attr("fill", highlightColor);
+					
+					curSelElements.push(windowBars);
+					curSelElements.push(legendBars);
+					curSelElements.push(processCircles);
+					
+					curSelectProcess = d;
+				})
+				.attr("class", "clickableBar")
+				.attr("initStrokeWidth", 0);
+		
+		var legendTextProcess = legendSVGProcess.append("g")
+		.selectAll("text")
+		.data(cpuSortedList)
+		.enter()
+		.append("text")
+		//.attr("font-size", 11)
+		.attr("x", 0)
+		.attr("y", function(d, i)
+				{
+					//return legendHeight * (i + 1);
+					//return legendHeight * (i) + legendHeight;
+					return legendHeight * (2 * i + 1) + legendHeight * .5;
+				})
+		.attr("height", legendHeight * .75)
+		.text(function(d, i)
+				{
+					return d[0]["User"] + ":" + d[0]["Start"] + ":" + d[0]["PID"];
+				})
+		.attr("fill", function(d, i)
+				{
+					if(i % 2 == 0)
+					{
+						return "#FFF";
+					}
+					else
+					{
+						return "#000";
+					}
+				})
+		.attr("font-weight", "bolder")
+		.attr("dominant-baseline", "middle")
+		.attr("stroke", function(d, i)
+				{
+					if(i % 2 == 0)
+					{
+						return "none";
+					}
+					else
+					{
+						return "none";
+					}
+				});
+		
+		var legendTextProcessCmd = legendSVGProcess.append("g")
+		.selectAll("text")
+		.data(cpuSortedList)
+		.enter()
+		.append("text")
+		//.attr("font-size", 11)
+		.attr("x", 0)
+		.attr("y", function(d, i)
+				{
+					//return legendHeight * (i + 1);
+					//return legendHeight * (i) + legendHeight;
+					return legendHeight * (2 * i + 2) + legendHeight * .5;
+				})
+		.attr("height", legendHeight * .75)
+		.text(function(d, i)
+				{
+					return d[0]["Command"];
+				})
+		.attr("fill", function(d, i)
+				{
+					if(i % 2 == 0)
+					{
+						return "#FFF";
+					}
+					else
+					{
+						return "#000";
+					}
+				})
+		.attr("font-weight", "bolder")
+		.attr("dominant-baseline", "middle")
+		.attr("stroke", function(d, i)
+				{
+					if(i % 2 == 0)
+					{
+						return "none";
+					}
+					else
+					{
+						return "none";
+					}
+				});
+		
 	}
+	
+	var curSelectProcess;
+	var curSelElements = [];
 	
 	function showWindow(username, session, type, timestamp)
 	{
