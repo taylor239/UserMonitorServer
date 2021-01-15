@@ -392,7 +392,7 @@ function fadeOutLightbox()
 	var visPadding = 20;
 	
 	var visWidth = containingTableRow.offsetWidth - visPadding;
-	var visHeight = windowHeight * .6;
+	var visHeight = windowHeight * .5;
 	var bottomVisHeight = windowHeight * .25;
 	var sidePadding = 24;
 	
@@ -2575,6 +2575,9 @@ function fadeOutLightbox()
 	
 	function clearWindow()
 	{
+		//d3.select("#mainVisualization").select("svg")
+		//.attr("height", (visHeight) + "px")
+		//.style("height", (visHeight) + "px");
 		if(curPlayButton)
 		{
 			curPlayButton.attr("fill", curPlayButton.attr("initFill"));
@@ -2661,6 +2664,8 @@ function fadeOutLightbox()
 	
 	function showSession(owningUser, owningSession)
 	{
+		//console.log(d3.select("#mainVisContainer").style("height",  "300px").attr("height",  "300px"));
+		
 		curSelectUser = owningUser;
 		curSelectSession = owningSession;
 		bottomVizFontSize = bottomVisHeight / 25;
@@ -2688,6 +2693,110 @@ function fadeOutLightbox()
 		
 		
 		curProcessMap = processMap[owningUser][owningSession];
+		
+		var timeScale;
+		if(timeMode == "Universal")
+		{
+			timeScale = theNormData["Time Scale"];
+		}
+		else if(timeMode == "User")
+		{
+			timeScale = theNormData[owningUser]["Time Scale"];
+		}
+		else
+		{
+			timeScale = theNormData[owningUser][owningSession]["Time Scale"];
+		}
+		
+		var addTaskRow = d3.select("#infoTable").append("tr").append("td")
+			.attr("width", visWidth + "px")
+			.html("<td><div align=\"center\">Add Task</div></td>");
+		
+		var addTaskRow = d3.select("#infoTable").append("tr").append("td")
+		.attr("width", visWidth + "px")
+				.append("table").attr("width", visWidth + "px").append("tr").attr("width", visWidth + "px")
+					.html("<td width=\"25%\"><div align=\"center\"><input type=\"text\" id=\"addTaskStart\" name=\"addTaskStart\" value=\"Start (MS Session Time)\"></div></td>" +
+							"<td width=\"25%\"><div align=\"center\"><input type=\"text\" id=\"addTaskEnd\" name=\"addTaskEnd\" value=\"End (MS Session Time)\"></div></td>" +
+							"<td width=\"25%\"><div align=\"center\"><input type=\"text\" id=\"addTaskName\" name=\"addTaskName\" value=\"Task Name\"></div></td>" +
+							"<td width=\"25%\"><div align=\"center\"><button type=\"button\">Submit</button></div></td>");
+		
+		var newAxis = d3.axisTop(timeScale);
+		
+		var initX = 0;
+		
+		var dragAddTask = d3.drag()
+			.on("drag", dragmoveAddTask)
+			.on("start", function(d)
+					{
+						initX = d3.event.x;
+						if(initX < xAxisPadding)
+						{
+							initX = xAxisPadding;
+						}
+						selectRect.attr("x", initX);
+						selectRect.attr("width", 0);
+						document.getElementById("addTaskStart").value = "Start (MS Session Time)";
+						document.getElementById("addTaskEnd").value = "End (MS Session Time)";
+					});
+		
+		function dragmoveAddTask(d)
+		{
+			var x = d3.event.x;
+			var y = d3.event.y;
+			var startPoint = 0;
+			var endPoint = 0;
+			if(x < initX)
+			{
+				selectRect.attr("x", x);
+				selectRect.attr("width", initX - x);
+				startPoint = timeScale.invert(x - xAxisPadding);
+				endPoint = timeScale.invert(initX - xAxisPadding);
+			}
+			else
+			{
+				selectRect.attr("x", initX);
+				selectRect.attr("width", x - initX);
+				startPoint = timeScale.invert(initX - xAxisPadding);
+				endPoint = timeScale.invert(x - xAxisPadding);
+			}
+			document.getElementById("addTaskStart").value = startPoint;
+			document.getElementById("addTaskEnd").value = endPoint;
+		}
+		
+		var addTaskAxisSVG = d3.select("#infoTable").append("tr").append("td").append("svg")
+				.attr("class", "clickableBar")
+				.attr("width", visWidth + "px")
+				.attr("height", (barHeight / 1.75) + "px")
+				//.on("mousedown", function(d)
+				//		{
+				//			console.log(d);
+				//		})
+				.call(dragAddTask);
+		
+		var selectRect = addTaskAxisSVG.append("g")
+				.append("rect")
+				.attr("x", 0)
+				.attr("y", 0)
+				.attr("width", 0)
+				.attr("height", barHeight / 1.75)
+				.attr("fill", "cyan")
+				.attr("pointer-events", "none");
+		
+		var addTableAxis = addTaskAxisSVG.append("g")
+				.attr("transform", "translate(" + xAxisPadding + "," + (barHeight / 2) + ")")
+				.attr("pointer-events", "none")
+				.call(newAxis);
+		var addTableAxisLabel = addTaskAxisSVG.append("g")
+				.append("text")
+				.attr("x", xAxisPadding / 2)
+				.attr("y", barHeight / 3.5)
+				.attr("text-anchor", "middle")
+				.attr("dominant-baseline", "middle")
+				.attr("font-size", bottomVizFontSize * 2)
+				.text("Select Time:")
+				.attr("pointer-events", "none");
+		
+		
 		
 		var newSVG = d3.select("#infoTable").append("tr").append("td").append("svg")
 			.attr("width", visWidth + "px")
@@ -2732,19 +2841,7 @@ function fadeOutLightbox()
 		cpuScale.domain([0, maxCPU]);
 		cpuScale.range([bottomVisHeight, 0]);
 		
-		var timeScale;
-		if(timeMode == "Universal")
-		{
-			timeScale = theNormData["Time Scale"];
-		}
-		else if(timeMode == "User")
-		{
-			timeScale = theNormData[owningUser]["Time Scale"];
-		}
-		else
-		{
-			timeScale = theNormData[owningUser][owningSession]["Time Scale"];
-		}
+		
 		
 		var finalProcList = [];
 		
