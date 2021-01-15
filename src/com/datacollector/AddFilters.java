@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -12,10 +14,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 /**
  * Servlet implementation class AddFilters
  */
-@WebServlet("/openDataCollection/AddFilters.json")
+@WebServlet("/openDataCollection/addFilters.json")
 public class AddFilters extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
@@ -92,18 +97,32 @@ public class AddFilters extends HttpServlet {
 		
 		String admin = (String)session.getAttribute("admin");
 		
-		String saveName = (String)session.getAttribute("saveName");
+		String saveName = (String)request.getParameter("saveName");
 		
 		int x=0;
-		while(session.getAttribute("filterLevel" + x) != null)
+		ArrayList filtersToAdd = new ArrayList();
+		while(request.getParameter("filterLevel" + x) != null)
 		{
-			String curLevel = (String)session.getAttribute("filterLevel" + x);
-			String curField = (String)session.getAttribute("filteField" + x);
-			String curValue = (String)session.getAttribute("filterValue" + x);
-			
+			String curLevel = (String)request.getParameter("filterLevel" + x);
+			String curField = (String)request.getParameter("filteField" + x);
+			if(curField == null)
+			{
+				curField = "";
+			}
+			String curValue = (String)request.getParameter("filterValue" + x);
+			ConcurrentHashMap curFilter = new ConcurrentHashMap();
+			curFilter.put("level", curLevel);
+			curFilter.put("field", curField);
+			curFilter.put("value", curValue);
+			filtersToAdd.add(curFilter);
+			x++;
 		}
+		ConcurrentHashMap result = myConnector.addFilters(eventName, admin, filtersToAdd, saveName);
+		Gson gson = new GsonBuilder().create();
 		
-		response.getWriter().append("Served at: ").append(request.getContextPath());
+		
+		response.getWriter().append(gson.toJson(result));
+		
 	}
 
 	/**

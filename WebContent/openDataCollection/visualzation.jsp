@@ -87,7 +87,7 @@ if(request.getParameter("email") != null)
 					<tr>
 						<td colspan="2">
 						<div align="center">
-						<button type="button">Save</button>
+						<button type="button" onclick="saveFilters()">Save</button>
 						</div>
 						</td>
 						<td colspan="3">
@@ -451,6 +451,26 @@ function fadeOutLightbox()
 		}
 		rebuildFilters();
 		start(true);
+	}
+	
+	function saveFilters()
+	{
+		
+		var saveAs = document.getElementById("saveFilter").value;
+		var urlToPost = "addFilters.json?event=" + eventName + "&saveName=" + saveAs;
+		var x=0;
+		for(entry in filters)
+		{
+			//console.log(filters[entry]);
+			urlToPost += "&filterLevel" + x + "=" + filters[entry]["Level"];
+			urlToPost += "&filterValue" + x + "=" + filters[entry]["Value"];
+			urlToPost += "&filterField" + x + "=" + filters[entry]["Field"];
+			x++;
+		}
+		d3.json(urlToPost, function(error, data)
+				{
+					console.log(data);
+				});
 	}
 	
 	function rebuildFilters()

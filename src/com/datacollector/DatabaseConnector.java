@@ -88,8 +88,8 @@ public class DatabaseConnector
 	
 	private String allWindowQuery = "SELECT * FROM `Window` LEFT JOIN `WindowDetails`ON `Window`.`event` = `WindowDetails`.`event` AND `Window`.`adminEmail` = `WindowDetails`.`adminEmail` AND `Window`.`username` = `WindowDetails`.`username` AND `Window`.`session` = `WindowDetails`.`session` AND `Window`.`user` = `WindowDetails`.`user` AND `Window`.`pid` = `WindowDetails`.`pid` AND `Window`.`start` = `WindowDetails`.`start` AND `Window`.`xid` = `WindowDetails`.`xid` WHERE `WindowDetails`.`event` = ? AND `WindowDetails`.`adminEmail` = ? ORDER BY `WindowDetails`.`timeChanged`, `WindowDetails`.`insertTimestamp` ASC";
 	
-	private String insertFilter = "INSERT INTO `VisualizationFilters`(`event`, `adminEmail`, `level`, `field`, `value`, `server`, `saveName`, `filterNum`) VALUES (?,?,?,?,?,?,?,?)";
-	
+	private String insertFilter = "INSERT INTO `VisualizationFilters`(`event`, `adminEmail`, `level`, `field`, `value`, `server`, `saveName`, `filterNum`) VALUES ";
+	private String insertFilterValues = "(?,?,?,?,?,?,?,?)";
 	
 	private TestingConnectionSource mySource;
 	
@@ -706,6 +706,65 @@ public class DatabaseConnector
 		finally
 		{
             try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
+		
+		return myReturn;
+	}
+	
+	public ConcurrentHashMap addFilters(String event, String admin, ArrayList toAdd, String saveAs)
+	{
+		ConcurrentHashMap myReturn = new ConcurrentHashMap();
+		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
+		conn = myConnector;
+		try
+		{
+			String curStatement = insertFilter;
+			for(int x=0; x<toAdd.size(); x++)
+			{
+				if(x > 0)
+				{
+					curStatement += ",";
+				}
+				curStatement += insertFilterValues;
+			}
+			PreparedStatement myStatement = myConnector.prepareStatement(curStatement);
+			//(`event`, `adminEmail`, `level`, `field`, `value`, `server`, `saveName`, `filterNum`)
+			for(int x=0; x<toAdd.size(); x++)
+			{
+				int curStart = 8 * x + 1;
+				ConcurrentHashMap curMap = (ConcurrentHashMap) toAdd.get(x);
+				
+				myStatement.setString(curStart, event);
+				myStatement.setString(curStart + 1, admin);
+				myStatement.setString(curStart + 2, (String) curMap.get("level"));
+				myStatement.setString(curStart + 3, (String) curMap.get("field"));
+				myStatement.setString(curStart + 4, (String) curMap.get("value"));
+				myStatement.setString(curStart + 5, "0");
+				myStatement.setString(curStart + 6, saveAs);
+				myStatement.setInt(curStart + 7, x);
+			}
+			myStatement.execute();
+			
+			stmt = myStatement;
+			
+			stmt.close();
+			conn.close();
+			myReturn.put("result", "okay");
+		}
+		catch(Exception e)
+		{
+			myReturn.put("result", "nokay");
+			e.printStackTrace();
+		}
+		finally
+		{
             try { if (stmt != null) stmt.close(); } catch(Exception e) { }
             try { if (conn != null) conn.close(); } catch(Exception e) { }
         }
