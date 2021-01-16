@@ -91,6 +91,10 @@ public class DatabaseConnector
 	private String insertFilter = "INSERT INTO `VisualizationFilters`(`event`, `adminEmail`, `level`, `field`, `value`, `server`, `saveName`, `filterNum`) VALUES ";
 	private String insertFilterValues = "(?,?,?,?,?,?,?,?)";
 	
+	private String insertTask = "INSERT INTO `Task`(`event`, `adminEmail`, `username`, `session`, `taskName`, `completion`, `startTimestamp`) VALUES (?,?,?,?,?,?, FROM_UNIXTIME(? / 1000))";
+	private String insertTaskEvent = "INSERT INTO `TaskEvent`(`event`, `adminEmail`, `username`, `session`, `taskName`, `eventTime`, `eventDescription`, `startTimestamp`, `source`) VALUES (?,?,?,?,?,FROM_UNIXTIME(? / 1000),?,FROM_UNIXTIME(? / 1000),?)";
+	
+	
 	private TestingConnectionSource mySource;
 	
 	private String databaseName = "dataserver";
@@ -757,6 +761,92 @@ public class DatabaseConnector
 			stmt.close();
 			conn.close();
 			myReturn.put("result", "okay");
+		}
+		catch(Exception e)
+		{
+			myReturn.put("result", "nokay");
+			e.printStackTrace();
+		}
+		finally
+		{
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
+		
+		return myReturn;
+	}
+	
+	public ConcurrentHashMap addTask(String event, String user, String session, String admin, long start, long end, String taskName)
+	{
+		ConcurrentHashMap myReturn = new ConcurrentHashMap();
+		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
+		conn = myConnector;
+		try
+		{
+			String curStatement = insertFilter;
+			curStatement = insertTask;
+			PreparedStatement myStatement = myConnector.prepareStatement(curStatement);
+			//`event`, `adminEmail`, `username`, `session`, `taskName`, `completion`, `startTimestamp`
+			myStatement.setString(1, event);
+			myStatement.setString(2, admin);
+			myStatement.setString(3, user);
+			myStatement.setString(4, session);
+			myStatement.setString(5, taskName);
+			myStatement.setString(6, "1");
+			myStatement.setLong(7, start);
+			
+			//System.out.println(myStatement);
+			
+			myStatement.execute();
+			myStatement.close();
+			
+			curStatement = insertTaskEvent;
+			myStatement = myConnector.prepareStatement(curStatement);
+			//`event`, `adminEmail`, `username`, `session`, `taskName`, `eventTime`, `eventDescription`, `startTimestamp`, `source`
+			myStatement.setString(1, event);
+			myStatement.setString(2, admin);
+			myStatement.setString(3, user);
+			myStatement.setString(4, session);
+			myStatement.setString(5, taskName);
+			myStatement.setLong(6, start);
+			myStatement.setString(7, "start");
+			myStatement.setLong(8, start);
+			myStatement.setString(9, admin);
+			
+			myStatement.execute();
+			myStatement.close();
+			
+			myStatement = myConnector.prepareStatement(curStatement);
+			//`event`, `adminEmail`, `username`, `session`, `taskName`, `eventTime`, `eventDescription`, `startTimestamp`, `source`
+			myStatement.setString(1, event);
+			myStatement.setString(2, admin);
+			myStatement.setString(3, user);
+			myStatement.setString(4, session);
+			myStatement.setString(5, taskName);
+			myStatement.setLong(6, end);
+			myStatement.setString(7, "end");
+			myStatement.setLong(8, start);
+			myStatement.setString(9, admin);
+			
+			myStatement.execute();
+			
+			
+			stmt = myStatement;
+			
+			stmt.close();
+			conn.close();
+			myReturn.put("result", "okay");
+			
+			ArrayList thisUser = new ArrayList();
+			thisUser.add(user);
+			
+			myReturn.put("newEvents", normalizeAllTime(getTasksHierarchy(event, admin, thisUser)));
+			
 		}
 		catch(Exception e)
 		{

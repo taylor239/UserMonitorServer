@@ -846,6 +846,7 @@ function fadeOutLightbox()
 				sessionOrderMap = {};
 				maxTimeUser = 0;
 				minTimeUser = Number.POSITIVE_INFINITY;
+				minTimeUserAbsolute = Number.POSITIVE_INFINITY;
 				maxTimeUserDate = "";
 				minTimeUserDate = "";
 				minTimeUserUniversal = Number.POSITIVE_INFINITY;
@@ -950,6 +951,7 @@ function fadeOutLightbox()
 							lastTimeDate = thisData[thisData.length - 1]["Index"];
 							firstTimeSession = thisData[0]["Index MS Session"];
 							firstTimeUser = thisData[0]["Index MS User"];
+							firstTimeUserAbsolute = thisData[0]["Index MS"];
 							firstTimeDate = thisData[0]["Index"];
 							
 							if(lastTimeSession > maxTimeSession)
@@ -974,7 +976,9 @@ function fadeOutLightbox()
 							if(firstTimeUser < minTimeUser)
 							{
 								minTimeUser = firstTimeUser;
+								minTimeUserAbsolute = firstTimeUserAbsolute;
 								minTimeUserDate = firstTimeDate;
+								
 							}
 							firstTimeUniversal = thisData[0]["Index MS Universal"];
 							if(firstTimeUniversal < minTimeUserUniversal)
@@ -1037,6 +1041,7 @@ function fadeOutLightbox()
 				theNormData[user]["Index MS User Min"] = minTimeUser;
 				theNormData[user]["Index MS User Max Date"] = maxTimeUserDate;
 				theNormData[user]["Index MS User Min Date"] = minTimeUserDate;
+				theNormData[user]["Index MS User Min Absolute"] = minTimeUserAbsolute;
 				
 				timeScale = d3.scaleLinear();
 				timeScale.domain
@@ -2662,6 +2667,107 @@ function fadeOutLightbox()
 	var curSelectUser = "";
 	var curSelectSession = "";
 	
+	function addTask(userName, sessionName)
+	{
+		var startTask = Number(document.getElementById("addTaskStart").value) + theNormData[userName]["Index MS User Min Absolute"] + theNormData[userName][sessionName]["Index MS User Session Min"];
+		var endTask = Number(document.getElementById("addTaskEnd").value) + theNormData[userName]["Index MS User Min Absolute"] + theNormData[userName][sessionName]["Index MS User Session Min"];
+		var taskName = document.getElementById("addTaskName").value;
+		
+		var taskUrl = "addTask.json?event=" + eventName + "&userName=" + userName + "&sessionName=" + sessionName + "&start=" + startTask + "&end=" + endTask + "&taskName=" + taskName;
+		
+		d3.json(taskUrl, function(error, data)
+					{
+						console.log(data);
+						if(data["result"] == "okay")
+						{
+							
+							var sessEvents = theNormDataClone[userName][sessionName]["events"];
+							var aggEvents = theNormDataClone[userName]["Aggregated"]["events"];
+							
+							var userSessDiff = theNormData[userName][sessionName]["Index MS User Session Min"];
+							var absUserDiff = theNormData[userName]["Index MS User Min Absolute"];
+							
+							var newEvents = data["newEvents"][userName][sessionName]["events"];
+							
+							function binarySearchEvents(items, value){
+							    var firstIndex  = 0,
+							        lastIndex   = items.length - 1,
+							        middleIndex = Math.floor((lastIndex + firstIndex)/2);
+
+							    while(items[middleIndex]["Index MS"] != value && firstIndex < lastIndex)
+							    {
+							       if (value < items[middleIndex]["Index MS"])
+							        {
+							            lastIndex = middleIndex - 1;
+							        } 
+							      else if (value > items[middleIndex]["Index MS"])
+							        {
+							            firstIndex = middleIndex + 1;
+							        }
+							        middleIndex = Math.floor((lastIndex + firstIndex)/2);
+							    }
+
+							 return middleIndex;
+							}
+							
+							//newEvents = theNormDataClone[userName][sessionName]["events"];
+							
+							var aggEventList = theNormDataClone[userName]["Aggregated"]["events"];
+							
+							for(entry in newEvents)
+							{
+								newEvents[entry]["Index MS Session"] = newEvents[entry]["Index MS"] - absUserDiff - userSessDiff;
+								newEvents[entry]["Index MS User"] = newEvents[entry]["Index MS"] - absUserDiff;
+								if(newEvents[entry]["TaskName"] == taskName)
+								{
+									aggEntry = binarySearchEvents(aggEventList, newEvents[entry]["Index MS"]);
+									if(aggEventList[aggEntry]["Index MS"] < newEvents[entry]["Index MS"])
+									{
+										aggEventList.splice(aggEntry, 0, newEvents[entry]);
+									}
+									else
+									{
+										aggEventList.splice(aggEntry - 1, 0, newEvents[entry]);
+									}
+								}
+							}
+							//console.log(newEvents);
+							theNormDataClone[userName][sessionName]["events"] = newEvents;
+							
+							
+							
+							//var lastAggIndex = 0;
+							//for(newEntry in newEvents)
+							//{
+							//	var curEntry = newEvents[newEntry];
+							//	var curIndex = newEntry["Index MS"];
+							//	if(curEntry["TaskName"] != taskName)
+							//	{
+							//		continue;
+							//	}
+							//	if(lastAggIndex >= aggEventList.length)
+							//	{
+							//		aggEventList.push(curEntry);
+							//		lastAggIndex++;
+							//		continue;
+							//	}
+							//	while(lastAggIndex < aggEventList.length)
+							//	{
+							//		if(aggEventList[lastAggIndex]["Index MS"] <= curIndex)
+							//		{
+							//			aggEventList.splice(lastAggIndex - 1, 0, curEntry);
+							//			break;
+							//		}
+							//		lastAggIndex++;
+							//	}
+							//}
+							//preprocess();
+							start(true);
+						}
+						
+					});
+	}
+	
 	function showSession(owningUser, owningSession)
 	{
 		//console.log(d3.select("#mainVisContainer").style("height",  "300px").attr("height",  "300px"));
@@ -2718,7 +2824,7 @@ function fadeOutLightbox()
 					.html("<td width=\"25%\"><div align=\"center\"><input type=\"text\" id=\"addTaskStart\" name=\"addTaskStart\" value=\"Start (MS Session Time)\"></div></td>" +
 							"<td width=\"25%\"><div align=\"center\"><input type=\"text\" id=\"addTaskEnd\" name=\"addTaskEnd\" value=\"End (MS Session Time)\"></div></td>" +
 							"<td width=\"25%\"><div align=\"center\"><input type=\"text\" id=\"addTaskName\" name=\"addTaskName\" value=\"Task Name\"></div></td>" +
-							"<td width=\"25%\"><div align=\"center\"><button type=\"button\">Submit</button></div></td>");
+							"<td width=\"25%\"><div align=\"center\"><button type=\"button\" onclick=\"addTask('" + owningUser + "', '" + owningSession + "')\">Submit</button></div></td>");
 		
 		var newAxis = d3.axisTop(timeScale);
 		
