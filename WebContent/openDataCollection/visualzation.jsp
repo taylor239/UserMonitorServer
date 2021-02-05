@@ -77,6 +77,20 @@ if(request.getParameter("email") != null)
 									<input type="text" size="4" id="playbackSpeed" name="playbackSpeed" value="10">x
 						</td>
 					</tr>
+					
+					<tr>
+						<td colspan="5">
+									Timeline Zoom
+						</td>
+					</tr>
+					<tr>
+						<td colspan="3">
+									<input type="text" size="4" id="timelineZoom" name="timelineZoom" value="1">x
+						</td>
+						<td colspan="2">
+									<button type="button" onclick="start(true)">Apply</button>
+						</td>
+					</tr>
 					<tr id="filterTitle1">
 						<td colspan="5">
 							<div align="center">
@@ -155,11 +169,11 @@ if(request.getParameter("email") != null)
 			</table>
 		</td>
 		<td class="layoutTableCenter" id="mainVisContainer">
-			<table>
+			<table style="overflow-x:auto" id="visTable">
 			<tr><td>
 			<div align="center" id="title">User Timelines for <%=eventName %></div>
 			</td></tr>
-			<tr><td>
+			<tr><td id="visRow">
 			<div align="center" id="mainVisualization">
 			</div>
 			</td></tr>
@@ -382,6 +396,8 @@ function fadeOutLightbox()
 	
 	
 	var containingTableRow = document.getElementById("mainVisContainer");
+	var visTable = document.getElementById("visTable");
+	var visRow = document.getElementById("visRow");
 	
 	var windowWidth = window.innerWidth;
 	var windowHeight = window.innerHeight;
@@ -391,6 +407,7 @@ function fadeOutLightbox()
 	var visPadding = 20;
 	
 	var visWidth = containingTableRow.offsetWidth - visPadding;
+	var visWidthParent = containingTableRow.offsetWidth - visPadding;
 	var visHeight = windowHeight * .5;
 	var bottomVisHeight = windowHeight * .25;
 	var sidePadding = 24;
@@ -422,6 +439,8 @@ function fadeOutLightbox()
 	var curPlayLabel;
 	
 	var tickWidth = 4;
+	
+	var userSessionAxisY = {};
 	
 	var legendWidth = 25;
 	var legendHeight = visHeight / 25;
@@ -591,6 +610,7 @@ function fadeOutLightbox()
 		start(true);
 	}
 	
+	
 	function preprocess(dataToModify)
 	{
 		for(user in dataToModify)
@@ -601,6 +621,11 @@ function fadeOutLightbox()
 			newSession = {}
 			for(session in dataToModify[user])
 			{
+				if(Object.keys(dataToModify[user][session]).length < 3)
+				{
+					delete dataToModify[user][session];
+					continue;
+				}
 				if(dataToModify[user][session]["windows"])
 				{
 					var activeWindows = [];
@@ -883,7 +908,7 @@ function fadeOutLightbox()
 	
 	function downloadData()
 	{
-		d3.json("logExport.json?event=" + eventName + "&datasources=keystrokes,mouse,processes,windows,events,screenshotindices&normalize=none", function(error, data)
+		d3.json("logExport.json?event=" + eventName + "&datasources=keystrokes,mouse,processes,windows,events,screenshotindices,environment&normalize=none", function(error, data)
 				{
 					theNormData = preprocess(data);
 					theNormDataClone = JSON.parse(JSON.stringify(theNormData));
@@ -922,8 +947,17 @@ function fadeOutLightbox()
 	var processToWindow = {};
 	var windowToProcess = {};
 	
+	
+	var visWidthParent = (containingTableRow.offsetWidth - visPadding);
 	function start(needsUpdate)
 	{
+		d3.select(visRow).style("max-width", (visWidthParent + visPadding) + "px");
+		d3.select(visTable).style("max-width", (visWidthParent + visPadding) + "px");
+		
+		var timelineZoom = Number(document.getElementById("timelineZoom").value);
+		visWidth = (containingTableRow.offsetWidth - visPadding) * timelineZoom;
+		
+		console.log()
 		if(needsUpdate)
 		{
 			d3.select("#mainVisualization").selectAll("*").remove();
@@ -935,6 +969,7 @@ function fadeOutLightbox()
 			theNormData = filter(theNormData, filters);
 			showDefault();
 		}
+		console.log("Starting Main Vis")
 		lookupTable = {};
 		//Prepare data with sorting and finding mins, maxes
 		
@@ -966,10 +1001,16 @@ function fadeOutLightbox()
 					theCurData = theNormData[user][session];
 					for(dataType in theCurData)
 					{
+						
 						thisData = theCurData[dataType];
 						
 						for(x=0; x<thisData.length; x++)
 						{
+							if(dataType == "screenshots")
+							{
+								thisData[x]["Hash"] = SHA256(user + session + thisData[x]["Index MS"]);
+							}
+							
 							if(dataType == "windows")
 							{
 								if(!(thisData[x]["FirstClass"] in windowColorNumber))
@@ -1050,7 +1091,7 @@ function fadeOutLightbox()
 							thisData[x]["Index MS Session"] = Number(thisData[x]["Index MS Session"]);
 						}
 						
-						if(thisData.length > 0)
+						if(thisData.length > 0 && !(dataType == "environment"))
 						{
 							lastTimeSession = thisData[thisData.length - 1]["Index MS Session"];
 							lastTimeUser = thisData[thisData.length - 1]["Index MS User"];
@@ -1291,6 +1332,8 @@ function fadeOutLightbox()
 		svg = svg.append("g");
 		
 		var finalTimelineHeight = 0;
+		
+		
 		//Paint main vis timeline
 		var curSessionCount = 0;
 		backgroundG = svg.append("g")
@@ -2102,11 +2145,11 @@ function fadeOutLightbox()
 		.append("rect")
 		.attr("x", xAxisPadding / 2)
 		.attr("width", xAxisPadding / 2 - xAxisPadding / 20)
-		.attr("height", barHeight - 2 * (xAxisPadding / 25))
+		.attr("height", barHeight - 2 * (xAxisPadding / 25) - (xAxisPadding / 50))
 		.attr("y", function(d, i)
 				{
 					toReturn = d["User Number"] * barHeight + barHeight;
-					toReturn += barHeight * 2 * i + barHeight + (xAxisPadding / 25);
+					toReturn += barHeight * 2 * i + barHeight + (xAxisPadding / 25) + (xAxisPadding / 50);
 					return toReturn;
 				})
 		.attr("fill", "Chartreuse")
@@ -2150,11 +2193,11 @@ function fadeOutLightbox()
 		.append("rect")
 		.attr("x", 0)
 		.attr("width", xAxisPadding / 2 - xAxisPadding / 20)
-		.attr("height", barHeight - 2 * (xAxisPadding / 25))
+		.attr("height", barHeight - 2 * (xAxisPadding / 25) - (xAxisPadding / 50))
 		.attr("y", function(d, i)
 				{
 					toReturn = d["User Number"] * barHeight + barHeight;
-					toReturn += barHeight * 2 * i + barHeight + (xAxisPadding / 25);
+					toReturn += barHeight * 2 * i + barHeight + (xAxisPadding / 25) + (xAxisPadding / 50);
 					return toReturn;
 				})
 		.attr("fill", "Crimson")
@@ -2185,7 +2228,7 @@ function fadeOutLightbox()
 		.attr("y", function(d, i)
 				{
 					toReturn = d["User Number"] * barHeight + barHeight;
-					toReturn += barHeight * 2 * i + 1.5 * barHeight;
+					toReturn += barHeight * 2 * i + (1.5 * barHeight) + (xAxisPadding / 50);
 					return toReturn;
 				})
 		.attr("fill", "#000")
@@ -2215,7 +2258,7 @@ function fadeOutLightbox()
 		.attr("y", function(d, i)
 				{
 					toReturn = d["User Number"] * barHeight + barHeight;
-					toReturn += barHeight * 2 * i + 1.5 * barHeight;
+					toReturn += barHeight * 2 * i + (1.5 * barHeight) + (xAxisPadding / 50);
 					return toReturn;
 				})
 		.attr("fill", "#000")
@@ -2234,6 +2277,146 @@ function fadeOutLightbox()
 				})
 		.classed("clickableBar", true);
 		
+		var screenshotTimeline;
+		var sessionList = [];
+		var screenshotRects = svg.append("g")
+		.selectAll("rect")
+		.data(function()
+				{
+					var toReturn = [];
+					var userNum = 0;
+					var sessionNum = 0;
+					for(var x of userOrderArray)
+					{
+						var theUser = userOrderMap[x];
+						var userSessionOrdering = theNormData[theUser]["Session Ordering"]
+						var userSessionList = userSessionOrdering["Order List"];
+						for(var y in userSessionList)
+						{
+							var curSession = userSessionOrdering[userSessionList[y]];
+							var userSession = {}
+							userSession["User"] = theUser;
+							userSession["User Number"] = userNum;
+							userSession["Session"] = curSession;
+							sessionList.push(userSession);
+							var windowList = theNormData[theUser][curSession]["screenshots"];
+							var firstEntry = true;
+							for(var z in windowList)
+							{
+								windowList[z]["User Order"] = userNum;
+								windowList[z]["Session Order"] = sessionNum;
+								windowList[z]["Owning User"] = theUser;
+								windowList[z]["Owning Session"] = curSession;
+								if(!firstEntry)
+								{
+									toReturn[toReturn.length - 1]["End MS Universal"] = windowList[z]["Index MS Universal"];
+									toReturn[toReturn.length - 1]["End MS User"] = windowList[z]["Index MS User"];
+									toReturn[toReturn.length - 1]["End MS Session"] = windowList[z]["Index MS Session"];
+									toReturn[toReturn.length - 1]["Next"] = windowList[z];
+								}
+								firstEntry = false;
+								if(timeMode == "Session")
+								{
+									windowList[z]["Time Scale Session"] = theNormData[theUser][curSession]["Time Scale"];
+								}
+								else if(timeMode == "User")
+								{
+									windowList[z]["Time Scale User"] = theNormData[theUser]["Time Scale"];
+								}
+								else if(timeMode == "Universal")
+								{
+									windowList[z]["Time Scale Universal"] = theNormData["Time Scale"];
+								}
+								toReturn.push(windowList[z]);
+								if(!(theUser in lookupTable))
+								{
+									lookupTable[theUser] = {};
+								}
+								if(!(curSession in lookupTable[theUser]))
+								{
+									lookupTable[theUser][curSession] = {};
+									lookupTable[theUser][curSession]["Screenshots"] = {};
+								}
+								if(!("Screenshots" in lookupTable[theUser][curSession]))
+								{
+									lookupTable[theUser][curSession]["Screenshots"] = {};
+								}
+								lookupTable[theUser][curSession]["Screenshots"][windowList[z]["Index MS"]] = windowList[z];
+							}
+							toReturn[toReturn.length - 1]["End MS Session"] = theNormData[theUser][curSession]["Index MS Session Max"];
+							toReturn[toReturn.length - 1]["End MS User"] = theNormData[theUser][curSession]["Index MS Session Max"] + theNormData[theUser][curSession]["Index MS User Session Min"];
+							toReturn[toReturn.length - 1]["End MS Universal"] = theNormData[theUser][curSession]["Index MS Session Max"] + theNormData[theUser][curSession]["Index MS User Session Min"] + theNormData[theUser]["Index MS Universal Min"];
+							sessionNum++;
+						}
+						userNum++;
+					}
+					screenshotTimeline = toReturn;
+					return toReturn;
+				})
+		.enter()
+		.append("rect")
+		.attr("x", function(d, i)
+				{
+					if(timeMode == "Session")
+					{
+						return d["Time Scale Session"](d["Index MS Session"]) + xAxisPadding;
+					}
+					else if(timeMode == "User")
+					{
+						return d["Time Scale User"](d["Index MS User"]) + xAxisPadding;
+					}
+					else if(timeMode == "Universal")
+					{
+						return d["Time Scale Universal"](d["Index MS Universal"]) + xAxisPadding;
+					}
+					return 0;
+				})
+		.attr("width", function(d, i)
+				{
+					if(timeMode == "Session")
+					{
+						return d["Time Scale Session"](d["End MS Session"] - d["Index MS Session"]);
+					}
+					else if(timeMode == "User")
+					{
+						return d["Time Scale User"](d["End MS User"] - d["Index MS User"]);
+					}
+					else if(timeMode == "Universal")
+					{
+						return d["Time Scale Universal"](d["End MS Universal"] - d["Index MS Universal"]);
+					}
+					return timeScale(d["End Time MS"] - d["Start Time MS"]) -1;
+				})
+		.attr("y", function(d, i)
+				{
+					
+					return d["Session Order"] * barHeight * 2 + d["User Order"] * barHeight + barHeight + barHeight / 2;
+				})
+		.attr("height", barHeight / 2)
+		.attr("stroke", "black")
+		.attr("stroke-width", xAxisPadding / 100)
+		.attr("fill", function(d, i)
+				{
+					return colorScale(i % 20);
+				})
+		.attr("initFill", function(d, i)
+				{
+					return colorScale(i % 20);
+				})
+		.attr("id", function(d, i)
+				{
+					return "screenshot_" + d["Hash"];
+				})
+		.attr("opacity", .9);
+		
+		
+		//Tick for animation
+		var timelineTick = svg.append("rect").style("pointer-events", "none");
+		var timelineText = svg.append("text")
+			.style("fill", "Crimson")
+			.style("pointer-events", "none")
+			.style("font-size", barHeight / 4)
+			.style("dominant-baseline", "hanging");
 		
 		var axisBars = svg.append("g")
 		.selectAll("rect")
@@ -2242,24 +2425,84 @@ function fadeOutLightbox()
 		.append("rect")
 		.attr("x", xAxisPadding)
 		.attr("width", visWidth - xAxisPadding)
-		.attr("height", barHeight / 4)
+		.attr("height", barHeight / 2)
 		.attr("y", function(d, i)
 				{
+					if(!(d["User"] in userSessionAxisY))
+					{
+						userSessionAxisY[d["User"]] = {}
+					}
+					if(!(d["Session"] in userSessionAxisY[d["User"]]))
+					{
+						userSessionAxisY[d["User"]][d["Session"]] = {};
+					}
+					//console.log(userSessionAxisY);
 					toReturn = d["User Number"] * barHeight;
 					toReturn += barHeight * 2 * i;
-					toReturn -= barHeight / 4;
+					toReturn -= barHeight / 2;
 					toReturn += barHeight * 2;
+					
+					userSessionAxisY[d["User"]][d["Session"]]["y"] = toReturn;
+					
 					return toReturn;
 				})
 		.attr("fill", "#FFF")
-		.attr("opacity", ".85")
-		.attr("z", 2);
+		.attr("opacity", ".75")
+		.attr("z", 2)
+		.on("mousemove", function(d, i)
+				{
+					var curX = d3.mouse(this)[0];
+					var curY = d3.mouse(this)[1];
+					//console.log(curX + ", " + curY);
+					//console.log(this);
+					timelineTick.attr("x", curX)
+								.attr("y", function()
+										{
+											return userSessionAxisY[d["User"]][d["Session"]]["y"];
+										})
+								.attr("height", barHeight / 4)
+								.attr("width",  xAxisPadding / 50);
+					timelineTick.raise();
+					timelineText.attr("x", curX + xAxisPadding / 50)
+							.attr("y", function()
+							{
+								return userSessionAxisY[d["User"]][d["Session"]]["y"];
+							})
+							.text(function()
+									{
+										userName = d["User"];
+										sessionName = d["Session"];
+										//var scale = theNormData[userName][sessionName]["Time Scale"];
+										maxSession = Number(theNormData[userName][sessionName]["Index MS Session Max"]);
+										minSession = theNormData[userName]["Index MS User Min Absolute"] + theNormData[userName][sessionName]["Index MS User Session Min"];
+										scale = d3.scaleLinear();
+										scale.range([0, maxSession / 60000]);
+										scale.domain([xAxisPadding, visWidth]);
+										d3.select("#screenshotDiv")
+												.selectAll("*")
+												.remove();
+										d3.select("#screenshotDiv")
+												.append("img")
+												.attr("width", "100%")
+												.attr("src", "./getClosestScreenshot.jpg?username=" + userName + "&timestamp=" + getClosestScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Index MS"] + "&session=" + getClosestScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Original Session"] + "&event=" + eventName)
+												.attr("style", "cursor:pointer;")
+												.on("click", function()
+														{
+															showLightbox("<tr><td><div width=\"100%\"><img src=\"./getClosestScreenshot.jpg?username=" + userName + "&timestamp=" + getClosestScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Index MS"] + "&session=" + getClosestScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Original Session"] + "&event=" + eventName + "\" style=\"width: 100%;\"></div></td></tr>");
+														});
+										//showLightbox("<tr><td><div width=\"100%\"><img src=\"./getClosestScreenshot.jpg?username=" + userName + "&timestamp=" + getClosestScreenshot(userName, sessionName, screenshotIndex)["Index MS"] + "&session=" + sessionName + "&event=" + eventName + "\" style=\"width: 100%;\"></div></td></tr>");
+										//console.log(minSession + (scale(curX) * 60000));
+										return scale(curX)
+									});
+					timelineText.raise();
+				});
 		
 		var axisUnits = svg.append("g")
 		.selectAll("text")
 		.data(sessionList)
 		.enter()
 		.append("text")
+		.style("pointer-events", "none")
 		.style("font-size", (barHeight / 8) + "px")
 		.style("font-weight", "bolder")
 		.attr("font-size", (barHeight / 8) + "px")
@@ -2270,12 +2513,64 @@ function fadeOutLightbox()
 					toReturn = d["User Number"] * barHeight;
 					toReturn += barHeight * 2 * i;
 					toReturn -= barHeight / 16;
+					toReturn += barHeight * 2;
 					return toReturn;
 				})
 		.attr("fill", "#000")
 		.attr("opacity", "1")
 		.text("Minutes")
 		.attr("z", 2);
+		
+		var screenshotLabel = svg.append("g")
+		.selectAll("text")
+		.data(sessionList)
+		.enter()
+		.append("text")
+		.style("pointer-events", "none")
+		.style("font-size", (barHeight / 8) + "px")
+		.style("font-weight", "bolder")
+		.attr("font-size", (barHeight / 8) + "px")
+		.attr("dominant-baseline", "middle")
+		.attr("x", xAxisPadding + xAxisPadding / 25)
+		.attr("y", function(d, i)
+				{
+					toReturn = d["User Number"] * barHeight;
+					toReturn += barHeight * 2 * i;
+					toReturn -= barHeight / 16;
+					toReturn += barHeight * 2;
+					toReturn -= barHeight / 4;
+					return toReturn;
+				})
+		.attr("fill", "#000")
+		.attr("opacity", "1")
+		.text("Screenshots")
+		.attr("z", 2);
+		
+		var windowLabel = svg.append("g")
+		.selectAll("text")
+		.data(sessionList)
+		.enter()
+		.append("text")
+		.style("pointer-events", "none")
+		.style("font-size", (barHeight / 8) + "px")
+		.style("font-weight", "bolder")
+		.attr("font-size", (barHeight / 8) + "px")
+		.attr("dominant-baseline", "middle")
+		.attr("x", xAxisPadding + xAxisPadding / 25)
+		.attr("y", function(d, i)
+				{
+					toReturn = d["User Number"] * barHeight;
+					toReturn += barHeight * 2 * i;
+					toReturn -= barHeight / 16;
+					toReturn += barHeight * 2;
+					toReturn -= barHeight / 2;
+					return toReturn;
+				})
+		.attr("fill", "#000")
+		.attr("opacity", "1")
+		.text("Active Window")
+		.attr("z", 2);
+		
 		
 		var sessionAxes = svg.append("g")
 		.selectAll("g")
@@ -2297,6 +2592,7 @@ function fadeOutLightbox()
 				})
 		.attr("fill", "#FFF")
 		.attr("z", 2)
+		.style("pointer-events", "none")
 		.attr("transform", function(d, i)
 				{
 					toReturn = d["User Number"] * barHeight;
@@ -2317,7 +2613,11 @@ function fadeOutLightbox()
 						.scale(scale).tickSize(barHeight / 16);
 					
 					axis(d3.select(this));
+					d3.selectAll(this).select("*").style("pointer-events", "none");
 				});
+		
+		
+		
 		
 		var sessionLabels = svg.append("g")
 		.selectAll("text")
@@ -2337,14 +2637,21 @@ function fadeOutLightbox()
 					var sessionName = sessionList[sess]["Session"];
 					
 					sessionName += '\n';
-					sessionName += "From:"
-					sessionName += '\n';
+					//sessionName += "Fr:"
+					//sessionName += '\n';
 					sessionName += minDate;
-					sessionName += '\n';
-					sessionName += "To:"
-					sessionName += '\n';
+					sessionName += '\nTo\n';
+					//sessionName += "To:"
+					//sessionName += '\n';
 					sessionName += maxDate;
-					
+					if(sessionList[sess]["Session"] != "Aggregated")
+					{
+						sessionName += '\n';
+						sessionName += normEntry["environment"][0]["Environment"].substring(0, 20) + "...";
+						sessionName += '\n';
+						sessionName += 'Up:';
+						sessionName += normEntry["environment"][0]["UploadTime"];
+					}
 					var line = 0;
 					var position = 0;
 					for(var i = 0; i < sessionName.length; i++)
@@ -2979,11 +3286,11 @@ function fadeOutLightbox()
 	{
 		
 		var addTaskRow = d3.select("#infoTable").append("tr").append("td")
-		.attr("width", visWidth + "px")
-		.html("<td><div align=\"center\">Task Occurances in Sessions</div></td>");
+		.attr("width", visWidthParent + "px")
+		.html("<td><div align=\"center\">Process Occurances in Sessions</div></td>");
 	
-		var newSVG = d3.select("#infoTable").append("tr").append("td").style("max-width", visWidth + "px").style("overflow-x", "scroll").append("svg")
-			.attr("width", ((visWidth / 15) * summaryProcStatsArray.length)  + "px")
+		var newSVG = d3.select("#infoTable").append("tr").append("td").style("max-width", visWidthParent + "px").style("overflow-x", "scroll").append("svg")
+			.attr("width", ((visWidthParent / 15) * summaryProcStatsArray.length)  + "px")
 			.attr("height", bottomVisHeight  + "px")
 			.append("g");
 		
@@ -3006,11 +3313,11 @@ function fadeOutLightbox()
 			.append("rect")
 					.attr("x", function(d, i)
 							{
-								return i * (visWidth / 15) + (visWidth / 60);
+								return i * (visWidthParent / 15) + (visWidthParent / 60);
 							})
 					.attr("width", function(d, i)
 							{
-								return (visWidth / 20);
+								return (visWidthParent / 20);
 							})
 					.attr("y", function(d, i)
 							{
@@ -3029,7 +3336,7 @@ function fadeOutLightbox()
 					{
 						processTooltip.text(d["Command"] + ": " + d["count"])
 								.attr("y", (bottomVisHeight - d["count"] / summaryProcStats["Max"] * bottomVisHeight + (xAxisPadding / 10)) + "px")
-								.attr("x", i * (visWidth / 15) + (visWidth / 60) + "px");
+								.attr("x", i * (visWidthParent / 15) + (visWidthParent / 60) + "px");
 					});
 					
 		
@@ -3039,7 +3346,7 @@ function fadeOutLightbox()
 		.append("text")
 				.attr("x", function(d, i)
 						{
-							return i * (visWidth / 15) + (visWidth / 60) + (visWidth / 40);
+							return i * (visWidthParent / 15) + (visWidthParent / 60) + (visWidthParent / 40);
 						})
 				.attr("y", function(d, i)
 						{
@@ -3070,7 +3377,7 @@ function fadeOutLightbox()
 		.append("text")
 				.attr("x", function(d, i)
 						{
-							return i * (visWidth / 15) + (visWidth / 60) + (visWidth / 40);
+							return i * (visWidthParent / 15) + (visWidthParent / 60) + (visWidthParent / 40);
 						})
 				.attr("y", function(d, i)
 						{
@@ -3259,12 +3566,12 @@ function fadeOutLightbox()
 		}
 		
 		var addTaskRow = d3.select("#infoTable").append("tr").append("td")
-			.attr("width", visWidth + "px")
+			.attr("width", visWidthParent + "px")
 			.html("<td><div align=\"center\">Add Task</div></td>");
 		
 		var addTaskRow = d3.select("#infoTable").append("tr").append("td")
-		.attr("width", visWidth + "px")
-				.append("table").attr("width", visWidth + "px").append("tr").attr("width", visWidth + "px")
+		.attr("width", visWidthParent + "px")
+				.append("table").attr("width", visWidthParent + "px").append("tr").attr("width", visWidthParent + "px")
 					.html("<td width=\"25%\"><div align=\"center\"><input type=\"text\" id=\"addTaskStart\" name=\"addTaskStart\" value=\"Start (MS Session Time)\"></div></td>" +
 							"<td width=\"25%\"><div align=\"center\"><input type=\"text\" id=\"addTaskEnd\" name=\"addTaskEnd\" value=\"End (MS Session Time)\"></div></td>" +
 							"<td width=\"25%\"><div align=\"center\"><input type=\"text\" id=\"addTaskName\" name=\"addTaskName\" value=\"Task Name\"></div></td>" +
@@ -3315,7 +3622,7 @@ function fadeOutLightbox()
 		
 		var addTaskAxisSVG = d3.select("#infoTable").append("tr").append("td").append("svg")
 				.attr("class", "clickableBar")
-				.attr("width", visWidth + "px")
+				.attr("width", visWidthParent + "px")
 				.attr("height", (barHeight / 1.75) + "px")
 				//.on("mousedown", function(d)
 				//		{
@@ -3349,7 +3656,7 @@ function fadeOutLightbox()
 		
 		
 		var newSVG = d3.select("#infoTable").append("tr").append("td").append("svg")
-			.attr("width", visWidth + "px")
+			.attr("width", visWidthParent + "px")
 			.attr("height", bottomVisHeight + "px")
 			.append("g");
 		
@@ -3544,7 +3851,7 @@ function fadeOutLightbox()
 							.attr("height", (processTooltip.node().getBoundingClientRect().height));
 						}
 						
-						if(processTooltipRect.attr("x") > visWidth / 2)
+						if(processTooltipRect.attr("x") > visWidthParent / 2)
 						{
 							processTooltipRect.attr("x", processTooltipRect.attr("x") - (bottomVisHeight / 25) - (processTooltipRect.attr("width") + (0)));
 							processTooltip.selectAll("*").attr("x", processTooltip.attr("x") - (bottomVisHeight / 25) - (processTooltipRect.attr("width") + (0)));
@@ -3993,15 +4300,55 @@ function fadeOutLightbox()
 	        }
 	        middleIndex = Math.floor((lastIndex + firstIndex)/2);
 	    }
-
+	    var curDiff = Math.abs(value - items[middleIndex]["Index MS"]);
+	    var nextDiff = Infinity;
+	    var prevDiff = Infinity;
+	    
+	    if(items[middleIndex + 1])
+	    {
+	    	nextDiff = Math.abs(value - items[middleIndex + 1]["Index MS"]);
+	    }
+	    if(items[middleIndex - 1])
+	    {
+	    	prevDiff = Math.abs(value - items[middleIndex - 1]["Index MS"]);
+	    }
+	    if(curDiff > nextDiff)
+	    {
+	    	if(nextDiff > prevDiff)
+	    	{
+	    		return middleIndex - 1;
+	    	}
+	    	return middleIndex + 1;
+	    }
+	    if(curDiff > prevDiff)
+	    {
+	    	return middleIndex - 1;
+	    }
+	    
 	 return middleIndex;
 	}
+	
+	var prevScreenshot;
 	
 	function getClosestScreenshot(userName, sessionName, indexMS)
 	{
 		var screenshotIndexArray = theNormDataClone[userName][sessionName]["screenshots"];
 		var finalScreenshot = screenshotIndexArray[closestIndexMSBinary(screenshotIndexArray, indexMS)];
-		console.log(finalScreenshot);
+		//console.log(finalScreenshot);
+		var curHash = SHA256(userName + sessionName + finalScreenshot["Index MS"])
+		var nextScreenshot = d3.select("#" + "screenshot_" + curHash);
+		if(prevScreenshot)
+		{
+			if(prevScreenshot.attr("id") == nextScreenshot.attr("id"))
+			{
+				return finalScreenshot;
+			}
+			prevScreenshot.attr("fill", prevScreenshot.attr("initFill"));
+			prevScreenshot.attr("stroke", "Black");
+		}
+		nextScreenshot.attr("stroke", "Crimson");
+		nextScreenshot.attr("fill", "Black");
+		prevScreenshot = nextScreenshot;
 		return finalScreenshot;
 	}
 	
@@ -4185,7 +4532,7 @@ function fadeOutLightbox()
 							//{
 							//	return d;
 							//}
-							return "<td width=\"12.5%\" style=\" max-width:" + (.125 * visWidth) + "px\">" + d["key1"] + "</td>" + "<td width=\"37.5%\" style=\" max-width:" + (.375 * visWidth) + "px; overflow-x:auto;\">" + d["value1"] + "</td>" + "<td width=\"12.5%\" style=\" max-width:" + (.125 * visWidth) + "px\">" + d["key2"] + "</td>" + "<td width=\"37.5%\" style=\" max-width:" + (.375 * visWidth) + "px; overflow-x:auto;\">" + d["value2"] + "</td>";
+							return "<td width=\"12.5%\" style=\" max-width:" + (.125 * visWidthParent) + "px\">" + d["key1"] + "</td>" + "<td width=\"37.5%\" style=\" max-width:" + (.375 * visWidthParent) + "px; overflow-x:auto;\">" + d["value1"] + "</td>" + "<td width=\"12.5%\" style=\" max-width:" + (.125 * visWidthParent) + "px\">" + d["key2"] + "</td>" + "<td width=\"37.5%\" style=\" max-width:" + (.375 * visWidthParent) + "px; overflow-x:auto;\">" + d["value2"] + "</td>";
 						});
 		
 		//console.log(curSlot);

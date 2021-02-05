@@ -100,6 +100,7 @@ public class DatabaseConnector
 	private String selectTaskEvents = "SELECT * FROM `TaskEvent` WHERE `event` = ? AND `adminEmail` = ? AND `username` = ? AND `session` = ? AND `taskName` = ? AND `startTimestamp` = FROM_UNIXTIME(? / 1000)";
 	private String deleteTask = "DELETE FROM `Task` WHERE `event` = ? AND `adminEmail` = ? AND `username` = ? AND `session` = ? AND `taskName` = ? AND `startTimestamp` = FROM_UNIXTIME(? / 1000)";
 	
+	private String sessionDetailsQuery = "SELECT * FROM `openDataCollectionServer`.`User` WHERE `event` = ? AND `adminEmail` = ? ORDER BY `insertTimestamp` ASC";
 	
 	private TestingConnectionSource mySource;
 	
@@ -1127,6 +1128,99 @@ public class DatabaseConnector
 					sessionMap.put("events", new ArrayList());
 				}
 				ArrayList eventList = (ArrayList) sessionMap.get("events");
+				
+				eventList.add(nextRow);
+				//myReturn.add(nextRow);
+			}
+			stmt = myStatement;
+			rset = myResults;
+			
+			rset.close();
+			stmt.close();
+			conn.close();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+            try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
+		
+		return myReturn;
+	}
+	
+	public ConcurrentHashMap getSessionDetailsHierarchy(String event, String admin, ArrayList usersToSelect)
+	{
+		ConcurrentHashMap myReturn = new ConcurrentHashMap();
+		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
+		conn = myConnector;
+		
+		String taskQuery = sessionDetailsQuery;
+		String userSelectString = "";
+		if(!usersToSelect.isEmpty())
+		{
+			userSelectString = "AND `User`.`username` IN (";
+			for(int x=0; x<usersToSelect.size(); x++)
+			{
+				userSelectString += "?";
+				if(!(x + 1 == usersToSelect.size()))
+				{
+					userSelectString += ", ";
+				}
+			}
+			userSelectString += ")";
+			taskQuery = taskQuery.replace("`User`.`adminEmail` = ?", "`User`.`adminEmail` = ? " + userSelectString);
+		}		
+		try
+		{
+			System.out.println(taskQuery);
+			PreparedStatement myStatement = myConnector.prepareStatement(taskQuery);
+			myStatement.setString(1, event);
+			myStatement.setString(2, admin);
+			for(int x=0; x < usersToSelect.size(); x++)
+			{
+				myStatement.setString(3 + x, (String) usersToSelect.get(x));
+			}
+			ResultSet myResults = myStatement.executeQuery();
+			while(myResults.next())
+			{
+				ConcurrentHashMap nextRow = new ConcurrentHashMap();
+				
+				//nextRow.put("Username", myResults.getString("username"));
+				String userName = myResults.getString("username");
+				//nextRow.put("Session", myResults.getString("session"));
+				String sessionName = myResults.getString("session");
+				nextRow.put("UploadTime", myResults.getTimestamp("insertTimestamp", cal));
+				//nextRow.put("Index", myResults.getTimestamp("insertTimestamp", cal));
+				nextRow.put("Environment", myResults.getString("sessionEnvironment"));
+				
+				
+				if(!myReturn.containsKey(userName))
+				{
+					myReturn.put(userName, new ConcurrentHashMap());
+				}
+				ConcurrentHashMap userMap = (ConcurrentHashMap) myReturn.get(userName);
+				
+				if(!userMap.containsKey(sessionName))
+				{
+					userMap.put(sessionName, new ConcurrentHashMap());
+				}
+				ConcurrentHashMap sessionMap = (ConcurrentHashMap) userMap.get(sessionName);
+				
+				if(!sessionMap.containsKey("environment"))
+				{
+					sessionMap.put("environment", new ArrayList());
+				}
+				ArrayList eventList = (ArrayList) sessionMap.get("environment");
 				
 				eventList.add(nextRow);
 				//myReturn.add(nextRow);
