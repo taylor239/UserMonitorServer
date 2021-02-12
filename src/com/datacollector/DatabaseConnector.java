@@ -62,6 +62,7 @@ public class DatabaseConnector
 	private String taskQuery = "SELECT * FROM `openDataCollectionServer`.`Task` LEFT JOIN `TaskEvent` ON `Task`.`username` = `TaskEvent`.`username` AND `Task`.`event` = `TaskEvent`.`event` AND `Task`.`adminEmail` = `TaskEvent`.`adminEmail` AND `Task`.`taskName` = `TaskEvent`.`taskName` WHERE `Task`.`event` = ? AND `Task`.`adminEmail` = ? ORDER BY `TaskEvent`.`eventTime`, `TaskEvent`.`insertTimestamp` ASC";
 	
 	private String imageQuery = "SELECT * FROM `openDataCollectionServer`.`Screenshot` WHERE `username` = ? AND `session` = ? AND `event` = ? AND `adminEmail` = ? ORDER BY abs(? - (UNIX_TIMESTAMP(`taken`) * 1000)) LIMIT 1";
+	private String imageQueryExact = "SELECT * FROM `openDataCollectionServer`.`Screenshot` WHERE `username` = ? AND `session` = ? AND `event` = ? AND `adminEmail` = ? AND (UNIX_TIMESTAMP(`taken`) * 1000) = ?";
 	
 	private String allImageQuery = "SELECT * FROM `openDataCollectionServer`.`Screenshot` WHERE `event` = ? AND `adminEmail` = ? ORDER BY `taken`, `insertTimestamp` ASC";
 	
@@ -2581,6 +2582,59 @@ public class DatabaseConnector
             try { if (stmt != null) stmt.close(); } catch(Exception e) { }
             try { if (conn != null) conn.close(); } catch(Exception e) { }
         }
+		
+		return myReturn;
+	}
+	
+	public byte[] getScreenshotExact(String username, String session, String myTimestamp, String event, String admin)
+	{
+		//System.out.println("Got to method");
+		byte[] myReturn = null;
+		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
+		//System.out.println("Got connection");
+		conn = myConnector;
+		try
+		{
+			PreparedStatement myStatement = myConnector.prepareStatement(imageQueryExact);
+			myStatement.setString(1, username);
+			myStatement.setString(2, session);
+			myStatement.setString(3, event);
+			myStatement.setString(4, admin);
+			myStatement.setString(5, myTimestamp);
+			//System.out.println(myTimestamp);
+			//myStatement.setString(3, myTimestamp);
+			//System.err.println(myStatement.toString());
+			ResultSet myResults = myStatement.executeQuery();
+			while(myResults.next())
+			{
+				byte[] imageBytes = myResults.getBytes("screenshot");
+				//BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
+				myReturn = imageBytes;
+			}
+			stmt = myStatement;
+			rset = myResults;
+			
+			rset.close();
+			stmt.close();
+			conn.close();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+            try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
+		
+		//System.out.println("Finished query");
 		
 		return myReturn;
 	}

@@ -352,6 +352,7 @@ function fadeInLightbox()
 
 function unshowLightbox()
 {
+	clearTimeout(animationTimeout);
 	clearTimeout(lightBoxTimeout);
 	
 	var oldWhiteDiv=document.getElementById('light');
@@ -615,7 +616,7 @@ function fadeOutLightbox()
 	{
 		for(user in dataToModify)
 		{
-			console.log(dataToModify);
+			//console.log(dataToModify);
 			aggregateSession = {}
 			listsToAdd = {}
 			newSession = {}
@@ -845,7 +846,7 @@ function fadeOutLightbox()
 				});
 		summaryProcStats["Max"] = maxProc;
 		summaryProcStats["Min"] = minProc;
-		console.log(summaryProcStatsArray);
+		//console.log(summaryProcStatsArray);
 		return dataToFilter;
 	}
 	
@@ -908,7 +909,7 @@ function fadeOutLightbox()
 	
 	function downloadData()
 	{
-		d3.json("logExport.json?event=" + eventName + "&datasources=keystrokes,mouse,processes,windows,events,screenshotindices,environment&normalize=none", function(error, data)
+		d3.json("logExport.json?event=" + eventName + "&datasources=keystrokes,mouse,processes,windows,events,environment,screenshots&normalize=none", function(error, data)
 				{
 					theNormData = preprocess(data);
 					theNormDataClone = JSON.parse(JSON.stringify(theNormData));
@@ -955,9 +956,8 @@ function fadeOutLightbox()
 		d3.select(visTable).style("max-width", (visWidthParent + visPadding) + "px");
 		
 		var timelineZoom = Number(document.getElementById("timelineZoom").value);
-		visWidth = (containingTableRow.offsetWidth - visPadding) * timelineZoom;
+		visWidth = (visWidthParent) * timelineZoom;
 		
-		console.log()
 		if(needsUpdate)
 		{
 			d3.select("#mainVisualization").selectAll("*").remove();
@@ -1693,6 +1693,73 @@ function fadeOutLightbox()
 		//.classed("clickableBar", true)
 		.attr("z", 2);
 		
+		var foregroundTextG = svg.append("g");
+		
+		/*
+		var foregroundText = foregroundTextG
+		.selectAll("text")
+		.data(windowTimeline)
+		.enter()
+		.append("text")
+		.attr("x", function(d, i)
+				{
+					if(timeMode == "Session")
+					{
+						return d["Time Scale Session"](d["Index MS Session"]) + xAxisPadding;
+					}
+					else if(timeMode == "User")
+					{
+						return d["Time Scale User"](d["Index MS User"]) + xAxisPadding;
+					}
+					else if(timeMode == "Universal")
+					{
+						return d["Time Scale Universal"](d["Index MS Universal"]) + xAxisPadding;
+					}
+					return 0;
+				})
+		.attr("y", function(d, i)
+				{
+					
+					return d["Session Order"] * barHeight * 2 + d["User Order"] * barHeight + barHeight + xAxisPadding / 50;
+				})
+		.attr("fill", function(d, i)
+				{
+					if(windowColorNumber[d["FirstClass"]] % 2 == 1)
+					{
+						return "Black"
+					}
+					return "White"
+				})
+		.attr("textLength", function(d, i)
+				{
+					if(timeMode == "Session")
+					{
+						return d["Time Scale Session"](d["End MS Session"] - d["Index MS Session"]) + "px";
+					}
+					else if(timeMode == "User")
+					{
+						return d["Time Scale User"](d["End MS User"] - d["Index MS User"]) + "px";
+					}
+					else if(timeMode == "Universal")
+					{
+						return d["Time Scale Universal"](d["End MS Universal"] - d["Index MS Universal"]) + "px";
+					}
+					return (timeScale(d["End Time MS"] - d["Start Time MS"]) -1) + "px";
+				})
+		.attr("font-size", barHeight / 4)
+		.attr("dominant-baseline", "hanging")
+		.style("pointer-events", "none")
+		.attr("clip-path", function(d, i)
+				{
+					return "url(#ellipse-clip)";
+				})
+		.attr("opacity", 1)
+		.text(function(d, i)
+				{
+					return d["Name"];
+				});
+		*/
+		
 		var eventTimeline;
 		var eventTypeNumbers = {};
 		var eventTypeArray = [];
@@ -1765,12 +1832,12 @@ function fadeOutLightbox()
 								eventsList[z]["User Order"] = userNum;
 								eventsList[z]["Session Order"] = sessionNum;
 								
-								if(!(eventsList[z]["Description"] in eventTypeNumbers))
+								if(!(eventsList[z]["Source"] in eventTypeNumbers))
 								{
 									var eventType = {};
-									eventType["Description"] = eventsList[z]["Description"];
+									eventType["Source"] = eventsList[z]["Source"];
 									eventType["Number"] = Object.keys(eventTypeNumbers).length % 8;
-									eventTypeNumbers[eventType["Description"]] = eventType;
+									eventTypeNumbers[eventType["Source"]] = eventType;
 									eventTypeArray.push(eventType);
 								}
 								
@@ -1970,7 +2037,7 @@ function fadeOutLightbox()
 		.attr("stroke-width", xAxisPadding / 100)
 		.attr("fill", function(d, i)
 				{
-					return colorScaleAccent(eventTypeNumbers[d["Description"]]["Number"]);
+					return colorScaleAccent(eventTypeNumbers[d["Source"]]["Number"]);
 				})
 		.attr("opacity", 1)
 		.on("click", function(d, i)
@@ -2181,8 +2248,8 @@ function fadeOutLightbox()
 					curStroke = this;
 					showSession(d["User"], d["Session"]);
 					
-					curPlayButton = d3.select(("#playbutton_" + SHA256(d["User"] + d["Session"]))).attr("fill", "red");
-					curPlayLabel = d3.select(("#playbutton_label_" + SHA256(d["User"] + d["Session"]))).text("Pause");
+					//curPlayButton = d3.select(("#playbutton_" + SHA256(d["User"] + d["Session"]))).attr("fill", "red");
+					//curPlayLabel = d3.select(("#playbutton_label_" + SHA256(d["User"] + d["Session"]))).text("Pause");
 					playAnimation(d["User"], d["Session"]);
 				});
 		
@@ -2484,13 +2551,15 @@ function fadeOutLightbox()
 										d3.select("#screenshotDiv")
 												.append("img")
 												.attr("width", "100%")
-												.attr("src", "./getClosestScreenshot.jpg?username=" + userName + "&timestamp=" + getClosestScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Index MS"] + "&session=" + getClosestScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Original Session"] + "&event=" + eventName)
+												.attr("src", "data:image/jpg;base64," + getScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Screenshot"])
+												//.attr("src", "./getScreenshot.jpg?username=" + userName + "&timestamp=" + getScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Index MS"] + "&session=" + getScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Original Session"] + "&event=" + eventName)
 												.attr("style", "cursor:pointer;")
 												.on("click", function()
 														{
-															showLightbox("<tr><td><div width=\"100%\"><img src=\"./getClosestScreenshot.jpg?username=" + userName + "&timestamp=" + getClosestScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Index MS"] + "&session=" + getClosestScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Original Session"] + "&event=" + eventName + "\" style=\"width: 100%;\"></div></td></tr>");
+															//showLightbox("<tr><td><div width=\"100%\"><img src=\"./getScreenshot.jpg?username=" + userName + "&timestamp=" + getScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Index MS"] + "&session=" + getScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Original Session"] + "&event=" + eventName + "\" style=\"width: 100%;\"></div></td></tr>");
+															showLightbox("<tr><td><div width=\"100%\"><img src=\""+ "data:image/jpg;base64," + getScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Screenshot"] + "\" style=\"width: 100%;\"></div></td></tr>");
 														});
-										//showLightbox("<tr><td><div width=\"100%\"><img src=\"./getClosestScreenshot.jpg?username=" + userName + "&timestamp=" + getClosestScreenshot(userName, sessionName, screenshotIndex)["Index MS"] + "&session=" + sessionName + "&event=" + eventName + "\" style=\"width: 100%;\"></div></td></tr>");
+										//showLightbox("<tr><td><div width=\"100%\"><img src=\"./getScreenshot.jpg?username=" + userName + "&timestamp=" + getScreenshot(userName, sessionName, screenshotIndex)["Index MS"] + "&session=" + sessionName + "&event=" + eventName + "\" style=\"width: 100%;\"></div></td></tr>");
 										//console.log(minSession + (scale(curX) * 60000));
 										return scale(curX)
 									});
@@ -2725,7 +2794,7 @@ function fadeOutLightbox()
 		.attr("text-anchor", "middle")
 		.style("pointer-events", "none")
 		//.attr("font-weight", "bolder")
-		.text("Task Events:");
+		.text("Task Annotation Source:");
 
 		var legendEvents = legendSVG.append("g")
 		.selectAll("rect")
@@ -2764,7 +2833,7 @@ function fadeOutLightbox()
 		.attr("height", legendHeight * .75)
 		.text(function(d, i)
 				{
-					return d["Description"];
+					return d["Source"];
 				})
 		.attr("fill", function(d, i)
 				{
@@ -3402,8 +3471,301 @@ function fadeOutLightbox()
 		
 	}
 	
+	var animationTimeout;
+	
+	var degradeCoefficient = 60000;
+	
 	function playAnimation(owningUser, owningSession)
 	{
+		showLightbox("<tr><td id=\"animationRow\"><div id=\"animationDiv\" width=\"100%\" height=\"100%\"></div></td></tr>");
+		
+		var playbackSpeedMultiplier = Number(document.getElementById("playbackSpeed").value);
+		
+		var aniRow = d3.select("#animationRow");
+		var aniDiv = d3.select("#animationDiv");
+		
+		var divBounds = aniRow.node().getBoundingClientRect();
+		
+		//console.log(divBounds);
+		
+		var animationSvg = aniDiv.append("svg")
+			.attr("width", divBounds["width"])
+			.attr("height", divBounds["height"]);
+		
+		var animationG = animationSvg.append("g");
+		
+		var curScreenshot = animationG.append("image")
+			.attr("width", divBounds["width"])
+			.attr("height", divBounds["height"])
+			//.attr("preserveAspectRatio", "xMidYMid meet");
+			.attr("preserveAspectRatio", "none");
+		
+		var screenshots = theNormData[owningUser][owningSession]["screenshots"];
+		var keystrokes = theNormData[owningUser][owningSession]["keystrokes"];
+		var mouse = theNormData[owningUser][owningSession]["mouse"];
+		
+		var curTimer = 0;
+		var screenshotIndex = 0;
+		var keystrokesIndex = 0;
+		var mouseIndex = 0;
+		
+		function nextFrame()
+		{
+			var screenshotTime = Infinity;
+			if(screenshotIndex < screenshots.length)
+			{
+				screenshotTime = Number(screenshots[screenshotIndex]["Index MS Session"]);
+			}
+			var keystrokesTime = Infinity;
+			if(keystrokesIndex < keystrokes.length)
+			{
+				keystrokesTime = Number(keystrokes[keystrokesIndex]["Index MS Session"]);
+			}
+			var mouseTime = Infinity;
+			if(mouseIndex < mouse.length)
+			{
+				mouseTime = Number(mouse[mouseIndex]["Index MS Session"]);
+			}
+			
+			if(screenshotTime < keystrokesTime)
+			{
+				if(screenshotTime < mouseTime)
+				{
+					screenshotIndex++;
+					return screenshots[screenshotIndex - 1];
+				}
+				else
+				{
+					mouseIndex++;
+					return mouse[mouseIndex - 1];
+				}
+			}
+			else if(mouseTime < keystrokesTime)
+			{
+				mouseIndex++;
+				return mouse[mouseIndex - 1];
+			}
+			else
+			{
+				keystrokesIndex++;
+				return keystrokes[keystrokesIndex - 1];
+			}
+		}
+		
+		var lastFrame;
+		var lastImg = new Image();
+		
+		var lastMouseClicks = [];
+		
+		var keyboardInputs = [];
+		
+		var curKeyInput = animationG.append("text").attr("x", 0)
+							.attr("y", 0)
+							.text("")
+							.attr("text", "")
+							.attr("font-size", 0);
+		
+		keyboardInputs.unshift(curKeyInput);
+		//var typedText = animationG.selectAll("text").data(keyboardInputs).append("text");
+		
+		//var curLine = "";
+		
+		
+		var typedText;
+			
+		var textHeight = 0;
+		
+		var startY = 0;
+		
+		function runAnimation()
+		{
+			var curFrame = nextFrame();
+			//console.log(curFrame);
+			
+			if(curFrame)
+			{
+				for(entry in lastMouseClicks)
+				{
+					//if(entry != lastMouseClicks.length)
+					{
+						var sessionTime = Number(lastMouseClicks[entry].attr("indexTime"));
+						var curType = lastMouseClicks[entry].attr("Type");
+						//console.log(sessionTime);
+						var timeDiff = Number(curFrame["Index MS Session"]) - sessionTime;
+						//console.log(timeDiff);
+						if(timeDiff > degradeCoefficient)
+						{
+							lastMouseClicks[entry].remove();
+							lastMouseClicks.splice(entry, 1);
+							entry--;
+							continue;
+						}
+						else
+						{
+							lastMouseClicks[entry].attr("opacity", ((1 - (timeDiff / degradeCoefficient)) * .5));
+							nextColor = "Grey";
+							if(curType == "Down")
+							{
+								nextColor = "Green"
+							}
+							lastMouseClicks[entry].attr("stroke", nextColor);
+						}
+						
+					}
+				}
+			}
+			
+			if(curFrame && curFrame["Screenshot"])
+			{
+				lastImg.src = "data:image/jpg;base64," + curFrame["Screenshot"];
+				
+				var xRatio = divBounds["width"] / lastImg["width"];
+				var yRatio = (divBounds["height"] * .8) / lastImg["height"];
+				var finalRatio = xRatio;
+				if(xRatio > yRatio)
+				{
+					finalRatio = yRatio;
+				}
+				
+				var finalWidth = finalRatio * lastImg["width"];
+				var finalX = (divBounds["width"] - finalWidth) / 2;
+				
+				curScreenshot.attr("href", "data:image/jpg;base64," + curFrame["Screenshot"])
+							.attr("width", finalWidth)
+							.attr("x", finalX)
+							.attr("height", finalRatio * lastImg["height"]);
+				
+				textHeight = curScreenshot.attr("width") / 100;
+				
+				startY = finalRatio * lastImg["height"];
+				
+				if(!typedText)
+				{
+					typedText = animationG.append("text").attr("x", 0)
+						.attr("y", startY + textHeight)
+						.text("Input:")
+						.attr("font-size", textHeight);
+				}
+				
+			}
+			
+			if(curFrame && curFrame["XLoc"])
+			{
+				var xLoc = Number(curFrame["XLoc"]);
+				//console.log(xLoc);
+				xLoc = xLoc / lastImg["width"];
+				//console.log(xLoc);
+				xLoc = xLoc * curScreenshot.attr("width");
+				xLoc = xLoc + Number(curScreenshot.attr("x"));
+				//console.log(xLoc);
+				var yLoc = Number(curFrame["YLoc"]) / lastImg["height"];
+				yLoc = yLoc * curScreenshot.attr("height");
+				var centerColor = "Black";
+				var outerColor = "Blue"
+				if(curFrame["Type"] == "down")
+				{
+					outerColor = "Red"
+				}
+				var nextMouse = animationG.append("circle")
+					.attr("indexTime", curFrame["Index MS Session"])
+					.attr("mouseType", curFrame["Type"])
+					.attr("cx", xLoc)
+					.attr("cy", yLoc)
+					.attr("r", curScreenshot.attr("width") / 200)
+					.attr("fill", centerColor)
+					.attr("stroke", outerColor)
+					.attr("stroke-width", curScreenshot.attr("width") / 400)
+					.attr("opacity", ".9");
+				
+				lastMouseClicks.push(nextMouse);
+			}
+			
+			if(curFrame && curFrame["Button"] && (curFrame["Type"] == "press"))// || curFrame["Type"] == "type"))
+			{
+				buttonToType = curFrame["Button"];
+				if(buttonToType == "Up")
+				{
+					buttonToType = "⇧";
+				}
+				else if(buttonToType == "Down")
+				{
+					buttonToType = "⇩";
+				}
+				else if(buttonToType == "Left")
+				{
+					buttonToType = "⇦";
+				}
+				else if(buttonToType == "Right")
+				{
+					buttonToType = "⇨";
+				}
+				else if(buttonToType == "Space")
+				{
+					buttonToType = " ";
+				}
+				else if(buttonToType == "Period")
+				{
+					buttonToType = ".";
+				}
+				else if(buttonToType == "Backspace")
+				{
+					buttonToType = "⌫";
+				}
+				else if(buttonToType == "Shift")
+				{
+					buttonToType = "⇯";
+				}
+				else if(buttonToType == "Enter")
+				{
+					//keyboardInputs.shift();
+					//keyboardInputs.unshift(curLine);
+					curKeyInput = animationG.append("text").attr("x", 0)
+					.attr("y", startY)
+					.text("⏎")
+					.attr("text", "⏎")
+					.attr("font-size", textHeight);
+					
+					keyboardInputs.unshift(curKeyInput);
+				}
+				else if(buttonToType.length > 1)
+				{
+					buttonToType = "[" + buttonToType + "]";
+				}
+				
+				if(buttonToType != "Enter")
+				{
+					curKeyInput.attr("text", curKeyInput.attr("text") + buttonToType);
+					curKeyInput.text(curKeyInput.attr("text"));
+					//keyboardInputs.shift();
+					//keyboardInputs.unshift(curLine);
+					
+				}
+				
+				//console.log(keyboardInputs);
+				
+				
+				
+			}
+			
+			for(entry in keyboardInputs)
+			{
+				keyboardInputs[entry].attr("y", startY + ((Number(entry) + 2) * textHeight))
+									.attr("font-size", textHeight);
+			}
+			
+			
+			if(curFrame && (!(lastFrame)))
+			{
+				animationTimeout = setTimeout(runAnimation, Number(curFrame["Index MS Session"]) / playbackSpeedMultiplier);
+			}
+			else if(curFrame)
+			{
+				animationTimeout = setTimeout(runAnimation, (Number(curFrame["Index MS Session"]) - Number(lastFrame["Index MS Session"])) / playbackSpeedMultiplier);
+			}
+			lastFrame = curFrame;
+		}
+		
+		animationTimeout = setTimeout(runAnimation, 0);
 		
 	}
 	
@@ -3541,11 +3903,13 @@ function fadeOutLightbox()
 		d3.select("#screenshotDiv")
 		.append("img")
 		.attr("width", "100%")
-		.attr("src", "./getClosestScreenshot.jpg?username=" + owningUser + "&timestamp=" + getClosestScreenshot(owningUser, screenshotSession, screenshotIndex)["Index MS"] + "&session=" + screenshotSession + "&event=" + eventName)
+		.attr("src", "data:image/jpg;base64," + theNormData[owningUser][owningSession]["screenshots"][0]["Screenshot"])
+		//.attr("src", "./getScreenshot.jpg?username=" + owningUser + "&timestamp=" + getScreenshot(owningUser, screenshotSession, screenshotIndex)["Index MS"] + "&session=" + screenshotSession + "&event=" + eventName)
 		.attr("style", "cursor:pointer;")
 		.on("click", function()
 				{
-					showLightbox("<tr><td><div width=\"100%\"><img src=\"./getClosestScreenshot.jpg?username=" + owningUser + "&timestamp=" + getClosestScreenshot(owningUser, screenshotSession, screenshotIndex)["Index MS"] + "&session=" + screenshotSession + "&event=" + eventName + "\" style=\"width: 100%;\"></div></td></tr>");
+					//showLightbox("<tr><td><div width=\"100%\"><img src=\"./getScreenshot.jpg?username=" + owningUser + "&timestamp=" + getScreenshot(owningUser, screenshotSession, screenshotIndex)["Index MS"] + "&session=" + screenshotSession + "&event=" + eventName + "\" style=\"width: 100%;\"></div></td></tr>");
+					showLightbox("<tr><td><div width=\"100%\"><img src=\"data:image/jpg;base64," + theNormData[owningUser][owningSession]["screenshots"][0]["Screenshot"] + "\" style=\"width: 100%;\"></div></td></tr>");
 				});
 		
 		
@@ -4330,7 +4694,7 @@ function fadeOutLightbox()
 	
 	var prevScreenshot;
 	
-	function getClosestScreenshot(userName, sessionName, indexMS)
+	function getScreenshot(userName, sessionName, indexMS)
 	{
 		var screenshotIndexArray = theNormDataClone[userName][sessionName]["screenshots"];
 		var finalScreenshot = screenshotIndexArray[closestIndexMSBinary(screenshotIndexArray, indexMS)];
@@ -4546,11 +4910,13 @@ function fadeOutLightbox()
 		d3.select("#screenshotDiv")
 				.append("img")
 				.attr("width", "100%")
-				.attr("src", "./getClosestScreenshot.jpg?username=" + curSlot["Owning User"] + "&timestamp=" + getClosestScreenshot(curSlot["Owning User"], curSlot["Original Session"], curSlot["Index MS"])["Index MS"] + "&session=" + curSlot["Original Session"] + "&event=" + eventName)
+				.attr("src", "data:image/jpg;base64," + getScreenshot(curSlot["Owning User"], curSlot["Original Session"], curSlot["Index MS"])["Screenshot"])
+				//.attr("src", "./getScreenshot.jpg?username=" + curSlot["Owning User"] + "&timestamp=" + getScreenshot(curSlot["Owning User"], curSlot["Original Session"], curSlot["Index MS"])["Index MS"] + "&session=" + curSlot["Original Session"] + "&event=" + eventName)
 				.attr("style", "cursor:pointer;")
 				.on("click", function()
 						{
-							showLightbox("<tr><td><div width=\"100%\"><img src=\"./getClosestScreenshot.jpg?username=" + curSlot["Owning User"] + "&timestamp=" + getClosestScreenshot(curSlot["Owning User"], curSlot["Original Session"], curSlot["Index MS"])["Index MS"] + "&session=" + curSlot["Original Session"] + "&event=" + eventName + "\" style=\"width: 100%;\"></div></td></tr>");
+							showLightbox("<tr><td><div width=\"100%\"><img src=\"data:image/jpg;base64," + getScreenshot(curSlot["Owning User"], curSlot["Original Session"], curSlot["Index MS"])["Screenshot"] + "\" style=\"width: 100%;\"></div></td></tr>");
+							//showLightbox("<tr><td><div width=\"100%\"><img src=\"./getScreenshot.jpg?username=" + curSlot["Owning User"] + "&timestamp=" + getScreenshot(curSlot["Owning User"], curSlot["Original Session"], curSlot["Index MS"])["Index MS"] + "&session=" + curSlot["Original Session"] + "&event=" + eventName + "\" style=\"width: 100%;\"></div></td></tr>");
 						});
 		
 		d3.select("#extraHighlightDiv")
