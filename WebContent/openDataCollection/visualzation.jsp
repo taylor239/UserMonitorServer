@@ -1249,6 +1249,7 @@ function fadeOutLightbox()
 			if(curScreenshot)
 			{
 				curCount = entry + 1;
+				//break;
 			}
 			else
 			{
