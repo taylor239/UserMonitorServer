@@ -6387,6 +6387,17 @@ function fadeOutLightbox()
 			
 			if(curChildren.length == 0)
 			{
+				if(!curTask["Predecessor"])
+				{
+					var defPred = {}
+					defPred["Child Tasks"] = [];
+					defPred["Concurrent Tasks"] = [];
+					defParent = {};
+					defPred["Parent Task"] = {};
+					defPred["Parent Task"]["TaskName"] = "_StartNode_";
+					defPred["Parent Task"]["Task Hash"] = "-1";
+					curTask["Predecessor"] = defPred;
+				}
 				if(curTask["Predecessor"])
 				{
 					var nextPredNode = {};
@@ -6406,6 +6417,17 @@ function fadeOutLightbox()
 						//console.log(nextConNode);
 					}
 					curTransition.push(nextPredNode);
+				}
+				else
+				{
+					var defPred = {}
+					defPred["Child Tasks"] = [];
+					defPred["Concurrent Tasks"] = [];
+					defParent = {};
+					defPred["Parent Task"] = {};
+					defPred["Parent Task"]["TaskName"] = "_StartNode_";
+					defPred["Parent Task"]["Task Hash"] = "-1";
+					curTask["Predecessor"] = defPred;
 				}
 			}
 			
@@ -6432,7 +6454,7 @@ function fadeOutLightbox()
 				{
 					//defPred = JSON.parse(JSON.stringify(curTask));
 					//console.log(defPred);
-					defPred = {}
+					var defPred = {}
 					defPred["Child Tasks"] = [];
 					defPred["Concurrent Tasks"] = [];
 					defParent = {};
@@ -6641,9 +6663,14 @@ function fadeOutLightbox()
 			var curSession = sessionTasks[sessions[entry]];
 			var startNode = binarySearch(curSession, task["Index MS"]);
 			var endNode = binarySearch(curSession, task["Next"]["Index MS"]);
-			
+			console.log(curSession[startNode]);
+			console.log(curSession[startNode]["Index MS"]);
+			console.log(task);
+			console.log(task["Index MS"]);
 			while((curSession[startNode]["Index MS"] < task["Index MS"] || curSession[startNode] == task) && startNode < curSession.length)
 			{
+				console.log(task["Next"]);
+				console.log(task["Next"]["Index MS"]);
 				if(curSession[startNode]["Index MS"] > task["Next"]["Index MS"])
 				{
 					//return toReturn;
@@ -6844,6 +6871,8 @@ function fadeOutLightbox()
 		//For each top level attack:
 		var usedPlaces = {};
 		
+		var numUnused = 0;
+		
 		var finalAttackGraphs = JSON.parse(JSON.stringify(attackGraphs));
 		//var finalAttackGraphs = angular.copy(attackGraphs;
 		
@@ -6927,11 +6956,21 @@ function fadeOutLightbox()
 				.attr("cy", 0);
 			  simulation.alphaTarget(0.3).restart();
 			}
-		
+			
+		var curEndNode = 0;
+		var numUnused = 0;
 		var places = node.filter(d => d.type === "Place")
 			.append("circle")
 			.attr("r", "10")
 			.attr("fill", "red")
+			.attr("endpointNum", function(d)
+					{
+						if(usedPlaces[d["id"]] == true)
+						{
+							numUnused++;
+							return numUnused;
+						}
+					})
 			.attr("cx", function(d)
 					{
 						if(d["id"] == "-1_place")
@@ -6961,6 +7000,7 @@ function fadeOutLightbox()
 						else if(usedPlaces[d["id"]] == true)
 						{
 							return divBounds["width"] / 2;
+							numUnused++;
 						}
 						return undefined;
 					})
@@ -7045,6 +7085,11 @@ function fadeOutLightbox()
 							{
 								d.y = 0;
 								return 0;
+							}
+							else if(usedPlaces[d["id"]] == true)
+							{
+								d.y = ((this.getAttribute("endpointNum") / (numUnused + 1)) * (divBounds["height"])) - (divBounds["height"] / 2);
+								return d.y;
 							}
 							//return d.x;
 						})
