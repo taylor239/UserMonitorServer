@@ -42,7 +42,7 @@ public class DataExportLog extends HttpServlet {
      */
     public DataExportLog() {
         super();
-        // TODO Auto-generated constructor stub
+        System.out.println("New export");
     }
 
 	/**
@@ -50,7 +50,8 @@ public class DataExportLog extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
 	{
-		
+		keepingAlive = true;
+		doneKeepingAlive = false;
 		System.out.println("Got an export query");
 		try
 		{
