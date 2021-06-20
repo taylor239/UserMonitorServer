@@ -84,13 +84,13 @@ public class DatabaseConnector
 	
 	//private String allProcessQueryOld = "SELECT * FROM `Process` LEFT JOIN `ProcessAttributes` ON `Process`.`event` = `ProcessAttributes`.`event` AND `Process`.`adminEmail` = `ProcessAttributes`.`adminEmail` AND `Process`.`username` = `ProcessAttributes`.`username` AND `Process`.`session` = `ProcessAttributes`.`session` AND `Process`.`user` = `ProcessAttributes`.`user` AND `Process`.`pid` = `ProcessAttributes`.`pid` AND `Process`.`start` = `ProcessAttributes`.`start` WHERE `ProcessAttributes`.`event` = ? AND `ProcessAttributes`.`adminEmail` = ? ORDER BY `ProcessAttributes`.`insertTimestamp` ASC";
 	
-	//private String allProcessQuery = "SELECT * FROM `Process` LEFT JOIN \n" + 
-	//		"(\n" + 
-	//		"SELECT `event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`, GROUP_CONCAT(`arg` ORDER BY `numbered` ASC SEPARATOR ' ') AS `arguments` FROM `ProcessArgs` GROUP BY `ProcessArgs`.`event`, `ProcessArgs`.`adminEmail`, `ProcessArgs`.`username`, `ProcessArgs`.`session`, `ProcessArgs`.`user`, `ProcessArgs`.`pid`, `ProcessArgs`.`start`\n" + 
-	//		") a\n" + 
-	//		"USING (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`)\n" + 
-	//		"LEFT JOIN `ProcessAttributes` ON `Process`.`event` = `ProcessAttributes`.`event` AND `Process`.`adminEmail` = `ProcessAttributes`.`adminEmail` AND `Process`.`username` = `ProcessAttributes`.`username` AND `Process`.`session` = `ProcessAttributes`.`session` AND `Process`.`user` = `ProcessAttributes`.`user` AND `Process`.`pid` = `ProcessAttributes`.`pid` AND `Process`.`start` = `ProcessAttributes`.`start`\n" + 
-	//		"WHERE `ProcessAttributes`.`event` = ? AND `ProcessAttributes`.`adminEmail` = ? ORDER BY `ProcessAttributes`.`timestamp`, `ProcessAttributes`.`insertTimestamp` ASC";
+	private String allProcessQuery = "SELECT * FROM `Process` LEFT JOIN \n" + 
+			"(\n" + 
+			"SELECT `event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`, GROUP_CONCAT(`arg` ORDER BY `numbered` ASC SEPARATOR ' ') AS `arguments` FROM `ProcessArgs` GROUP BY `ProcessArgs`.`event`, `ProcessArgs`.`adminEmail`, `ProcessArgs`.`username`, `ProcessArgs`.`session`, `ProcessArgs`.`user`, `ProcessArgs`.`pid`, `ProcessArgs`.`start`\n" + 
+			") a\n" + 
+			"USING (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`)\n" + 
+			"LEFT JOIN `ProcessAttributes` ON `Process`.`event` = `ProcessAttributes`.`event` AND `Process`.`adminEmail` = `ProcessAttributes`.`adminEmail` AND `Process`.`username` = `ProcessAttributes`.`username` AND `Process`.`session` = `ProcessAttributes`.`session` AND `Process`.`user` = `ProcessAttributes`.`user` AND `Process`.`pid` = `ProcessAttributes`.`pid` AND `Process`.`start` = `ProcessAttributes`.`start`\n" + 
+			"WHERE `ProcessAttributes`.`event` = ? AND `ProcessAttributes`.`adminEmail` = ? ORDER BY `ProcessAttributes`.`timestamp`, `ProcessAttributes`.`insertTimestamp` ASC";
 	
 	private String allProcessQueryFix = "SELECT * FROM `Process` LEFT JOIN \n" + 
 			"(\n" + 
@@ -100,28 +100,28 @@ public class DatabaseConnector
 			"LEFT JOIN `ProcessAttributes` ON `Process`.`event` = `ProcessAttributes`.`event` AND `Process`.`adminEmail` = `ProcessAttributes`.`adminEmail` AND `Process`.`username` = `ProcessAttributes`.`username` AND `Process`.`session` = `ProcessAttributes`.`session` AND `Process`.`user` = `ProcessAttributes`.`user` AND `Process`.`pid` = `ProcessAttributes`.`pid` AND `Process`.`start` = `ProcessAttributes`.`start`\n" + 
 			"WHERE `ProcessAttributes`.`event` = ? AND `ProcessAttributes`.`adminEmail` = ? ORDER BY `ProcessAttributes`.`insertTimestamp`, `ProcessAttributes`.`timestamp` ASC";
 	
-	private String allProcessQuery = "SELECT * FROM\n" + 
-			"(\n" + 
-			"\n" + 
-			"SELECT `Process`.`command`, `Process`.`parentpid`, `Process`.`parentuser`, `Process`.`parentstart`, a.`arguments`, `ProcessAttributes`.*, @prev_username AS 'prev_username', @prev_username := `Process`.`username`, @prev_session AS 'prev_session', @prev_session := `Process`.`session`, @prev_user AS 'prev_user', @prev_user := `Process`.`user`, @prev_pid AS 'prev_pid', @prev_pid := `Process`.`pid`, @prev_start AS 'prev_start', @prev_start := `Process`.`start`, @prev_cpu AS 'prev_cpu', @prev_cpu := `ProcessAttributes`.`cpu`, @prev_mem AS 'prev_mem', @prev_mem := `ProcessAttributes`.`mem` FROM `Process` LEFT JOIN \n" + 
-			"\n" + 
-			"(\n" + 
-			"	SELECT `event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`, GROUP_CONCAT(`arg` ORDER BY `numbered` ASC SEPARATOR ' ') AS `arguments` FROM `ProcessArgs` GROUP BY `ProcessArgs`.`event`, `ProcessArgs`.`adminEmail`, `ProcessArgs`.`username`, `ProcessArgs`.`session`, `ProcessArgs`.`user`, `ProcessArgs`.`pid`, `ProcessArgs`.`start`\n" + 
-			") a\n" + 
-			"\n" + 
-			"USING (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`)\n" + 
-			"\n" + 
-			"LEFT JOIN `ProcessAttributes` ON `Process`.`event` = `ProcessAttributes`.`event` AND `Process`.`adminEmail` = `ProcessAttributes`.`adminEmail` AND `Process`.`username` = `ProcessAttributes`.`username` AND `Process`.`session` = `ProcessAttributes`.`session` AND `Process`.`user` = `ProcessAttributes`.`user` AND `Process`.`pid` = `ProcessAttributes`.`pid` AND `Process`.`start` = `ProcessAttributes`.`start`\n" + 
-			"\n" + 
-			"WHERE `ProcessAttributes`.`event` = ? AND `ProcessAttributes`.`adminEmail` = ?\n" + 
-			"\n" + 
-			"ORDER BY `ProcessAttributes`.`event`, `ProcessAttributes`.`adminEmail`, `ProcessAttributes`.`username`, `ProcessAttributes`.`session`, `ProcessAttributes`.`user`, `ProcessAttributes`.`pid`, `ProcessAttributes`.`start`, `ProcessAttributes`.`timestamp` ASC\n" + 
-			"\n" + 
-			") qu\n" + 
-			"\n" + 
-			"WHERE `prev_username` != `qu`.`username` OR `prev_session` != `qu`.`session` OR `prev_user` != `qu`.`user` OR `prev_pid` != `qu`.`pid` OR `prev_start` != `qu`.`start` OR `prev_cpu` != `qu`.`cpu` OR `prev_mem` != `qu`.`mem`\n" + 
-			"\n" + 
-			"ORDER BY `qu`.`timestamp` ASC";
+	//private String allProcessQuery = "SELECT * FROM\n" + 
+	//		"(\n" + 
+	//		"\n" + 
+	//		"SELECT `Process`.`command`, `Process`.`parentpid`, `Process`.`parentuser`, `Process`.`parentstart`, a.`arguments`, `ProcessAttributes`.*, @prev_username AS 'prev_username', @prev_username := `Process`.`username`, @prev_session AS 'prev_session', @prev_session := `Process`.`session`, @prev_user AS 'prev_user', @prev_user := `Process`.`user`, @prev_pid AS 'prev_pid', @prev_pid := `Process`.`pid`, @prev_start AS 'prev_start', @prev_start := `Process`.`start`, @prev_cpu AS 'prev_cpu', @prev_cpu := `ProcessAttributes`.`cpu`, @prev_mem AS 'prev_mem', @prev_mem := `ProcessAttributes`.`mem` FROM `Process` LEFT JOIN \n" + 
+	//		"\n" + 
+	//		"(\n" + 
+	//		"	SELECT `event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`, GROUP_CONCAT(`arg` ORDER BY `numbered` ASC SEPARATOR ' ') AS `arguments` FROM `ProcessArgs` GROUP BY `ProcessArgs`.`event`, `ProcessArgs`.`adminEmail`, `ProcessArgs`.`username`, `ProcessArgs`.`session`, `ProcessArgs`.`user`, `ProcessArgs`.`pid`, `ProcessArgs`.`start`\n" + 
+	//		") a\n" + 
+	//		"\n" + 
+	//		"USING (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`)\n" + 
+	//		"\n" + 
+	//		"LEFT JOIN `ProcessAttributes` ON `Process`.`event` = `ProcessAttributes`.`event` AND `Process`.`adminEmail` = `ProcessAttributes`.`adminEmail` AND `Process`.`username` = `ProcessAttributes`.`username` AND `Process`.`session` = `ProcessAttributes`.`session` AND `Process`.`user` = `ProcessAttributes`.`user` AND `Process`.`pid` = `ProcessAttributes`.`pid` AND `Process`.`start` = `ProcessAttributes`.`start`\n" + 
+	//		"\n" + 
+	//		"WHERE `ProcessAttributes`.`event` = ? AND `ProcessAttributes`.`adminEmail` = ?\n" + 
+	//		"\n" + 
+	//		"ORDER BY `ProcessAttributes`.`event`, `ProcessAttributes`.`adminEmail`, `ProcessAttributes`.`username`, `ProcessAttributes`.`session`, `ProcessAttributes`.`user`, `ProcessAttributes`.`pid`, `ProcessAttributes`.`start`, `ProcessAttributes`.`timestamp` ASC\n" + 
+	//		"\n" + 
+	//		") qu\n" + 
+	//		"\n" + 
+	//		"WHERE `prev_username` != `qu`.`username` OR `prev_session` != `qu`.`session` OR `prev_user` != `qu`.`user` OR `prev_pid` != `qu`.`pid` OR `prev_start` != `qu`.`start` OR `prev_cpu` != `qu`.`cpu` OR `prev_mem` != `qu`.`mem`\n" + 
+	//		"\n" + 
+	//		"ORDER BY `qu`.`timestamp` ASC";
 	
 	private String allProcessQueryBounds = "SELECT `ProcessAttributes`.`username`, `ProcessAttributes`.`session`, MIN(`ProcessAttributes`.`timestamp`) AS `mintime`, MAX(`ProcessAttributes`.`timestamp`) AS `maxtime` FROM `ProcessAttributes` WHERE `ProcessAttributes`.`event` = ? AND `ProcessAttributes`.`adminEmail` = ? GROUP BY `ProcessAttributes`.`session`, `ProcessAttributes`.`username`, `ProcessAttributes`.`event`, `ProcessAttributes`.`adminEmail`";
 	
@@ -1332,10 +1332,7 @@ public class DatabaseConnector
 			taskQuery = taskQuery.replace("`Task`.`adminEmail` = ?", "`Task`.`adminEmail` = ? " + sessionSelectString);
 		}
 		
-		//if(!start.isEmpty() && !end.isEmpty())
-		//{
-		//	taskQuery = taskQuery + limiter;
-		//}
+		
 		
 		try
 		{
@@ -1357,11 +1354,7 @@ public class DatabaseConnector
 				secondSessionOffset = x + 1;
 			}
 			
-			if(!start.isEmpty() && !end.isEmpty())
-			{
-				myStatement.setInt(3 + sessionOffset + secondSessionOffset, Integer.parseInt(start));
-				myStatement.setInt(4 + sessionOffset + secondSessionOffset, Integer.parseInt(end));
-			}
+			
 			
 			
 			ResultSet myResults = myStatement.executeQuery();
@@ -1773,11 +1766,6 @@ public class DatabaseConnector
 				secondSessionOffset = x + 1;
 			}
 			
-			if(!start.isEmpty() && !end.isEmpty())
-			{
-				myStatement.setInt(3 + sessionOffset + secondSessionOffset, Integer.parseInt(start));
-				myStatement.setInt(4 + sessionOffset + secondSessionOffset, Integer.parseInt(end));
-			}
 			
 			ResultSet myResults = myStatement.executeQuery();
 			while(myResults.next())
@@ -2169,7 +2157,7 @@ public class DatabaseConnector
 		//	return myReturn;
 		//}
 		
-		/*Iterator userIterator = myReturn.entrySet().iterator();
+		Iterator userIterator = myReturn.entrySet().iterator();
 		while(userIterator.hasNext())
 		{
 			Entry userEntry = (Entry) userIterator.next();
@@ -2256,7 +2244,7 @@ public class DatabaseConnector
 				dataMap.put("processes", newProcessList);
 			}
 		}
-		*/
+		
 		
 		return myReturn;
 	}
@@ -2307,10 +2295,7 @@ public class DatabaseConnector
 			allProcessQuery = allProcessQuery.replace("`ProcessAttributes`.`adminEmail` = ?", "`ProcessAttributes`.`adminEmail` = ? " + sessionSelectString);
 		}
 		
-		//if(!start.isEmpty() && !end.isEmpty())
-		//{
-		//	allProcessQuery = allProcessQuery + limiter;
-		//}
+		
 		
 		try
 		{
@@ -2332,11 +2317,7 @@ public class DatabaseConnector
 				secondSessionOffset = x + 1;
 			}
 			
-			if(!start.isEmpty() && !end.isEmpty())
-			{
-				myStatement.setInt(3 + sessionOffset + secondSessionOffset, Integer.parseInt(start));
-				myStatement.setInt(4 + sessionOffset + secondSessionOffset, Integer.parseInt(end));
-			}
+			
 			
 			//System.out.println(myStatement);
 			ResultSet myResults = myStatement.executeQuery();
@@ -2821,11 +2802,6 @@ public class DatabaseConnector
 				secondSessionOffset = x + 1;
 			}
 			
-			if(!start.isEmpty() && !end.isEmpty())
-			{
-				myStatement.setInt(3 + sessionOffset + secondSessionOffset, Integer.parseInt(start));
-				myStatement.setInt(4 + sessionOffset + secondSessionOffset, Integer.parseInt(end));
-			}
 			
 			
 			ResultSet myResults = myStatement.executeQuery();
@@ -3091,11 +3067,7 @@ public class DatabaseConnector
 				secondSessionOffset = x + 1;
 			}
 			
-			if(!start.isEmpty() && !end.isEmpty())
-			{
-				myStatement.setInt(3 + sessionOffset + secondSessionOffset, Integer.parseInt(start));
-				myStatement.setInt(4 + sessionOffset + secondSessionOffset, Integer.parseInt(end));
-			}
+			
 			
 			
 			ResultSet myResults = myStatement.executeQuery();
@@ -3346,10 +3318,7 @@ public class DatabaseConnector
 			allWindowQuery = allWindowQuery.replace("`WindowDetails`.`adminEmail` = ?", "`WindowDetails`.`adminEmail` = ? " + sessionSelectString);
 		}
 		
-		//if(!start.isEmpty() && !end.isEmpty())
-		//{
-		//	allWindowQuery = allWindowQuery + limiter;
-		//}
+		
 		
 		try
 		{
@@ -3371,11 +3340,7 @@ public class DatabaseConnector
 				secondSessionOffset = x + 1;
 			}
 			
-			if(!start.isEmpty() && !end.isEmpty())
-			{
-				myStatement.setInt(3 + sessionOffset + secondSessionOffset, Integer.parseInt(start));
-				myStatement.setInt(4 + sessionOffset + secondSessionOffset, Integer.parseInt(end));
-			}
+			
 			
 			
 			ResultSet myResults = myStatement.executeQuery();

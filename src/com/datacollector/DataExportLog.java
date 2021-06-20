@@ -166,6 +166,7 @@ public class DataExportLog extends HttpServlet {
 		ZipOutputStream zipOut = null;
 		Thread threadToJoin = null;
 		System.out.println("Got an export query");
+		PadderThread padder = null;
 		try
 		{
 			Class.forName("com.mysql.jdbc.Driver");
@@ -182,7 +183,6 @@ public class DataExportLog extends HttpServlet {
 				zipOut = new ZipOutputStream(out);
 			}
 			
-			PadderThread padder = null;
 			if(zip)
 			{
 				padder = new PadderThread(zipOut);
@@ -645,12 +645,33 @@ public class DataExportLog extends HttpServlet {
 			{
 				finalMap = headMap;
 			}
-			
+			/*
 			System.out.println("Encoding to JSON");
-			
+			System.out.println(finalMap.keySet());
+			System.out.println(((ConcurrentHashMap)((ConcurrentHashMap)finalMap.get("arek.kupka@gmail.com")).get("b01a62f6-f274-4c6e-9d84-fed76fd2a52f")).keySet());
+			ArrayList debugList = (ArrayList) (((ConcurrentHashMap)((ConcurrentHashMap)finalMap.get("arek.kupka@gmail.com")).get("b01a62f6-f274-4c6e-9d84-fed76fd2a52f")).get("processes"));
+			System.out.println(debugList.size());
+			for(int z=0; z<debugList.size(); z++)
+			{
+				System.out.println(z);
+				ConcurrentHashMap debugMap = (ConcurrentHashMap) debugList.get(z);
+				System.out.println(debugMap.keySet());
+				Iterator tmpIter = debugMap.entrySet().iterator();
+				while(tmpIter.hasNext())
+				{
+					Entry tmpEntry = (Entry) tmpIter.next();
+					System.out.println(tmpEntry.getKey());
+					System.out.println(tmpEntry.getValue());
+				}
+			}
+			if(true)
+			{
+				return;
+			}
+			*/
 			Gson gson = new GsonBuilder().create();
 			String output = "";
-			if(normalize.equals("user"))
+			if(normalize != null && normalize.equals("user"))
 			{
 				output = gson.toJson(finalList);
 			}
@@ -668,6 +689,7 @@ public class DataExportLog extends HttpServlet {
 				{
 					padder.setKeepingAlive(false);
 					Thread.currentThread().sleep(100);
+					threadToJoin.join(100);
 				}
 				System.out.println("Zipping");
 				
@@ -723,6 +745,7 @@ public class DataExportLog extends HttpServlet {
 				{
 					padder.setKeepingAlive(false);
 					Thread.currentThread().sleep(100);
+					threadToJoin.join(100);
 				}
 				response.getWriter().append(output);
 				response.getWriter().close();
@@ -738,7 +761,32 @@ public class DataExportLog extends HttpServlet {
 		}
 		catch(Exception e)
 		{
-			
+			try {
+				if(padder != null)
+				{
+					padder.setKeepingAlive(false);
+				}
+				if(threadToJoin != null)
+				{
+					threadToJoin.join();
+				}
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}
+		try {
+			if(padder != null)
+			{
+				padder.setKeepingAlive(false);
+			}
+			if(threadToJoin != null)
+			{
+				threadToJoin.join();
+			}
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
 	}
 	
