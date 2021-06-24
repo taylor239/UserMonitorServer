@@ -2262,8 +2262,8 @@ public class DatabaseConnector
 				//	nextRow.put("SnapTime", myResults.getTimestamp("timestamp", cal));
 				//}
 				//nextRow.put("InsertTime", myResults.getTimestamp("insertTimestamp"));
-				nextRow.put("Index", myResults.getTimestamp("mintime"));
-				nextNextRow.put("Index", myResults.getTimestamp("maxtime"));
+				nextRow.put("Index", myResults.getTimestamp("mintime", cal));
+				nextNextRow.put("Index", myResults.getTimestamp("maxtime", cal));
 				
 				
 				//nextRow.put("CPU", myResults.getString("cpu"));
