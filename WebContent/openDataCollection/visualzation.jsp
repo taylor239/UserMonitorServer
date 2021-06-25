@@ -1751,11 +1751,13 @@ function fadeOutLightbox()
 	
 		await d3.json("logExport.json?event=" + eventName + "&datasources=processes&normalize=none" + curSelect, async function(error, data)
 		{
-			console.log("Errors:");
-			console.log(error);
 			if(error)
 			{
 				failed = true;
+				console.log("Error, retrying...");
+				console.log(error);
+				downloadProcesses(userName, sessionName, curCount, sheet);
+				return;
 			}
 			failed = false;
 			//for(user in data)
@@ -1882,6 +1884,14 @@ function fadeOutLightbox()
 			var curSelect = "&users=" + userName + "&sessions=" + sessionName + "&first=" + curCount + "&count=" + chunkSize;
 			await d3.json("logExport.json?event=" + eventName + "&datasources=screenshots&normalize=none" + curSelect, async function(error, data)
 			{
+				if(error)
+				{
+					failed = true;
+					console.log("Error, retrying...");
+					console.log(error);
+					downloadImages(userName, sessionName, imageArray, curCount, sheet);
+					return;
+				}
 				//for(user in data)
 				{
 					//for(session in data[user])
