@@ -912,6 +912,53 @@ function fadeOutLightbox()
 		start(true);
 	}
 	
+	async function getProcessData()
+	{
+		if(session == "Aggregated")
+		{
+			return [];
+		}
+		else
+		{
+			var hashVal = SHA256(this.user + this.session + "_processes");
+			var toReturn = (await retrieveData(hashVal));
+			return toReturn;
+		}
+	}
+	
+	async function getProcessDataFiltered()
+	{
+		if(session == "Aggregated")
+		{
+			return [];
+		}
+		else
+		{
+			var hashVal = SHA256(this.user + this.session + "_processes_filtered");
+			var toReturn = (await retrieveData(hashVal));
+			return toReturn;
+		}
+	}
+	
+	async function storeProcessDataFiltered(toStore)
+	{
+		//console.log("Storing for: " + this.session);
+		//console.log(toStore);
+		if(session == "Aggregated")
+		{
+			
+		}
+		else
+		{
+			var isDone = false;
+			while(!isDone)
+			{
+				var hashVal = SHA256(this.user + this.session + "_processes_filtered");
+				isDone = await persistData(hashVal, toStore);
+			}
+		}
+	}
+	
 	var startedDownload = {};
 	
 	function preprocess(dataToModify)
@@ -1019,37 +1066,7 @@ function fadeOutLightbox()
 	var measureBy = "session";
 	async function filter(dataToFilter, filters)
 	{
-		/*
-		//console.log("Filtering:");
-		//console.log(dataToFilter);
-		for(user in dataToFilter)
-		{
-			for(session in dataToFilter[user])
-			{
-				//console.log("Checking " + user + ":" + session)
-				var hashVal = SHA256(user + session + "_processes");
-				//console.log((retrieveData(hashVal)))
-				//console.log(await retrieveData(hashVal))
-				//console.log((await hasData(hashVal)));
-				if((await hasData(hashVal)))
-				{
-					//console.log("Has process data")
-					var hasStored = ((await retrieveData(hashVal)).value)
-					//console.log("Looking for processes for: " + user + ":" + session)
-					//console.log(hashVal);
-					//console.log(hasStored);
-					if(hasStored)
-					{
-						//console.log("Found");
-						//console.log(((await retrieveData(hashVal)).value));
-						console.log(dataToFilter[user][session]);
-						dataToFilter[user][session]["processes"] = hasStored;
-					}
-					//dataToFilter[user][session]["processes"] = ((await retrieveData(SHA256(user + session + "_processes"))).value)
-				}
-			}
-		}
-		*/
+		
 		
 		summaryProcStats = {};
 		summaryProcStatsArray = [];
@@ -1104,6 +1121,23 @@ function fadeOutLightbox()
 				
 				for(data in dataToFilter[user][session])
 				{
+					//console.log(data);
+					var isAsync = false;
+					var dataSource = dataToFilter[user][session][data];
+					if(dataToFilter[user][session][data]["data"] && (typeof dataToFilter[user][session][data]["data"]) == "function")
+					{
+						//console.log("Async filter");
+						//console.log(session);
+						//console.log(dataToFilter[user][session][data]["data"]);
+						//console.log(dataToFilter[user][session][data]["data"]());
+						dataSource = (await dataToFilter[user][session][data]["data"]()).value;
+						if(!dataSource)
+						{
+							continue;
+						}
+						//console.log(dataSource);
+						isAsync = true;
+					}
 					toFilter = filterMap[2];
 					if(toFilter)
 					{
@@ -1111,14 +1145,14 @@ function fadeOutLightbox()
 						{
 							if(!(eval("'" + data + "'" + toFilter[curFilter]["Value"])))
 							{
-								dataToFilter[user][session][data] = [];
+								dataSource = [];
 							}
 						}
 					}
 					toSplice = [];
 					//console.log(dataToFilter[user][session][data]);
 					entry = 0;
-					curLength = dataToFilter[user][session][data].length;
+					curLength = dataSource.length;
 					while(entry < curLength)
 					//for(entry in dataToFilter[user][session][data])
 					{
@@ -1128,14 +1162,14 @@ function fadeOutLightbox()
 						{
 							for(curFilter in toFilter)
 							{
-								if(toFilter[curFilter]["Field"] in dataToFilter[user][session][data][entry])
+								if(toFilter[curFilter]["Field"] in dataSource[entry])
 								{
-									if(!(eval("'" + dataToFilter[user][session][data][entry][toFilter[curFilter]["Field"]] + "'" + toFilter[curFilter]["Value"])))
+									if(!(eval("'" + dataSource[entry][toFilter[curFilter]["Field"]] + "'" + toFilter[curFilter]["Value"])))
 									{
 										//console.log(dataToFilter[user][session][data][entry]);
-										dataToFilter[user][session][data].splice(entry, 1);
+										dataSource.splice(entry, 1);
 										entry--;
-										curLength = dataToFilter[user][session][data].length;
+										curLength = dataSource.length;
 										//console.log(entry);
 										//toSplice.push(entry);
 										filteredOut = true;
@@ -1148,39 +1182,30 @@ function fadeOutLightbox()
 						{
 							if(data == "processes")
 							{
-								if(!(dataToFilter[user][session][data][entry]["Command"] in userProcFound))
+								if(!(dataSource[entry]["Command"] in userProcFound))
 								{
-									if(dataToFilter[user][session][data][entry]["Command"] in summaryProcStats)
+									if(dataSource[entry]["Command"] in summaryProcStats)
 									{
-										summaryProcStats[dataToFilter[user][session][data][entry]["Command"]]["count"]++;
+										summaryProcStats[dataSource[entry]["Command"]]["count"]++;
 									}
 									else
 									{
 										procStatMap = {};
-										procStatMap["Command"] = dataToFilter[user][session][data][entry]["Command"];
+										procStatMap["Command"] = dataSource[entry]["Command"];
 										procStatMap["count"] = 1;
-										summaryProcStats[dataToFilter[user][session][data][entry]["Command"]] = procStatMap;
+										summaryProcStats[dataSource[entry]["Command"]] = procStatMap;
 									}
-									userProcFound[dataToFilter[user][session][data][entry]["Command"]] = 0
+									userProcFound[dataSource[entry]["Command"]] = 0
 								}
 							}
 						}
 						entry++;
 					}
-					//toSplice.reverse();
 					
-					//console.log("Removing");
-					//console.log(dataToFilter[user][session][data]);
-					//console.log(toSplice);
-					//console.log(dataToFilter[user][session][data]);
-					//for(reEntry in toSplice)
-					//{
-						//console.log(reEntry);
-						//console.log(dataToFilter[user][session][data][reEntry]);
-						//dataToFilter[user][session][data].splice(entry, 1);
-						//console.log(dataToFilter[user][session][data]);
-						
-					//}
+					if(isAsync)
+					{
+						dataSource = await dataToFilter[user][session][data]["storefiltered"](dataSource);
+					}
 				}
 			}
 			}
@@ -1551,40 +1576,17 @@ function fadeOutLightbox()
 		}
 		updating = true;
 		
-		
+		/*
 		var initData = ((await retrieveData("indexdata")).value);
 		for(user in initData)
 		{
 			for(session in initData[user])
 			{
-				//console.log("Checking " + user + ":" + session)
-				var hashVal = SHA256(user + session + "_processes");
-				//console.log("hasData(" + hashVal + ")");
-				//console.log((retrieveData(hashVal)))
-				//console.log(await retrieveData(hashVal))
-				//console.log((await hasData(hashVal)));
-				if((await hasData(hashVal)))
-				{
-					//console.log("Has process data")
-					var hasStored = ((await retrieveData(hashVal)).value)
-					//console.log("Looking for processes for: " + user + ":" + session)
-					//console.log(hashVal);
-					//console.log(hasStored);
-					if(hasStored)
-					{
-						//console.log("Found");
-						//console.log(((await retrieveData(hashVal)).value));
-						//console.log("Pairing:");
-						//console.log(initData[user][session]);
-						//console.log(hasStored);
-						if(hasStored.length > 0)
-						{
-							//console.log("Not empty, pairing...")
-							initData[user][session]["processes"] = hasStored;
-						}
-					}
-					//dataToFilter[user][session]["processes"] = ((await retrieveData(SHA256(user + session + "_processes"))).value)
-				}
+				var processDataObject = {};
+				processDataObject["user"] = user;
+				processDataObject["session"] = session;
+				processDataObject["data"] = getProcessData;
+				initData[user][session]["processes"] = processDataObject;
 			}
 		}
 		
@@ -1614,7 +1616,7 @@ function fadeOutLightbox()
 		{
 			console.log(err);
 		}
-		
+		*/
 		start(true);
 		
 		updating = false;
@@ -1770,6 +1772,12 @@ function fadeOutLightbox()
 					if(curProcessList)
 					{
 						var hashVal = SHA256(userName + sessionName + "_processes");
+						
+						for(entry in curProcessList)
+						{
+							curProcessList[entry]["Original Session"] = sessionName;
+						}
+						
 						//console.log("Hash for process: " + hashVal);
 						try
 						{
@@ -2038,7 +2046,22 @@ function fadeOutLightbox()
 			
 			//d3.select("#legend").html("");
 			clearWindow();
+			
 			var theNormDataInit = ((await retrieveData("data")).value);
+			
+			for(user in theNormDataInit)
+			{
+				for(session in theNormDataInit[user])
+				{
+					var processDataObject = {};
+					processDataObject["user"] = user;
+					processDataObject["session"] = session;
+					processDataObject["data"] = getProcessData;
+					processDataObject["getfiltered"] = getProcessDataFiltered;
+					processDataObject["storefiltered"] = storeProcessDataFiltered;
+					theNormDataInit[user][session]["processes"] = processDataObject;
+				}
+			}
 			//console.log("Data:");
 			//console.log(theNormDataInit);
 			//console.log("Filtering...");
@@ -2086,6 +2109,18 @@ function fadeOutLightbox()
 					{
 						
 						thisData = theCurData[dataType];
+						
+						var isAsync = false;
+						
+						if(thisData["data"] && (typeof thisData["data"]) == "function")
+						{
+							thisData = (await thisData["getfiltered"]()).value;
+							if(!thisData)
+							{
+								continue;
+							}
+							isAsync = true;
+						}
 						
 						for(x=0; x<thisData.length; x++)
 						{
@@ -2218,6 +2253,10 @@ function fadeOutLightbox()
 							}
 						}
 						
+						if(isAsync)
+						{
+							await theCurData[dataType]["storefiltered"](thisData);
+						}
 						
 					}
 					theCurData["Index MS Session Max"] = maxTimeSession;
@@ -6345,6 +6384,7 @@ function fadeOutLightbox()
 	
 	function getScreenshot(userName, sessionName, indexMS)
 	{
+		//console.log(userName +":" + sessionName + ":" + indexMS);
 		var screenshotIndexArray = theNormData[userName][sessionName]["screenshots"];
 		var finalScreenshot = screenshotIndexArray[closestIndexMSBinary(screenshotIndexArray, indexMS)];
 		//console.log(finalScreenshot);
@@ -6570,6 +6610,8 @@ function fadeOutLightbox()
 				.selectAll("*")
 				.remove();
 		
+		
+		//console.log(curSlot);
 		d3.select("#screenshotDiv")
 				.append("img")
 				.attr("width", "100%")
