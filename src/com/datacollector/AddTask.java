@@ -100,11 +100,16 @@ public class AddTask extends HttpServlet {
 		long startTime = Math.round(Double.parseDouble((String)request.getParameter("start")));
 		long endTime = Math.round(Double.parseDouble((String)request.getParameter("end")));
 		String taskName = (String)request.getParameter("taskName");
+		String taskTags = (String)request.getParameter("taskTags");
+		if(taskTags == null)
+		{
+			taskTags = "";
+		}
+		String taskLines[] = taskTags.split("\\r?\\n");
 		String userName = (String)request.getParameter("userName");
 		String sessionName = (String)request.getParameter("sessionName");
 		
-		
-		ConcurrentHashMap result = myConnector.addTask(eventName, userName, sessionName, admin, startTime, endTime, taskName);
+		ConcurrentHashMap result = myConnector.addTask(eventName, userName, sessionName, admin, startTime, endTime, taskName, taskLines);
 		Gson gson = new GsonBuilder().create();
 		
 		

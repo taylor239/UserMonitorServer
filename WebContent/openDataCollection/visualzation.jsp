@@ -1302,6 +1302,9 @@ function fadeOutLightbox()
 	var curQueue = [];
 	
 	var persistWriting = false;
+	
+	
+	
 	async function persistData(key, value)
 	{
 		var args = {};
@@ -1334,6 +1337,35 @@ function fadeOutLightbox()
 		}
 		persistWriting = false;
 		d3.select("body").style("cursor", "");
+	}
+	
+	function sleep(ms)
+	{
+		return new Promise(resolve => setTimeout(resolve, ms));
+	}
+	
+	async function persistDataAndWait(key, value)
+	{
+		var args = {};
+		args["key"] = key;
+		args["value"] = value;
+		//console.log(args);
+		curQueue.push(args);
+		//console.log(curQueue);
+		await writePersist();
+		
+		
+		//if(curQueue.length > 0)
+		//{
+		//	console.log("Waiting on write...")
+		//	console.log(curQueue.length);
+		//	console.log(curQueue[0]);
+		//	await sleep(150000);
+		//}
+		return new Promise(async function (resolve, reject)
+		{
+			resolve(true);
+		})
 	}
 	
 	Function.prototype.clone = function() {
@@ -1622,6 +1654,8 @@ function fadeOutLightbox()
 		updating = false;
 	}
 	
+	var searchTerms = [];
+	
 	async function downloadData()
 	{
 		var needsUpdate = false;
@@ -1645,6 +1679,10 @@ function fadeOutLightbox()
 		{
 			d3.select("#title")
 				.html(origTitle + "<br />Starting download...");
+			d3.json("getTags.json?event=" + eventName, async function(error, data)
+			{
+				searchTerms = data;
+			});
 			d3.json("logExport.json?event=" + eventName + "&datasources=keystrokes,mouse,windows,events,environment,screenshotindices&normalize=none", async function(error, data)
 				{
 					try
@@ -2028,8 +2066,15 @@ function fadeOutLightbox()
 	
 	
 	var visWidthParent = (containingTableRow.offsetWidth - visPadding);
+	var refreshingStart = false;
 	async function start(needsUpdate)
 	{
+		if(refreshingStart)
+		{
+			console.log("Already restarting");
+			return;
+		}
+		refreshingStart = true;
 		d3.select(visRow).style("max-width", (visWidthParent + visPadding) + "px");
 		d3.select(visTable).style("max-width", (visWidthParent + visPadding) + "px");
 		
@@ -3994,6 +4039,7 @@ function fadeOutLightbox()
 		//console.log(legendSVG.node())
 		d3.select("#legend").select("svg").style("height", (legendHeight * (2 + windowLegend.length + eventTypeArray.length)) + "px");
 		d3.select("#legend").style("height", getInnerHeight("legendCell") + "px");
+		refreshingStart = false;
 	}
 	
 	function getInnerHeight(elementID)
@@ -5425,15 +5471,60 @@ function fadeOutLightbox()
 		var startTask = Number(document.getElementById("addTaskStart").value) + theNormData[userName]["Index MS User Min Absolute"] + theNormData[userName][sessionName]["Index MS User Session Min"];
 		var endTask = Number(document.getElementById("addTaskEnd").value) + theNormData[userName]["Index MS User Min Absolute"] + theNormData[userName][sessionName]["Index MS User Session Min"];
 		var taskName = document.getElementById("addTaskName").value;
+		var taskTags = encodeURIComponent(document.getElementById("tags").value);
 		
-		var taskUrl = "addTask.json?event=" + eventName + "&userName=" + userName + "&sessionName=" + sessionName + "&start=" + startTask + "&end=" + endTask + "&taskName=" + taskName;
+		//console.log(taskTags);
+		
+		var taskUrl = "addTask.json?event=" + eventName + "&userName=" + userName + "&sessionName=" + sessionName + "&start=" + startTask + "&end=" + endTask + "&taskName=" + taskName + "&taskTags=" + taskTags;
 		
 		d3.json(taskUrl, function(error, data)
 					{
 						//console.log(data);
 						if(data["result"] == "okay")
 						{
-							
+							console.log("Added task, now refreshing")
+							var curSelect = "&users=" + userName + "&sessions=" + sessionName;
+							d3.json("logExport.json?event=" + eventName + "&datasources=events&normalize=none" + curSelect, async function(error, data)
+							{
+								console.log("Downloaded")
+								console.log(data);
+								var theNormDataInit = ((await retrieveData("indexdata")).value);
+								console.log("Adding to")
+								console.log(theNormDataInit);
+								
+								theNormDataInit[userName][sessionName]["events"] = data[userName][sessionName]["events"];
+								try
+								{
+									var isDone = false;
+									while(!isDone)
+									{
+										isDone = await persistDataAndWait("indexdata", theNormDataInit);
+									}
+								}
+								catch(err)
+								{
+									console.log(err);
+								}
+								
+								theNormData = preprocess(theNormDataInit);
+								console.log("New norm data")
+								console.log(theNormData)
+								try
+								{
+									var isDone = false;
+									while(!(isDone == true))
+									{
+										isDone = (await (persistDataAndWait("data", theNormData)));
+									}
+									start(true);
+								}
+								catch(err)
+								{
+									console.log(err);
+								}
+								
+							});
+							/*
 							var sessEvents = theNormData[userName][sessionName]["events"];
 							var aggEvents = theNormData[userName]["Aggregated"]["events"];
 							
@@ -5489,7 +5580,7 @@ function fadeOutLightbox()
 							}
 							//console.log(newEvents);
 							theNormData[userName][sessionName]["events"] = newEvents;
-							
+							*/
 							
 							
 							//var lastAggIndex = 0;
@@ -5518,10 +5609,66 @@ function fadeOutLightbox()
 							//	}
 							//}
 							//preprocess();
-							start(true);
+							//start(true);
 						}
 						
 					});
+	}
+	
+	var searchTerms = ["Reverse", "Engineering", "Produces", "Resuls"];
+	function filterTags()
+	{
+		var input = document.getElementById("searchTags");
+		var filter = input.value.toUpperCase();
+		var selected = document.getElementById("storedTags");
+		var items = selected.getElementsByTagName("option");
+		for (i = 0; i < items.length; i++)
+		{
+			var txtValue = items[i].textContent || items[i].innerText;
+			if(txtValue.toUpperCase().indexOf(filter) > -1)
+			{
+				items[i].style.display = "";
+			}
+			else
+			{
+				items[i].style.display = "none";
+				items[i].selected = false;
+			}
+		}
+	}
+	
+	function delBlankLines()
+	{
+		 var stringArray = document.getElementById('tags').value.split('\n');
+		 var temp = [""];
+		 var x = 0;
+		 for (var i = 0; i < stringArray.length; i++)
+		 {
+		   if (stringArray[i].trim() != "")
+		   {
+		     temp[x] = stringArray[i];
+		     x++;
+		   }
+		 }
+
+		 temp = temp.join('\n');
+		 document.getElementById('tags').value = temp;
+	}
+	
+	function addTag()
+	{
+		var tagbox = document.getElementById("tags");
+		var selected = document.getElementById("storedTags");
+		var items = selected.getElementsByTagName("option");
+		for (i = 0; i < items.length; i++)
+		{
+			if(items[i].selected)
+			{
+				var txtValue = items[i].textContent || items[i].innerText;
+				tagbox.value = tagbox.value + "\n" + txtValue;
+			}
+		}
+		delBlankLines();
 	}
 	
 	async function showSession(owningUser, owningSession)
@@ -5575,6 +5722,19 @@ function fadeOutLightbox()
 		var addTaskRow = d3.select("#infoTable").append("tr").append("td")
 			.attr("width", visWidthParent + "px")
 			.html("<td><div align=\"center\">Add Task</div></td>");
+		
+		var selectEntries = "";
+		for(var x = 0; x < searchTerms.length; x++)
+		{
+			selectEntries = selectEntries + "<option value=\"" + searchTerms[x] + "\">" + searchTerms[x] + "</option>";
+		}
+		
+		var addTagRow = d3.select("#infoTable").append("tr").append("td")
+		.attr("width", visWidthParent + "px")
+				.append("table").attr("width", visWidthParent + "px").append("tr").attr("width", visWidthParent + "px")
+					.html(	"<td colspan=\"2\" width=\"50%\"><div align=\"center\"><b>Search Tags:</b></div><div align=\"center\"><input type=\"text\" style=\"width:75%\" id=\"searchTags\" name=\"searchTags\" value=\"Search/New\" onkeyup=\"filterTags()\"><button type=\"button\" style=\"width:20%\" onclick=\"addTag()\">Add</button></div>" +
+							"<div align=\"center\"><select style=\"width:100%\" name=\"storedTags\" id=\"storedTags\" size=\"3\" multiple>" + selectEntries + "</select></div></td>" +
+							"<td colspan=\"2\" width=\"50%\"><div align=\"center\"><b>Task Tags:</b></div><div align=\"center\"><textarea id=\"tags\" name=\"tags\" rows=\"5\" cols=\"50\"></textarea></div></td>");
 		
 		var addTaskRow = d3.select("#infoTable").append("tr").append("td")
 		.attr("width", visWidthParent + "px")
