@@ -1744,6 +1744,23 @@ function fadeOutLightbox()
 		}
 	}
 	
+	var sessionDownloadCount = {};
+	var numAsync = 2;
+	
+	function addDownloadCount(userName, sessionName)
+	{
+		if(!(userName in sessionDownloadCount))
+		{
+			sessionDownloadCount[userName] = {};
+		}
+		if(!(sessionName in sessionDownloadCount[userName]))
+		{
+			sessionDownloadCount[userName][sessionName] = 0;
+		}
+		sessionDownloadCount[userName][sessionName] = sessionDownloadCount[userName][sessionName] + 1;
+		return sessionDownloadCount[userName][sessionName];
+	}
+	
 	var downloadedSessions = 0;
 	var downloadedProcessSessions = 0;
 	var totalSessions = 0;
@@ -1863,6 +1880,10 @@ function fadeOutLightbox()
 								+ downloadedProcessSessions + " process sessions of "
 								+ totalSessions
 								+ " total sessions.")
+						if(addDownloadCount(userName, sessionName) >= numAsync)
+						{
+							sheet.innerHTML = "#playbutton_" + SHA256(userName + sessionName) + " {fill:Chartreuse;}";
+						}
 						refreshData();
 					}
 					
@@ -2036,8 +2057,11 @@ function fadeOutLightbox()
 					+ " screenshot and "
 					+ downloadedProcessSessions + " process sessions of "
 					+ totalSessions
-					+ " total sessions.")
-			sheet.innerHTML = "#playbutton_" + SHA256(userName + sessionName) + " {fill:Chartreuse;}";
+					+ " total sessions.");
+			if(addDownloadCount(userName, sessionName) >= numAsync)
+			{
+				sheet.innerHTML = "#playbutton_" + SHA256(userName + sessionName) + " {fill:Chartreuse;}";
+			}
 		}
 	}
 	
