@@ -148,7 +148,7 @@ public class DatabaseConnector
 	
 	private String limiter = " LIMIT ?, ?";
 	
-	private String checkPerms = "SELECT `adminEmail` FROM `EventPassword` WHERE `event` = ? AND `adminEmail` = ? AND `password` = ?";
+	private String checkPerms = "SELECT * FROM `EventPassword` WHERE `event` = ? AND `adminEmail` = ? AND `password` = ?";
 	
 	private TestingConnectionSource mySource;
 	
@@ -726,6 +726,58 @@ public class DatabaseConnector
 		return myReturn;
 	}
 	
+	public ConcurrentHashMap getPermissionDetails(String eventName, String eventAdmin, String password)
+	{
+		ConcurrentHashMap myReturn = new ConcurrentHashMap();
+		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
+		
+		conn = myConnector;
+		try
+		{
+			PreparedStatement myStatement = myConnector.prepareStatement(checkPerms);
+			myStatement.setString(1, eventName);
+			myStatement.setString(2, eventAdmin);
+			myStatement.setString(3, password);
+			ResultSet myResults = myStatement.executeQuery();
+			
+			while(myResults.next())
+			{
+				myReturn.put("adminemail", myResults.getString("adminEmail"));
+				String tagger = myResults.getString("tagger");
+				if(tagger != null)
+				{
+					myReturn.put("tagger", tagger);
+				}
+				myReturn.put("anon", myResults.getInt("anon") > 0);
+			}
+			
+			
+			stmt = myStatement;
+			rset = myResults;
+			
+			rset.close();
+			stmt.close();
+			conn.close();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+            try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
+		
+		return myReturn;
+	}
+	
 	public ArrayList getUsers(String event, String admin)
 	{
 		ArrayList myReturn = new ArrayList();
@@ -923,7 +975,7 @@ public class DatabaseConnector
 	
 	
 	
-	public ConcurrentHashMap addTask(String event, String user, String session, String admin, long start, long end, String taskName, String[] tags)
+	public ConcurrentHashMap addTask(String event, String user, String session, String admin, long start, long end, String taskName, String[] tags, String tagger)
 	{
 		ConcurrentHashMap myReturn = new ConcurrentHashMap();
 		
@@ -986,7 +1038,7 @@ public class DatabaseConnector
 			myStatement.setLong(6, start);
 			myStatement.setString(7, "start");
 			myStatement.setLong(8, start);
-			myStatement.setString(9, admin);
+			myStatement.setString(9, tagger);
 			
 			myStatement.execute();
 			myStatement.close();
@@ -1001,7 +1053,7 @@ public class DatabaseConnector
 			myStatement.setLong(6, end);
 			myStatement.setString(7, "end");
 			myStatement.setLong(8, start);
-			myStatement.setString(9, admin);
+			myStatement.setString(9, tagger);
 			
 			myStatement.execute();
 			
