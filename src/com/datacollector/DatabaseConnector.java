@@ -68,6 +68,7 @@ public class DatabaseConnector
 			"GROUP BY `MouseInput`.`session`, `MouseInput`.`username`, `MouseInput`.`event`, `MouseInput`.`adminEmail`";
 	
 	private String taskQuery = "SELECT * FROM `openDataCollectionServer`.`Task` LEFT JOIN `TaskEvent` ON `Task`.`username` = `TaskEvent`.`username` AND `Task`.`event` = `TaskEvent`.`event` AND `Task`.`adminEmail` = `TaskEvent`.`adminEmail` AND `Task`.`taskName` = `TaskEvent`.`taskName` WHERE `Task`.`event` = ? AND `Task`.`adminEmail` = ? ORDER BY `TaskEvent`.`eventTime`, `TaskEvent`.`insertTimestamp` ASC";
+	private String taskTagQuery = "SELECT * FROM `openDataCollectionServer`.`Task` INNER JOIN `TaskTags` ON `Task`.`username` = `TaskTags`.`username` AND `Task`.`event` = `TaskTags`.`event` AND `Task`.`adminEmail` = `TaskTags`.`adminEmail` AND `Task`.`taskName` = `TaskTags`.`taskName` WHERE `Task`.`event` = ? AND `Task`.`adminEmail` = ?";
 	private String taskQueryBounds = "SELECT `TaskEvent`.`username`, `TaskEvent`.`session`, MIN(`TaskEvent`.`eventTime`) AS `mintime`, MAX(`TaskEvent`.`eventTime`) AS `maxtime` FROM `openDataCollectionServer`.`Task` LEFT JOIN `TaskEvent` ON `Task`.`username` = `TaskEvent`.`username` AND `Task`.`event` = `TaskEvent`.`event` AND `Task`.`adminEmail` = `TaskEvent`.`adminEmail` AND `Task`.`taskName` = `TaskEvent`.`taskName` WHERE `Task`.`event` = ? AND `Task`.`adminEmail` = ? GROUP BY `TaskEvent`.`adminEmail`, `TaskEvent`.`event`, `TaskEvent`.`username`, `TaskEvent`.`session`";
 	private String taskQueryTags = "SELECT DISTINCT(`tag`) FROM `TaskTags` WHERE `TaskTags`.`event` = ? AND `TaskTags`.`adminEmail` = ? UNION SELECT `tag` FROM `TaskTagsPublic`";
 	
@@ -1291,6 +1292,141 @@ public class DatabaseConnector
 					sessionMap.put("events", new ArrayList());
 				}
 				ArrayList eventList = (ArrayList) sessionMap.get("events");
+				
+				eventList.add(nextRow);
+				//myReturn.add(nextRow);
+			}
+			stmt = myStatement;
+			rset = myResults;
+			
+			rset.close();
+			stmt.close();
+			conn.close();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+            try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
+		
+		return myReturn;
+	}
+	
+	public ConcurrentHashMap getTaskTagsHierarchy(String event, String admin, ArrayList usersToSelect, ArrayList sessionsToSelect, String start, String end)
+	{
+		ConcurrentHashMap myReturn = new ConcurrentHashMap();
+		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
+		conn = myConnector;
+		
+		String taskQuery = this.taskTagQuery;
+		String userSelectString = "";
+		if(!usersToSelect.isEmpty())
+		{
+			userSelectString = " AND `Task`.`username` IN (";
+			for(int x=0; x<usersToSelect.size(); x++)
+			{
+				userSelectString += "?";
+				if(!(x + 1 == usersToSelect.size()))
+				{
+					userSelectString += ", ";
+				}
+			}
+			userSelectString += ")";
+			taskQuery = taskQuery.replace("`Task`.`adminEmail` = ?", "`Task`.`adminEmail` = ? " + userSelectString);
+		}
+		
+		String sessionSelectString = "";
+		if(!sessionsToSelect.isEmpty())
+		{
+			sessionSelectString = " AND `Task`.`session` IN (";
+			for(int x=0; x<sessionsToSelect.size(); x++)
+			{
+				sessionSelectString += "?";
+				if(!(x + 1 == sessionsToSelect.size()))
+				{
+					sessionSelectString += ", ";
+				}
+			}
+			sessionSelectString += ")";
+			taskQuery = taskQuery.replace("`Task`.`adminEmail` = ?", "`Task`.`adminEmail` = ? " + sessionSelectString);
+		}
+		
+		if(!start.isEmpty() && !end.isEmpty())
+		{
+			taskQuery = taskQuery + limiter;
+		}
+		
+		try
+		{
+			System.out.println(taskQuery);
+			PreparedStatement myStatement = myConnector.prepareStatement(taskQuery);
+			myStatement.setString(1, event);
+			myStatement.setString(2, admin);
+			int sessionOffset = 0;
+			for(int x=0; x < sessionsToSelect.size(); x++)
+			{
+				myStatement.setString(3 + x, (String) sessionsToSelect.get(x));
+				sessionOffset = x + 1;
+			}
+			
+			int secondSessionOffset = 0;
+			for(int x=0; x < usersToSelect.size(); x++)
+			{
+				myStatement.setString(3 + sessionOffset + x, (String) usersToSelect.get(x));
+				secondSessionOffset = x + 1;
+			}
+			
+			if(!start.isEmpty() && !end.isEmpty())
+			{
+				myStatement.setInt(3 + sessionOffset + secondSessionOffset, Integer.parseInt(start));
+				myStatement.setInt(4 + sessionOffset + secondSessionOffset, Integer.parseInt(end));
+			}
+			
+			
+			ResultSet myResults = myStatement.executeQuery();
+			while(myResults.next())
+			{
+				ConcurrentHashMap nextRow = new ConcurrentHashMap();
+				
+				//nextRow.put("Username", myResults.getString("username"));
+				String userName = myResults.getString("username");
+				//nextRow.put("Session", myResults.getString("session"));
+				String sessionName = myResults.getString("session");
+				nextRow.put("TaskName", myResults.getString("taskName"));
+				nextRow.put("Completion", myResults.getString("completion"));
+				nextRow.put("StartTime", myResults.getTimestamp("startTimestamp", cal));
+				//nextRow.put("InsertTime", myResults.getTimestamp("insertTimestamp"));
+				//nextRow.put("Event", myResults.getString("event"));
+				
+				nextRow.put("Tag", myResults.getString("tag"));
+				
+				if(!myReturn.containsKey(userName))
+				{
+					myReturn.put(userName, new ConcurrentHashMap());
+				}
+				ConcurrentHashMap userMap = (ConcurrentHashMap) myReturn.get(userName);
+				
+				if(!userMap.containsKey(sessionName))
+				{
+					userMap.put(sessionName, new ConcurrentHashMap());
+				}
+				ConcurrentHashMap sessionMap = (ConcurrentHashMap) userMap.get(sessionName);
+				
+				if(!sessionMap.containsKey("eventtags"))
+				{
+					sessionMap.put("eventtags", new ArrayList());
+				}
+				ArrayList eventList = (ArrayList) sessionMap.get("eventtags");
 				
 				eventList.add(nextRow);
 				//myReturn.add(nextRow);
