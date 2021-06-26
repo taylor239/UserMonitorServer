@@ -128,41 +128,32 @@ public class GetTags extends HttpServlet
 			
 			//boolean fromAnon = session.getAttribute("fromAnon").equals("true");
 			
-			/*
-			boolean anon = false;
 			
+			boolean anon = false;
+			ConcurrentHashMap privs = null;
+			
+			boolean fromPrivs = false;
+			String tagger = null;
 			
 			if(admin == null || admin.isEmpty())
 			{
-				System.out.println("Anon request");
-				anon = true;
-				admin = myConnector.getPermission(eventName, eventAdmin, eventPassword);
-			}
-			
-			boolean fromAnon = anon;
-			
-			ConcurrentHashMap userMap = null;
-			ConcurrentHashMap inverseUserMap = null;
-			if(fromAnon || anon)
-			{
-				System.out.println("Building user map");
-				userMap = new ConcurrentHashMap();
-				inverseUserMap = new ConcurrentHashMap();
-				ArrayList userList = myConnector.getUsers(eventName, admin);
-				//System.out.println(userList);
-				for(int x = 0; x < userList.size(); x++)
+				fromPrivs = true;
+				System.out.println("Privs request");
+				privs = myConnector.getPermissionDetails(eventName, eventAdmin, eventPassword);
+				anon = (boolean) privs.get("anon");
+				admin = (String) privs.get("adminemail");
+				if(privs.containsKey("tagger"))
 				{
-					ConcurrentHashMap curUser = (ConcurrentHashMap) userList.get(x);
-					//System.out.println(curUser);
-					if(!userMap.containsKey(curUser.get("Username")))
-					{
-						userMap.put(curUser.get("Username"), "User" + x);
-						inverseUserMap.put("User" + x, curUser.get("Username"));
-					}
+					tagger = (String) privs.get("tagger");
 				}
-				//System.out.println(inverseUserMap);
+				else
+				{
+					return;
+				}
 			}
-			*/
+			
+			eventPassword = (String)session.getAttribute("eventPassword");
+			eventAdmin = (String)session.getAttribute("eventAdmin");
 			
 			
 			ArrayList tags = myConnector.getTaskTags(eventName, admin);
