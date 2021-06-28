@@ -1142,6 +1142,11 @@ function fadeOutLightbox()
 							continue;
 						}
 						dataSource = dataSource.value;
+						if(!dataSource)
+						{
+							console.log("No data source for " + user + ":" + session + ":" + data)
+							continue;
+						}
 						//console.log(dataSource);
 						isAsync = true;
 					}
@@ -1159,6 +1164,11 @@ function fadeOutLightbox()
 					toSplice = [];
 					//console.log(dataToFilter[user][session][data]);
 					entry = 0;
+					if(!dataSource)
+					{
+						console.log("No data source for " + user + ":" + session + ":" + data)
+						continue;
+					}
 					curLength = dataSource.length;
 					while(entry < curLength)
 					//for(entry in dataToFilter[user][session][data])
