@@ -646,7 +646,7 @@ public class InstallScriptServlet extends HttpServlet {
 					"\n" + 
 					"\n" + 
 					"mkdir C:\\datacollector\n" + 
-					"bitsadmin /transfer myDownloadJob /download /priority high http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/endpointSoftware/DataCollector.jar C:\\datacollector\\DataCollector.jar\n" + 
+					"bitsadmin /transfer myDownloadJob /download /priority high http://" + serverName + ":" + port + "/DataCollectorServer/openDataCollection/endpointSoftware/DataCollectorOld.jar C:\\datacollector\\DataCollector.jar\n" + 
 					"\n" + 
 					"echo start /B C:\\mysql\\mysql-8.0.23-winx64\\bin\\mysqld.exe --defaults-file=\"C:\\\\mysql\\\\config.ini\"> \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\StartDataCollection.bat\"\n" + 
 					"echo :wait_for_mysql>> \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\StartDataCollection.bat\"\n" + 
