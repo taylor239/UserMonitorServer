@@ -118,10 +118,17 @@ if(request.getParameter("email") != null)
 						</td>
 					</tr>
 					<tr>
-						<td colspan="3">
-									<input type="text" size="4" id="timelineZoom" name="timelineZoom" value="1">x
+						<td colspan="5">
+									<input type="text" size="4" id="timelineZoom" name="timelineZoom" value="1">x horizontal
 						</td>
-						<td colspan="2">
+					</tr>
+					<tr>
+						<td colspan="5">
+									<input type="text" size="4" id="timelineZoomVert" name="timelineZoomVert" value="1">x vertical
+						</td>
+					</tr>
+					<tr>
+						<td colspan="5">
 									<button type="button" onclick="start(true)">Apply</button>
 						</td>
 					</tr>
@@ -2542,8 +2549,11 @@ if(request.getParameter("email") != null)
 		d3.select(visTable).style("max-width", (visWidthParent + visPadding) + "px");
 		
 		var timelineZoom = Number(document.getElementById("timelineZoom").value);
+		var timelineZoomVert = Number(document.getElementById("timelineZoomVert").value);
 		visWidth = (visWidthParent) * timelineZoom;
-		
+		var visHeightNew = windowHeight * .5 * timelineZoomVert;
+		barHeight = visHeightNew / 10;
+		legendHeight = visHeightNew / 25;
 		
 		
 		if(needsUpdate)
@@ -4679,6 +4689,7 @@ if(request.getParameter("email") != null)
 		var newSVG = d3.select("#infoTable").append("tr").append("td").append("div").style("max-width", visWidthParent + "px").style("overflow-x", "scroll").append("svg")
 			.attr("width", ((visWidthParent / 15) * summaryProcStatsArray.length)  + "px")
 			.attr("height", bottomVisHeight  + "px")
+			//.attr("id", "processSVG")
 			.append("g");
 		
 		var processTooltip = newSVG.append("g")
@@ -6093,7 +6104,7 @@ if(request.getParameter("email") != null)
 		
 		var addTaskRow = d3.select("#infoTable").append("tr").append("td")
 			.attr("width", visWidthParent + "px")
-			.html("<td><div align=\"center\">Add Task</div></td>");
+			.html("<td><div id=\"addTaskTitle\" align=\"center\">Add Task</div></td>");
 		
 		var selectEntries = "";
 		for(var x = 0; searchTerms && x < searchTerms.length; x++)
@@ -6126,7 +6137,7 @@ if(request.getParameter("email") != null)
 			.on("drag", dragmoveAddTask)
 			.on("start", function(d)
 					{
-						initX = d3.event.x;
+						initX = d3.mouse(this)[0];
 						if(initX < xAxisPadding)
 						{
 							initX = xAxisPadding;
@@ -6139,8 +6150,11 @@ if(request.getParameter("email") != null)
 		
 		function dragmoveAddTask(d)
 		{
-			var x = d3.event.x;
-			var y = d3.event.y;
+			//var x = d3.event.x;
+			//var y = d3.event.y;
+			//console.log(d3.event);
+			var x = d3.mouse(this)[0];
+			var y = d3.mouse(this)[1];
 			var startPoint = 0;
 			var endPoint = 0;
 			if(x < initX)
@@ -6161,9 +6175,14 @@ if(request.getParameter("email") != null)
 			document.getElementById("addTaskEnd").value = endPoint;
 		}
 		
-		var addTaskAxisSVG = d3.select("#infoTable").append("tr").append("td").append("svg")
+		var axisRow = d3.select("#infoTable").append("tr").append("td")
+				.attr("width", visWidthParent)
+				.style("max-width", visWidthParent + "px")
+				.style("overflow-x", "auto");
+		
+		var addTaskAxisSVG = axisRow.append("svg")
 				.attr("class", "clickableBar")
-				.attr("width", visWidthParent + "px")
+				.attr("width", visWidth + "px")
 				.attr("height", (barHeight / 1.75) + "px")
 				.call(dragAddTask);
 		
@@ -6191,10 +6210,15 @@ if(request.getParameter("email") != null)
 				.attr("pointer-events", "none");
 		
 		
-		
-		var newSVG = d3.select("#infoTable").append("tr").append("td").append("svg")
-			.attr("width", visWidthParent + "px")
+		//var newRow = d3.select("#infoTable").append("tr").append("td")
+		//	.attr("width", visWidthParent)
+		//	.style("max-width", visWidthParent + "px")
+		//	.style("overflow-x", "auto");
+			
+		var newSVG = axisRow.append("svg")
+			.attr("width", visWidth + "px")
 			.attr("height", bottomVisHeight + "px")
+			.attr("id", "processGraphSvg")
 			.append("g");
 		
 		
@@ -7125,7 +7149,6 @@ if(request.getParameter("email") != null)
 					.append("tr")
 					.html("<td colspan=\"4\"><button type=\"button\" onclick=\"deleteTask('" + curSlot["Owning User"] + "', '" + curSlot["Original Session"] + "', '" + curSlot["TaskName"] + "', '" + curSlot["Index MS"] + "','" + curSlot["Source"] + "')\">Delete</button></td>");
 			}
-			
 			
 			objectCacheMap[curSlot["Hash"]] = curSlot;
 			
