@@ -119,17 +119,21 @@ if(request.getParameter("email") != null)
 					</tr>
 					<tr>
 						<td colspan="5">
+							<table>
+							<tr>
+							<td width="50%">
 									<input type="text" size="4" id="timelineZoom" name="timelineZoom" value="1">x horizontal
-						</td>
-					</tr>
-					<tr>
-						<td colspan="5">
+							</td>
+							<td width="50%">
 									<input type="text" size="4" id="timelineZoomVert" name="timelineZoomVert" value="1">x vertical
+							</td>
+							</tr>
+							</table>
 						</td>
 					</tr>
 					<tr>
 						<td colspan="5">
-									<button type="button" onclick="start(true)">Apply</button>
+									<div align="center"><button type="button" onclick="start(true)">Apply</button></div>
 						</td>
 					</tr>
 					<tr id="taskTitle1">
@@ -2535,6 +2539,10 @@ if(request.getParameter("email") != null)
 	var windowToProcess = {};
 	
 	
+	var timelineTick;
+	var timelineText;
+	
+	
 	var visWidthParent = (containingTableRow.offsetWidth - visPadding);
 	var refreshingStart = false;
 	async function start(needsUpdate)
@@ -4194,8 +4202,8 @@ if(request.getParameter("email") != null)
 		
 		
 		//Tick for animation
-		var timelineTick = svg.append("rect").style("pointer-events", "none");
-		var timelineText = svg.append("text")
+		timelineTick = svg.append("rect").style("pointer-events", "none");
+		timelineText = svg.append("text")
 			.style("fill", "Crimson")
 			.style("pointer-events", "none")
 			.style("font-size", barHeight / 4)
@@ -5934,13 +5942,26 @@ if(request.getParameter("email") != null)
 	var curSelectUser = "";
 	var curSelectSession = "";
 	
-	function addTask(userName, sessionName)
+	function addTask(userName, sessionName, isUpdate)
 	{
-		var startTask = Number(document.getElementById("addTaskStart").value) + theNormData[userName][sessionName]["Index MS Session Min Universal"];
-		var endTask = Number(document.getElementById("addTaskEnd").value) + theNormData[userName][sessionName]["Index MS Session Min Universal"];
-		var taskName = document.getElementById("addTaskName").value;
-		var taskTags = encodeURIComponent(document.getElementById("tags").value);
-		
+		var startTask = "";
+		var endTask = "";
+		var taskName = "";
+		var taskTags = "";
+		if(isUpdate)
+		{
+			startTask = Number(document.getElementById("updateTaskStart").value) + theNormData[userName][sessionName]["Index MS Session Min Universal"];
+			endTask = Number(document.getElementById("updateTaskEnd").value) + theNormData[userName][sessionName]["Index MS Session Min Universal"];
+			taskName = document.getElementById("updateTaskName").value;
+			taskTags = encodeURIComponent(document.getElementById("updateTags").value);
+		}
+		else
+		{
+			startTask = Number(document.getElementById("addTaskStart").value) + theNormData[userName][sessionName]["Index MS Session Min Universal"];
+			endTask = Number(document.getElementById("addTaskEnd").value) + theNormData[userName][sessionName]["Index MS Session Min Universal"];
+			taskName = document.getElementById("addTaskName").value;
+			taskTags = encodeURIComponent(document.getElementById("tags").value);
+		}
 		
 		var taskUrl = "addTask.json?event=" + eventName + "&userName=" + userName + "&sessionName=" + sessionName + "&start=" + startTask + "&end=" + endTask + "&taskName=" + taskName + "&taskTags=" + taskTags;
 		
@@ -6173,6 +6194,53 @@ if(request.getParameter("email") != null)
 			}
 			document.getElementById("addTaskStart").value = startPoint;
 			document.getElementById("addTaskEnd").value = endPoint;
+			
+			timelineTick.attr("x", x)
+			.attr("y", function()
+					{
+						return userSessionAxisY[owningUser][owningSession]["y"];
+					})
+			.attr("height", barHeight / 4)
+			.attr("width",  xAxisPadding / 50);
+			timelineTick.raise();
+			
+			timelineText.attr("x", x + xAxisPadding / 50)
+			.attr("y", function()
+			{
+				return userSessionAxisY[owningUser][owningSession]["y"];
+			})
+			.text(function()
+					{
+						userName = owningUser;
+						sessionName = owningSession;
+						//var scale = theNormData[userName][sessionName]["Time Scale"];
+						maxSession = Number(theNormData[userName][sessionName]["Index MS Session Max"]);
+						minSession = theNormData[userName]["Index MS User Min Absolute"] + theNormData[userName][sessionName]["Index MS User Session Min"];
+						scale = d3.scaleLinear();
+						scale.range([0, maxSession / 60000]);
+						scale.domain([xAxisPadding, visWidth]);
+						d3.select("#screenshotDiv")
+								.selectAll("*")
+								.remove();
+						async function updateScreenshot()
+						{
+							d3.select("#screenshotDiv")
+								.append("img")
+								.attr("width", "100%")
+								.attr("src", "data:image/jpg;base64," + (await getScreenshot(userName, sessionName, (scale(x) * 60000) + minSession)["Screenshot"]()))
+								//.attr("src", "./getScreenshot.jpg?username=" + userName + "&timestamp=" + getScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Index MS"] + "&session=" + getScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Original Session"] + "&event=" + eventName)
+								.attr("style", "cursor:pointer;")
+								.on("click", async function()
+										{
+											//showLightbox("<tr><td><div width=\"100%\"><img src=\"./getScreenshot.jpg?username=" + userName + "&timestamp=" + getScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Index MS"] + "&session=" + getScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Original Session"] + "&event=" + eventName + "\" style=\"max-height: " + (windowHeight * .9) + "px; max-width:100%\"></div></td></tr>");
+											showLightbox("<tr><td><div width=\"100%\"><img src=\""+ "data:image/jpg;base64," + (await getScreenshot(userName, sessionName, (scale(curX) * 60000) + minSession)["Screenshot"]()) + "\" style=\"max-height: " + (windowHeight * .9) + "px; max-width:100%\"></div></td></tr>");
+										});
+						}
+						updateScreenshot();
+						//showLightbox("<tr><td><div width=\"100%\"><img src=\"./getScreenshot.jpg?username=" + userName + "&timestamp=" + getScreenshot(userName, sessionName, screenshotIndex)["Index MS"] + "&session=" + sessionName + "&event=" + eventName + "\" style=\"max-height: " + (windowHeight * .9) + "px; max-width:100%\"></div></td></tr>");
+						return scale(x)
+					});
+			timelineText.raise();
 		}
 		
 		var axisRow = d3.select("#infoTable").append("tr").append("td")
@@ -6982,6 +7050,18 @@ if(request.getParameter("email") != null)
 		return finalScreenshot;
 	}
 	
+	function updateTask(userName, sessionName, taskName, startTime, tagger)
+	{
+		var taskUrl = "deleteTask.json?event=" + eventName + "&userName=" + userName + "&sessionName=" + sessionName + "&taskName=" + taskName + "&startTime=" + startTime + "&tagger=" + tagger;
+		d3.json(taskUrl, function(error, data)
+				{
+					if(data["result"] == "okay")
+					{
+						addTask(userName, sessionName, true);
+					}
+				});
+	}
+	
 	function deleteTask(userName, sessionName, taskName, startTime, tagger)
 	{
 		var taskUrl = "deleteTask.json?event=" + eventName + "&userName=" + userName + "&sessionName=" + sessionName + "&taskName=" + taskName + "&startTime=" + startTime + "&tagger=" + tagger;
@@ -7145,9 +7225,45 @@ if(request.getParameter("email") != null)
 			
 			if(curSlot["Original Session"] != "User")
 			{
-				d3.select("#extraInfoTable")
-					.append("tr")
-					.html("<td colspan=\"4\"><button type=\"button\" onclick=\"deleteTask('" + curSlot["Owning User"] + "', '" + curSlot["Original Session"] + "', '" + curSlot["TaskName"] + "', '" + curSlot["Index MS"] + "','" + curSlot["Source"] + "')\">Delete</button></td>");
+				var delRow = d3.select("#extraInfoTable")
+					.append("tr");
+				delRow.append("td")
+					.attr("colspan", "2")
+					.html("<button type=\"button\" onclick=\"deleteTask('" + curSlot["Owning User"] + "', '" + curSlot["Original Session"] + "', '" + curSlot["TaskName"] + "', '" + curSlot["Index MS"] + "','" + curSlot["Source"] + "')\">Delete</button>");
+				delRow.append("td")
+					.attr("colspan", "2")
+					.html("<button type=\"button\" onclick=\"updateTask('" + curSlot["Owning User"] + "', '" + curSlot["Original Session"] + "', '" + curSlot["TaskName"] + "', '" + curSlot["Index MS"] + "','" + curSlot["Source"] + "')\">Update</button>");
+			
+				var updateRow = d3.select("#extraInfoTable")
+					.append("tr");
+				updateRow.append("td")
+					.attr("colspan", "4")
+					.html("<div align='center'>New Values</div>");
+				
+				updateRow = d3.select("#extraInfoTable")
+					.append("tr");
+				updateRow.append("td")
+					.attr("colspan", "2")
+					.html("<div align='center'>Task Name</div><div align='center'><input type=\"text\" id=\"updateTaskName\" name=\"updateTaskName\" value=\"" + curSlot["TaskName"] + "\"></div>");
+				
+				var curTags = "";
+				if(curSlot["Tags"])
+				{
+					curTags = curSlot["Tags"].join('\n');
+				}	
+				updateRow.append("td")
+					.attr("colspan", "2")
+					.html("<div align='center'>Tags</div><div align='center'><textarea id=\"updateTags\" name=\"updateTags\" rows=\"5\" cols=\"50\">" + curTags + "</textarea></div>");
+				
+				updateRow = d3.select("#extraInfoTable")
+					.append("tr");
+				updateRow.append("td")
+					.attr("colspan", "2")
+					.html("<div align='center'>Start Time (MS)</div><div align='center'><input type=\"text\" id=\"updateTaskStart\" name=\"updateTaskStart\" value=\"" + curSlot["Index MS Session"] + "\"></div>");
+				updateRow.append("td")
+					.attr("colspan", "2")
+					.html("<div align='center'>End Time (MS)</div><div align='center'><input type=\"text\" id=\"updateTaskEnd\" name=\"updateTaskEnd\" value=\"" + curSlot["Next"]["Index MS Session"] + "\"></div>");
+				
 			}
 			
 			objectCacheMap[curSlot["Hash"]] = curSlot;
