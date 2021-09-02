@@ -119,16 +119,8 @@ if(request.getParameter("email") != null)
 					</tr>
 					<tr>
 						<td colspan="5">
-							<table>
-							<tr>
-							<td width="50%">
-									<input type="text" size="4" id="timelineZoom" name="timelineZoom" value="1">x horizontal
-							</td>
-							<td width="50%">
-									<input type="text" size="4" id="timelineZoomVert" name="timelineZoomVert" value="1">x vertical
-							</td>
-							</tr>
-							</table>
+									<span width="50%"><input type="text" size="4" id="timelineZoom" name="timelineZoom" value="1">x horizontal</span>
+									<span width="50%"><input type="text" size="4" id="timelineZoomVert" name="timelineZoomVert" value="1">x vertical</span>
 						</td>
 					</tr>
 					<tr>
@@ -6917,17 +6909,21 @@ if(request.getParameter("email") != null)
 		var unfound = true;
 		if(middleIndex > lastIndex)
 		{
+			console.log("Special case 1");
 			middleIndex = lastIndex;
 			unfound = false;
 		}
 		if(middleIndex < 0)
 		{
+			console.log("Special case 2");
 			middleIndex = 0;
 			unfound = false;
 		}
 		
 		while(unfound && items[middleIndex] && items[middleIndex]["Index MS"] != value && firstIndex < lastIndex)
 		{
+			console.log("Compare to: " + value);
+			console.log("Searching at " + middleIndex + ": " + middleIndex]["Index MS"]);
 		   if (value < items[middleIndex]["Index MS"])
 			{
 				lastIndex = middleIndex - 1;
@@ -7031,6 +7027,7 @@ if(request.getParameter("email") != null)
 	
 	function getScreenshot(userName, sessionName, indexMS)
 	{
+		console.log("Looking for screenshot at " + indexMS);
 		var screenshotIndexArray = theNormData[userName][sessionName]["screenshots"];
 		var finalScreenshot = screenshotIndexArray[closestIndexMSBinary(screenshotIndexArray, indexMS)];
 		var curHash = SHA256(userName + sessionName + finalScreenshot["Index MS"])
