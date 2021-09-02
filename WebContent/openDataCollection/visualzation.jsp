@@ -6923,7 +6923,7 @@ if(request.getParameter("email") != null)
 		while(unfound && items[middleIndex] && items[middleIndex]["Index MS"] != value && firstIndex < lastIndex)
 		{
 			console.log("Compare to: " + value);
-			console.log("Searching at " + middleIndex + ": " + middleIndex["Index MS"]);
+			console.log("Searching at " + middleIndex + ": " + items[middleIndex]["Index MS"]);
 		   if (value < items[middleIndex]["Index MS"])
 			{
 				lastIndex = middleIndex - 1;
