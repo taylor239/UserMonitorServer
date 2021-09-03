@@ -4206,6 +4206,7 @@ if(request.getParameter("email") != null)
 		.data(sessionList)
 		.enter()
 		.append("rect")
+		.style("cursor", "pointer")
 		.attr("x", xAxisPadding)
 		.attr("width", visWidth - xAxisPadding)
 		.attr("height", barHeight / 2)
@@ -4231,6 +4232,16 @@ if(request.getParameter("email") != null)
 		.attr("fill", "#FFF")
 		.attr("opacity", ".75")
 		.attr("z", 2)
+		.on("click", async function(d, i)
+				{
+					var curX = d3.mouse(this)[0];
+					var curY = d3.mouse(this)[1];
+					scale = d3.scaleLinear();
+					scale.range([0, maxSession / 60000]);
+					scale.domain([xAxisPadding, visWidth]);
+					var seekTo = scale(curX) * 60000
+					playAnimation(d["User"], d["Session"], seekTo);
+				})
 		.on("mousemove", async function(d, i)
 				{
 					var curX = d3.mouse(this)[0];
@@ -4804,7 +4815,7 @@ if(request.getParameter("email") != null)
 	
 	var degradeCoefficient = 60000;
 	
-	async function playAnimation(owningUser, owningSession)
+	async function playAnimation(owningUser, owningSession, seekTo)
 	{
 		showLightbox("<tr><td id=\"animationRow\"><div id=\"animationDiv\" width=\"100%\" height=\"100%\"></div></td></tr>");
 		
@@ -5814,13 +5825,19 @@ if(request.getParameter("email") != null)
 		
 		seekBar.on("click", function(d, i)
 				{
+					var curX = d3.mouse(this)[0];
+					var curY = d3.mouse(this)[1];
+					var selectTime = timeScaleAnimationLookup(curX);
+					seekTime(selectTime);
+					d3.event.stopPropagation();
+				});
+		
+		function seekTime(selectTime)
+		{
 					clearTimeout(animationTimeout);
 					topProcesses = [];
 					curTop = {};
 					updateProcAni = true;
-					var curX = d3.mouse(this)[0];
-					var curY = d3.mouse(this)[1];
-					var selectTime = timeScaleAnimationLookup(curX);
 					var curDiff = Infinity;
 					if(screenshots)
 					{
@@ -5886,7 +5903,7 @@ if(request.getParameter("email") != null)
 					{
 						windowsIndex++;
 					}
-					d3.event.stopPropagation();
+					
 					lastFrame = selectedEntry;
 					axisTick.style("transition", "none");
 					axisTick .attr("x", timeScaleAnimation(selectedEntry["Index MS Session"]));
@@ -5921,8 +5938,12 @@ if(request.getParameter("email") != null)
 						seekBar.attr("fill", "Crimson").attr("stroke", "Crimson");
 						runAnimation();
 					}
-				})
+		}
 		
+		if(seekTo)
+		{
+			seekTime(seekTo);
+		}
 		
 	}
 	
@@ -6909,13 +6930,11 @@ if(request.getParameter("email") != null)
 		var unfound = true;
 		if(middleIndex > lastIndex)
 		{
-			console.log("Special case 1");
 			middleIndex = lastIndex;
 			unfound = false;
 		}
 		if(middleIndex < 0)
 		{
-			console.log("Special case 2");
 			middleIndex = 0;
 			unfound = false;
 		}
