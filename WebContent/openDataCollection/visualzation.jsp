@@ -128,6 +128,11 @@ if(request.getParameter("email") != null)
 									<div align="center"><button type="button" onclick="start(true)">Apply</button></div>
 						</td>
 					</tr>
+					<tr>
+						<td colspan="5">
+									<input type="checkbox" id="processAutoSelect" name="processAutoSelect">Process Tooltip Details
+						</td>
+					</tr>
 					<tr id="taskTitle1">
 						<td colspan="5">
 							<div align="center">
@@ -6414,7 +6419,10 @@ if(request.getParameter("email") != null)
 								return;
 							}
 							lastMouseOver = d;
-						showWindow(owningUser, owningSession, "Processes", d["Hash"], d["Index MS"]);
+						if(document.getElementById("processAutoSelect").checked)
+						{
+							showWindow(owningUser, owningSession, "Processes", d["Hash"], d["Index MS"]);
+						}
 						x = 0;
 						if(timeMode == "Universal")
 						{
