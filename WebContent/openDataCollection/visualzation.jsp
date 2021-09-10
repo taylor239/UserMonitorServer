@@ -311,85 +311,6 @@ if(request.getParameter("email") != null)
 </table>
 </body>
 
-<style>
-
-.popimage
-{
-	
-}
-
-.black_overlay
-{
-	transition:300ms linear;
-	display: none;
-	position: absolute;
-	top: 0%;
-	left: 0%;
-	width: 100%;
-	height: 100%;
-	background-color: black;
-	z-index:1001;
-	opacity:0;
-	cursor:pointer;
-}
-
-.black_highlight
-{
-	transition:300ms linear;
-	position: absolute;
-	top: 0%;
-	left: 0%;
-	width: 100%;
-	height: 100%;
-	z-index:1001;
-	cursor:pointer;
-}
- 
-.white_content
-{
-	transition:300ms linear;
-	border-radius:10px;
-	display: none;
-	position: absolute;
-	top: 2.5%;
-	left: 5%;
-	width: 90%;
-	height: 95%;
-	max-height:95%;
-	padding: 2px;
-	border: 4px solid #000;
-	background-color: white;
-	z-index:1002;
-	overflow: auto;
-	text-align:center;
-	opacity:0;
-	vertical-align:middle;
-}
-
-.white_dim
-{
-	transition:300ms linear;
-	border-radius:10px;
-	display: block;
-	padding: 2px;
-	border: 4px solid #000;
-	background-color: white;
-	z-index:1002;
-	overflow: auto;
-	text-align:justify;
-	cursor:pointer;
-	opacity:0;
-	vertical-align:middle;
-}
-
-.white_content td
-{
-	text-align:center;
-	vertical-align:middle;
-}
-
-</style>
-
 <script>
 	var showLeft = true;
 	function toggleLeft()
@@ -1676,12 +1597,20 @@ if(request.getParameter("email") != null)
 			}
 			failed = false;
 			//for(user in data)
+			//if(data[userName])
 			{
 				//for(session in data[user])
+				//if(data[userName][sessionName])
 				{
-					
-					var curProcessList = data[userName][sessionName]["processes"];
-					
+					var curProcessList;
+					if(!data[userName][sessionName])
+					{
+						
+					}
+					else
+					{
+						curProcessList = data[userName][sessionName]["processes"];
+					}
 					if(curProcessList)
 					{
 						var hashVal = SHA256(userName + sessionName + "_processes");
@@ -1868,12 +1797,20 @@ if(request.getParameter("email") != null)
 			}
 			failed = false;
 			//for(user in data)
+			//if(data[userName])
 			{
 				//for(session in data[user])
+				//if(data[userName][sessionName])
 				{
-					
-					var curMouseList = data[userName][sessionName]["mouse"];
-					
+					var curMouseList;
+					if(!(data[userName][sessionName]))
+					{
+						
+					}
+					else
+					{
+						curMouseList = data[userName][sessionName]["mouse"];
+					}
 					if(curMouseList)
 					{
 						var hashVal = SHA256(userName + sessionName + "_mouse");
@@ -2060,12 +1997,20 @@ if(request.getParameter("email") != null)
 			}
 			failed = false;
 			//for(user in data)
+			//if(data[userName])
 			{
 				//for(session in data[user])
+				//if(data[userName][sessionName])
 				{
-					
-					var curKeystrokesList = data[userName][sessionName]["keystrokes"];
-					
+					var curKeystrokesList;
+					if(!data[userName][sessionName])
+					{
+						
+					}
+					else
+					{
+						curKeystrokesList = data[userName][sessionName]["keystrokes"];
+					}
 					if(curKeystrokesList)
 					{
 						var hashVal = SHA256(userName + sessionName + "_keystrokes");
@@ -6040,12 +5985,15 @@ if(request.getParameter("email") != null)
 		var endTask = "";
 		var taskName = "";
 		var taskTags = "";
+		var taskGoal = "";
+		
 		if(isUpdate)
 		{
 			startTask = Number(document.getElementById("updateTaskStart").value) + theNormData[userName][sessionName]["Index MS Session Min Universal"];
 			endTask = Number(document.getElementById("updateTaskEnd").value) + theNormData[userName][sessionName]["Index MS Session Min Universal"];
 			taskName = document.getElementById("updateTaskName").value;
 			taskTags = encodeURIComponent(document.getElementById("updateTags").value);
+			taskGoal = document.getElementById("updateTaskGoal").value;
 		}
 		else
 		{
@@ -6053,9 +6001,10 @@ if(request.getParameter("email") != null)
 			endTask = Number(document.getElementById("addTaskEnd").value) + theNormData[userName][sessionName]["Index MS Session Min Universal"];
 			taskName = document.getElementById("addTaskName").value;
 			taskTags = encodeURIComponent(document.getElementById("tags").value);
+			taskGoal = document.getElementById("addTaskGoal").value;
 		}
 		
-		var taskUrl = "addTask.json?event=" + eventName + "&userName=" + userName + "&sessionName=" + sessionName + "&start=" + startTask + "&end=" + endTask + "&taskName=" + taskName + "&taskTags=" + taskTags;
+		var taskUrl = "addTask.json?event=" + eventName + "&userName=" + userName + "&sessionName=" + sessionName + "&start=" + startTask + "&end=" + endTask + "&taskName=" + taskName + "&taskGoal=" + taskGoal + "&taskTags=" + taskTags;
 		
 		d3.json(taskUrl, function(error, data)
 					{
@@ -6228,6 +6177,11 @@ if(request.getParameter("email") != null)
 					.html(	"<td colspan=\"2\" width=\"50%\"><div align=\"center\"><b>Search Tags:</b></div><div align=\"center\"><input type=\"text\" style=\"width:75%\" id=\"searchTags\" name=\"searchTags\" value=\"Search/New\" onkeyup=\"filterTags()\"><button type=\"button\" style=\"width:20%\" onclick=\"addTag()\">Add</button></div>" +
 							"<div align=\"center\"><select style=\"width:100%\" name=\"storedTags\" id=\"storedTags\" size=\"3\" multiple>" + selectEntries + "</select></div></td>" +
 							"<td colspan=\"2\" width=\"50%\"><div align=\"center\"><b>Task Tags:</b></div><div align=\"center\"><textarea id=\"tags\" name=\"tags\" rows=\"5\" cols=\"50\"></textarea></div></td>");
+		
+		var addGoalRow = d3.select("#infoTable").append("tr").append("td")
+		.attr("width", visWidthParent + "px")
+				.append("table").attr("width", visWidthParent + "px").append("tr").attr("width", visWidthParent + "px")
+					.html(	"<td colspan=\"4\" width=\"100%\"><div align=\"center\"><b>Task Goal:</b></div><div align=\"center\"><textarea id=\"addTaskGoal\" name=\"addTaskGoal\" rows=\"2\" cols=\"100\"></textarea></div></td>");
 		
 		var addTaskRow = d3.select("#infoTable").append("tr").append("td")
 		.attr("width", visWidthParent + "px")
@@ -7332,6 +7286,12 @@ if(request.getParameter("email") != null)
 					.attr("colspan", "2")
 					.attr("width", "50%")
 					.html("<div align='center'>Tags</div><div align='center'><textarea id=\"updateTags\" name=\"updateTags\" rows=\"5\" cols=\"50\">" + curTags + "</textarea></div>");
+				
+				updateRow = d3.select("#extraInfoTable")
+					.append("tr");
+				updateRow.append("td")
+					.attr("colspan", "4")
+					.html("<div align='center'>Goal</div><div align='center'><textarea id=\"updateTaskGoal\" name=\"updateTaskGoal\" rows=\"2\" cols=\"100\">" + curSlot["Goal"] + "</textarea></div>");
 				
 				updateRow = d3.select("#extraInfoTable")
 					.append("tr");
