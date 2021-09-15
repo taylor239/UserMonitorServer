@@ -4206,8 +4206,8 @@ if(request.getParameter("email") != null)
 					timelineText.raise();
 				});
 		
-		var axisUnits = svg.append("g")
-		.selectAll("text")
+		var axisUnits = svg.append("g");
+		var minuteLog = axisUnits.selectAll("text")
 		.data(sessionList)
 		.enter()
 		.append("text")
@@ -4742,6 +4742,7 @@ if(request.getParameter("email") != null)
 		var backgroundG = animationSvg.append("g");
 		
 		var animationAxisG = animationSvg.append("g");
+		var animationAxisGMin = animationSvg.append("g");
 
 		var animationG = animationSvg.append("g");
 		
@@ -4763,6 +4764,16 @@ if(request.getParameter("email") != null)
 						[0, animationSvg.attr("width")]
 					);
 		
+		var timeScaleAnimationMin = d3.scaleLinear();
+		timeScaleAnimationMin.domain
+					(
+						[0, maxSessionAnimation / 60000]
+					)
+		timeScaleAnimationMin.range
+					(
+						[0, animationSvg.attr("width")]
+					);
+		
 		var timeScaleAnimationLookup = d3.scaleLinear();
 		timeScaleAnimationLookup.range
 					(
@@ -4774,9 +4785,15 @@ if(request.getParameter("email") != null)
 					);
 
 		var animationAxis = d3.axisBottom().scale(timeScaleAnimation);
+		var animationAxisMin = d3.axisTop().scale(timeScaleAnimationMin);
 		animationAxisG.call(animationAxis);
 		animationAxisG.attr("transform", "translate(" + 0 + "," + (divBounds["height"] * .8) + ")")
 		var textPadding = animationAxisG.node().getBBox()["height"];
+		animationAxisGMin.call(animationAxisMin);
+		animationAxisGMin.attr("transform", "translate(" + 0 + "," + ((divBounds["height"] * .8)) + ")")
+		animationAxisGMin.style("pointer-events", "none");
+		animationAxisGMin.selectAll("*")
+				.style("stroke", "white");
 		
 		var curTimer = 0;
 		var screenshotIndex = 0;
@@ -4850,7 +4867,7 @@ if(request.getParameter("email") != null)
 				.attr("y", (divBounds["height"] * .8))
 				.attr("text-anchor", "end")
 				.style("pointer-events", "none")
-				.text("MS");
+				.text("Minutes");
 		
 		var dragLabelG = animationSvg.append("g");
 		var dragLabel = dragLabelG.append("text")
@@ -5020,6 +5037,8 @@ if(request.getParameter("email") != null)
 				.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .1625));
 
 		
+		
+		animationAxisGMin.raise();
 		
 		function nextFrame()
 		{
@@ -5445,7 +5464,8 @@ if(request.getParameter("email") != null)
 			
 			if(curFrame)
 			{
-				timeLog.text(curFrame["Index MS Session"]);
+				scaleLabel.text((Math.round( ( (curFrame["Index MS Session"] / 60000) + Number.EPSILON ) * 100 ) / 100) + " Minutes");
+				timeLog.text(curFrame["Index MS Session"] + " MS");
 			}
 			
 			if(curFrame && curFrame["Screenshot"])
