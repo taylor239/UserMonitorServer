@@ -4996,6 +4996,7 @@ if(request.getParameter("email") != null)
 				.attr("x", divBounds["width"])
 				.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .125));
 		
+		
 		var activeEvents = [];
 		var activeEventName = playPauseG.append("text")
 				.style("pointer-events", "none")
@@ -5007,6 +5008,16 @@ if(request.getParameter("email") != null)
 				.text("...")
 				.attr("x", divBounds["width"])
 				.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .15));
+		var activeEventName2 = playPauseG.append("text")
+				.style("pointer-events", "none")
+				.attr("text-anchor", "end")
+				.attr("dominant-baseline", "middle")
+				.attr("fill", "Black")
+				.attr("stroke", "Black")
+				.attr("font-size", (divBounds["height"] * .0125))
+				.text("")
+				.attr("x", divBounds["width"])
+				.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .1625));
 
 		
 		
@@ -5515,11 +5526,27 @@ if(request.getParameter("email") != null)
 						activeEvents.splice(curIndex, 1);
 					}
 				}
+				activeEventName.attr("font-size", (divBounds["height"] * .025));
 				activeEventName.text(activeEvents.join(', '));
+				activeEventName2.text("");
 				activeEventName.attr("textLength", "")
+				activeEventName2.attr("textLength", "")
 				if(activeEventName.node().getBBox()["width"] + textHeight > ((2.5 * divBounds["width"]) / 9))
 				{
-					activeEventName.attr("textLength", (2.5 * divBounds["width"]) / 9)
+					var splitString = activeEvents;
+					var firstString = splitString.slice(0, Math.ceil(splitString.length / 2)).join(", ");
+					var secondString = splitString.slice(Math.ceil(splitString.length / 2), splitString.length).join(", ");
+					activeEventName.text(firstString);
+					activeEventName2.text(secondString);
+					activeEventName.attr("font-size", (divBounds["height"] * .0125));
+					if(activeEventName.node().getBBox()["width"] + textHeight > ((2.5 * divBounds["width"]) / 9))
+					{
+						activeEventName.attr("textLength", (2.5 * divBounds["width"]) / 9);
+					}
+					if(activeEventName2.node().getBBox()["width"] + textHeight > ((2.5 * divBounds["width"]) / 9))
+					{
+						activeEventName2.attr("textLength", (2.5 * divBounds["width"]) / 9);
+					}
 				}
 				else
 				{
