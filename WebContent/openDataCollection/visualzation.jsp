@@ -2958,6 +2958,75 @@ if(request.getParameter("email") != null)
 							}
 						});
 		
+		var legendFilter = legendSVG.append("g")
+		.selectAll("rect")
+		.data(windowLegend)
+		.enter()
+		.append("rect")
+		.attr("x", "90%")
+		.attr("width", "10%")
+		//.attr("width", legendWidth)
+		.attr("y", function(d, i)
+				{
+					return legendHeight * (i + 1);
+				})
+		.attr("height", legendHeight)
+		.attr("stroke", "black")
+		.style("cursor", "pointer")
+		.attr("fill", function(d, i)
+				{
+					return "Crimson";
+				})
+		.on("click", function(d, i)
+		{
+			addFilterDirect(3, "FirstClass", "!= '" + d + "'");
+		});
+		
+		var legendFilterText = legendSVG.append("g")
+		.selectAll("text")
+		.data(windowLegend)
+		.enter()
+		.append("text")
+		//.attr("font-size", 11)
+		.attr("x", "95%")
+		.attr("y", function(d, i)
+				{
+					//return legendHeight * (i + 1);
+					//return legendHeight * (i) + legendHeight;
+					return legendHeight * (i + 1) + legendHeight * .5;
+				})
+		.attr("height", legendHeight * .75)
+		.text(function(d, i)
+				{
+					return "X";
+				})
+		.attr("fill", function(d, i)
+				{
+					if(i % 2 == 0)
+					{
+						return "#FFF";
+					}
+					else
+					{
+						return "#000";
+					}
+				})
+		.attr("font-weight", "bolder")
+		.style("pointer-events", "none")
+		.attr("dominant-baseline", "middle")
+		.attr("text-anchor", "middle")
+		.attr("stroke", function(d, i)
+				{
+					if(i % 2 == 0)
+					{
+						return "none";
+					}
+					else
+					{
+						return "none";
+					}
+				});
+		
 		//Get the SVG for the main viz timeline
 		svg = d3.selectAll("#mainVisualization")
 		.style("height", visHeight + "px")
@@ -4488,6 +4557,67 @@ if(request.getParameter("email") != null)
 				})
 		.attr("font-weight", "bolder")
 		.attr("dominant-baseline", "middle")
+		.attr("stroke", function(d, i)
+				{
+					if(i % 2 == 0)
+					{
+						return "none";
+					}
+					else
+					{
+						return "none";
+					}
+				});
+		
+		var legendFilter = legendSVG.append("g")
+			.selectAll("rect")
+			.data(eventTypeArray)
+			.enter()
+			.append("rect")
+			.attr("x", "90%")
+			.attr("width", "10%")
+			//.attr("width", legendWidth)
+			.attr("y", function(d, i)
+					{
+						return legendHeight * (i + 1) + eventLegendBaseline;
+					})
+			.on("click", function(d, i)
+					{
+						addFilterDirect(3, "Source", "!= '" + d["Source"] + "'");
+					})
+			.attr("height", legendHeight)
+			.style("cursor", "pointer")
+			.attr("stroke", "Black")
+			.attr("fill", function(d, i)
+					{
+						return "Crimson";
+					});
+		
+		var legendFilterText = legendSVG.append("g")
+		.selectAll("text")
+		.data(eventTypeArray)
+		.enter()
+		.append("text")
+		.style("pointer-events", "none")
+		.attr("x", "95%")
+		.attr("y", function(d, i)
+				{
+					//return legendHeight * (i + 1);
+					//return legendHeight * (i) + legendHeight;
+					return legendHeight * (i + 1) + legendHeight * .5 + eventLegendBaseline;
+				})
+		.attr("height", legendHeight * .75)
+		.text(function(d, i)
+				{
+					return "X";
+				})
+		.attr("fill", function(d, i)
+				{
+					return "#000";
+				})
+		.attr("font-weight", "bolder")
+		.attr("dominant-baseline", "middle")
+		.attr("text-anchor", "middle")
 		.attr("stroke", function(d, i)
 				{
 					if(i % 2 == 0)
