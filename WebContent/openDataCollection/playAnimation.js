@@ -281,7 +281,7 @@ async function playAnimation(owningUser, owningSession, seekTo)
 			.attr("height", (divBounds["height"] * .05))
 			.attr("fill", "Chartreuse")
 			.attr("stroke", "Black")
-			.attr("x", (8 * divBounds["width"]) / 9)
+			.attr("x", (6.5 * divBounds["width"]) / 9)
 			.attr("y", (divBounds["height"] * .8) + textPadding)
 			.style("cursor", "pointer");
 	var playPauseLabel = playPauseG.append("text")
@@ -295,7 +295,7 @@ async function playAnimation(owningUser, owningSession, seekTo)
 			.attr("font-size", (divBounds["height"] * .0375))
 			.text("⏸")
 			.style("cursor", "pointer")
-			.attr("x", (8.5 * divBounds["width"]) / 9)
+			.attr("x", (7 * divBounds["width"]) / 9)
 			.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .03125));
 	var activeWindowTitle = playPauseG.append("text")
 			.style("pointer-events", "none")
@@ -306,7 +306,7 @@ async function playAnimation(owningUser, owningSession, seekTo)
 			.attr("font-size", (divBounds["height"] * .025))
 			.text("Active Window and Tasks")
 			.attr("x", divBounds["width"])
-			.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .075));
+			.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .03125));
 	var activeWindow = playPauseG.append("text")
 			.style("pointer-events", "none")
 			.attr("text-anchor", "end")
@@ -316,7 +316,7 @@ async function playAnimation(owningUser, owningSession, seekTo)
 			.attr("font-size", (divBounds["height"] * .025))
 			.text("...")
 			.attr("x", divBounds["width"])
-			.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .1));
+			.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .075));
 	var activeWindowName = playPauseG.append("text")
 			.style("pointer-events", "none")
 			.attr("text-anchor", "end")
@@ -326,7 +326,7 @@ async function playAnimation(owningUser, owningSession, seekTo)
 			.attr("font-size", (divBounds["height"] * .025))
 			.text("...")
 			.attr("x", divBounds["width"])
-			.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .125));
+			.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .1));
 	
 	
 	var activeEvents = [];
@@ -339,17 +339,17 @@ async function playAnimation(owningUser, owningSession, seekTo)
 			.attr("font-size", (divBounds["height"] * .025))
 			.text("...")
 			.attr("x", divBounds["width"])
-			.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .15));
+			.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .125));
 	var activeEventName2 = playPauseG.append("text")
 			.style("pointer-events", "none")
 			.attr("text-anchor", "end")
 			.attr("dominant-baseline", "middle")
 			.attr("fill", "Black")
 			.attr("stroke", "Black")
-			.attr("font-size", (divBounds["height"] * .0125))
+			.attr("font-size", (divBounds["height"] * .025))
 			.text("")
 			.attr("x", divBounds["width"])
-			.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .1625));
+			.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .15));
 
 	
 	
@@ -866,7 +866,7 @@ async function playAnimation(owningUser, owningSession, seekTo)
 					activeEvents.splice(curIndex, 1);
 				}
 			}
-			activeEventName.attr("font-size", (divBounds["height"] * .025));
+			//activeEventName.attr("font-size", (divBounds["height"] * .025));
 			activeEventName.text(activeEvents.join(', '));
 			activeEventName2.text("");
 			activeEventName.attr("textLength", "")
@@ -878,7 +878,7 @@ async function playAnimation(owningUser, owningSession, seekTo)
 				var secondString = splitString.slice(Math.ceil(splitString.length / 2), splitString.length).join(", ");
 				activeEventName.text(firstString);
 				activeEventName2.text(secondString);
-				activeEventName.attr("font-size", (divBounds["height"] * .0125));
+				//activeEventName.attr("font-size", (divBounds["height"] * .0125));
 				if(activeEventName.node().getBBox()["width"] + textHeight > ((2.5 * divBounds["width"]) / 9))
 				{
 					activeEventName.attr("textLength", (2.5 * divBounds["width"]) / 9);
