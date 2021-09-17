@@ -251,7 +251,7 @@ if(request.getParameter("email") != null)
 					</tr>
 					<tr>
 						<td style="height:100%" id="legendCell">
-							<div style="overflow-y: scroll" align="left" id="legend">
+							<div style="overflow-y: scroll; max-height: 100%" align="left" id="legend">
 							
 							</div>
 						</td>
@@ -4508,7 +4508,7 @@ if(request.getParameter("email") != null)
 		d3.select("#optionFilterTable").attr("height", getInnerHeight("optionFilterCell") + "px");
 		
 		d3.select("#legend").select("svg").style("height", (legendHeight * (2 + windowLegend.length + eventTypeArray.length)) + "px");
-		d3.select("#legend").style("height", getInnerHeight("legendCell") + "px");
+		//d3.select("#legend").style("height", getInnerHeight("legendCell") + "px");
 		refreshingStart = false;
 	}
 	
