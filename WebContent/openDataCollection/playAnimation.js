@@ -1223,6 +1223,10 @@ async function playAnimation(owningUser, owningSession, seekTo)
 	//Iterate through events to build a list for the given time
 	function updateEventList(selectTime)
 	{
+		if(!events)
+		{
+			return;
+		}
 		var curTime = 0;
 		var curEventIndex = 0;
 		
@@ -1286,6 +1290,10 @@ async function playAnimation(owningUser, owningSession, seekTo)
 	//Iterate through the processes to get the top processes at a given time.
 	function updateTopProcesses(selectTime)
 	{
+		if(!processes)
+		{
+			return;
+		}
 		var curTime = 0;
 		var curProcessIndex = 0;
 		
@@ -1510,7 +1518,7 @@ async function playAnimation(owningUser, owningSession, seekTo)
 				
 				var tmpWindow = curWindows;
 				var windowIndexSubtract = 1;
-				while(tmpWindow["Index MS Session"] > selectedEntry["Index MS Session"])
+				while(tmpWindow && tmpWindow["Index MS Session"] > selectedEntry["Index MS Session"])
 				{
 					if(windows[windowsIndex - windowIndexSubtract])
 					{
