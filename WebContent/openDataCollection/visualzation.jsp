@@ -4860,15 +4860,22 @@ if(request.getParameter("email") != null)
 	var curSelectUser = "";
 	var curSelectSession = "";
 	
-	function addTask(userName, sessionName, isUpdate)
+	function addTask(userName, sessionName, isUpdate, fromAni)
 	{
 		var startTask = "";
 		var endTask = "";
 		var taskName = "";
 		var taskTags = "";
 		var taskGoal = "";
-		
-		if(isUpdate)
+		if(fromAni)
+		{
+			startTask = Number(document.getElementById("addTaskAniStart").value) + theNormData[userName][sessionName]["Index MS Session Min Universal"];
+			endTask = Number(document.getElementById("addTaskAniEnd").value) + theNormData[userName][sessionName]["Index MS Session Min Universal"];
+			taskName = document.getElementById("addTaskAniName").value;
+			taskTags = encodeURIComponent(document.getElementById("tagsAni").value);
+			taskGoal = document.getElementById("addTaskAniGoal").value;
+		}
+		else if(isUpdate)
 		{
 			startTask = Number(document.getElementById("updateTaskStart").value) + theNormData[userName][sessionName]["Index MS Session Min Universal"];
 			endTask = Number(document.getElementById("updateTaskEnd").value) + theNormData[userName][sessionName]["Index MS Session Min Universal"];
@@ -4925,6 +4932,14 @@ if(request.getParameter("email") != null)
 									{
 										isDone = (await (persistDataAndWait("data", theNormData)));
 									}
+									if(fromAni)
+									{
+										document.getElementById("addTaskAniStart").value = "Start (MS Session Time)";
+										document.getElementById("addTaskAniEnd").value = "End (MS Session Time)";
+										document.getElementById("addTaskAniName").value = "";
+										document.getElementById("tagsAni").value = "";
+										document.getElementById("addTaskAniGoal").value = "";
+									}
 									start(true);
 								}
 								catch(err)
@@ -4960,9 +4975,14 @@ if(request.getParameter("email") != null)
 		}
 	}
 	
-	function delBlankLines()
+	function delBlankLines(isAni)
 	{
-		 var stringArray = document.getElementById('tags').value.split('\n');
+		 var tagEle = document.getElementById('tags');
+		 if(isAni)
+		 {
+			 tagEle = document.getElementById('tagsAni');
+		 }
+		 var stringArray = tagEle.value.split('\n');
 		 var temp = [""];
 		 var x = 0;
 		 for (var i = 0; i < stringArray.length; i++)
@@ -4975,13 +4995,18 @@ if(request.getParameter("email") != null)
 		 }
 
 		 temp = temp.join('\n');
-		 document.getElementById('tags').value = temp;
+		 tagEle.value = temp;
 	}
 	
-	function addTag()
+	function addTag(isAni)
 	{
 		var tagbox = document.getElementById("tags");
 		var selected = document.getElementById("storedTags");
+		if(isAni)
+		{
+			tagbox = document.getElementById("tagsAni");
+			selected = document.getElementById("storedTagsAni");
+		}
 		var items = selected.getElementsByTagName("option");
 		for (i = 0; i < items.length; i++)
 		{
@@ -4991,7 +5016,7 @@ if(request.getParameter("email") != null)
 				tagbox.value = tagbox.value + "\n" + txtValue;
 			}
 		}
-		delBlankLines();
+		delBlankLines(isAni);
 	}
 
 	var selectRect;
