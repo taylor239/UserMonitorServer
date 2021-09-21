@@ -77,7 +77,12 @@ async function playAnimation(owningUser, owningSession, seekTo)
 	var divBounds = aniRow.node().getBoundingClientRect();
 	
 	var screenshots = theNormData[owningUser][owningSession]["screenshots"];
-	var keystrokes = (await theNormData[owningUser][owningSession]["keystrokes"]["getfiltered"]()).value;
+	var getKeyValue = (await theNormData[owningUser][owningSession]["keystrokes"]["getfiltered"]())
+	var keystrokes;
+	if(getKeyValue)
+	{
+		keystrokes = getKeyValue.value;
+	}
 	var mouse = (await theNormData[owningUser][owningSession]["mouse"]["getfiltered"]()).value;
 	var windows = theNormData[owningUser][owningSession]["windows"];
 	var processes = (await theNormData[owningUser][owningSession]["processes"]["getfiltered"]()).value;
