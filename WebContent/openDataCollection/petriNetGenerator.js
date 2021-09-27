@@ -131,6 +131,8 @@ async function analyzeTaskMap(curTask)
 		var curConcurrent = curChild["Concurrent Tasks"];
 		var curChildParent = curChild["Parent Task"];
 		
+		console.log("Analyzing child:");
+		console.log(curChildParent["TaskName"]);
 		var foundPred = false;
 		if(x >= 1)
 		{
@@ -150,7 +152,7 @@ async function analyzeTaskMap(curTask)
 				}
 			}
 		}
-		
+		console.log("Found pred: " + foundPred)
 		if(!foundPred)
 		{
 			//There was no previous child that was not concurrent
