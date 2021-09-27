@@ -27,7 +27,8 @@ async function buildTaskMapTop(user, session, task, onlySession, colissionMap)
 	
 	console.log(curGraph);
 	
-	var toReturn = await toNodeMap(analyzeTaskMap(curGraph));
+	var toReturn = await analyzeTaskMap(curGraph)
+	toReturn = toNodeMap(toReturn);
 	
 	console.log(toReturn);
 	
