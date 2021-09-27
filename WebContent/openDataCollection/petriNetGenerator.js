@@ -119,7 +119,6 @@ async function analyzeTaskMap(curTask)
 	//We also keep track of children that have been used as
 	//predecessors so that at the end we can determine which
 	//ones are not used and thus are predecessor to the parent.
-	var usedChildren = {};
 	
 	//After this is all done, we will recursively call this on
 	//the children.
@@ -140,15 +139,26 @@ async function analyzeTaskMap(curTask)
 			//looking for one that is not concurrent.
 			for(var y = x - 1; y >= 0; y--)
 			{
-				if(curConcurrent.indexOf(curChildren[y]) == -1)
+				console.log("Comparing to:");
+				console.log(curChildren[y]["Parent Task"]["TaskName"]);
+				var isConcurrent = false;
+				for(entry in curConcurrent)
+				{
+					if(curConcurrent[entry]["Parent Task"]["Task Hash"] == curChildren[y]["Parent Task"]["Task Hash"])
+					{
+						isConcurrent = true;
+					}
+				}
+				if(!isConcurrent)
 				{
 					//The previous child is not concurrent to the
 					//current child we are getting pred for.  We
 					//assign it as pred and continue.
+					console.log("Found nonconcurrent pred")
 					curChild["Predecessor"] = [curChildren[y]];
-					usedChildren[curChildren[y]["Parent Task"]["Task Hash"]] = true;
+					curChildren[y]["UsedPred"] = true;
 					foundPred = true;
-					break;
+					y = -1;
 				}
 			}
 		}
@@ -172,10 +182,10 @@ async function analyzeTaskMap(curTask)
 	
 	//The predecessor to the parent task are all of the children that are
 	//not predecessor to anything else.
-	newPredList = [];
+	var newPredList = [];
 	for(entry in curChildren)
 	{
-		if(usedChildren[curChildren[entry]["Parent Task"]["Task Hash"]])
+		if(curChildren[entry]["UsedPred"])
 		{
 			
 		}
@@ -186,8 +196,6 @@ async function analyzeTaskMap(curTask)
 	}
 	console.log("Pred list for parent:");
 	console.log(newPredList);
-	console.log("Used children:")
-	console.log(usedChildren);
 	
 	if(newPredList.length > 0)
 	{
