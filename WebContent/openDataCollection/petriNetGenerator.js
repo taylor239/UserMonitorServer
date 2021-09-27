@@ -146,7 +146,7 @@ async function analyzeTaskMap(curTask)
 					//current child we are getting pred for.  We
 					//assign it as pred and continue.
 					curChild["Predecessor"] = [curChildren[y]];
-					usedChildren[curChildren[y]] = true;
+					usedChildren[curChildren[y]["Parent Task"]["Task Hash"]] = true;
 					foundPred = true;
 					break;
 				}
@@ -175,7 +175,7 @@ async function analyzeTaskMap(curTask)
 	newPredList = [];
 	for(entry in curChildren)
 	{
-		if(usedChildren[curChildren[entry]])
+		if(usedChildren[curChildren[entry]["Parent Task"]["Task Hash"]])
 		{
 			
 		}
@@ -186,6 +186,9 @@ async function analyzeTaskMap(curTask)
 	}
 	console.log("Pred list for parent:");
 	console.log(newPredList);
+	console.log("Used children:")
+	console.log(usedChildren);
+	
 	if(newPredList.length > 0)
 	{
 		curTask["Predecessor"] = newPredList;
