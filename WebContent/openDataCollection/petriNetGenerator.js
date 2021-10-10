@@ -27,6 +27,10 @@ async function buildTaskMapTop(user, session, task, onlySession, colissionMap)
 	
 	console.log(curGraph);
 	
+	console.log(curGraph);
+	
+	curGraph = getNestingLevel(curGraph);
+	
 	var toReturn = await analyzeTaskMap(curGraph)
 	toReturn = toNodeMap(toReturn);
 	
@@ -39,6 +43,35 @@ async function buildTaskMapTop(user, session, task, onlySession, colissionMap)
 	attackGraphs.push(toReturn);
 	console.log(attackGraphs)
 	rebuildPetriMenu();
+	return toReturn;
+}
+
+function getNestingLevel(toReturn)
+{
+	if(toReturn["Nesting Level"])
+	{
+		return;
+	}
+	//console.log("Getting nesting level")
+	//console.log(toReturn);
+	toReturn["Nesting Level"] = 1;
+	
+	if(toReturn["Child Tasks"] && toReturn["Child Tasks"].length > 0)
+	{
+		var maxNest = 0;
+		for(var entry in toReturn["Child Tasks"])
+		{
+			getNestingLevel(toReturn["Child Tasks"][entry]);
+			if(toReturn["Child Tasks"][entry]["Nesting Level"] > maxNest)
+			{
+				maxNest = toReturn["Child Tasks"][entry]["Nesting Level"];
+			}
+		}
+		toReturn["Nesting Level"] = maxNest + 1;
+	}
+	
+	toReturn["Parent Task"]["Nesting Level"] = toReturn["Nesting Level"];
+	
 	return toReturn;
 }
 
@@ -721,11 +754,37 @@ function viewPetriNets()
 	var numUnused = 0;
 	
 	var finalAttackGraphs = JSON.parse(JSON.stringify(attackGraphs));
-
+	
+	//In this loop we merge nodes and calculate min, max nesting level and time taken
+	var minNestingLevel = 0;
+	var maxNestingLevel = 0
+	var minTimeTaken = Infinity;
+	var maxTimeTaken = 0;
+	
+	
 	for(var entry in finalAttackGraphs)
 	{
 		for(place in finalAttackGraphs[entry]["nodes"])
 		{
+			if(finalAttackGraphs[entry]["nodes"][place]["type"] == "Transition")
+			{
+				if(finalAttackGraphs[entry]["nodes"][place]["Target Place"]["Nesting Level"] > maxNestingLevel)
+				{
+					maxNestingLevel = finalAttackGraphs[entry]["nodes"][place]["Target Place"]["Nesting Level"];
+				}
+				var timeTaken = finalAttackGraphs[entry]["nodes"][place]["Target Place"]["Next"]["Index MS"] - finalAttackGraphs[entry]["nodes"][place]["Target Place"]["Index MS"];
+				finalAttackGraphs[entry]["nodes"][place]["Time Taken"] = timeTaken;
+				
+				if(timeTaken < minTimeTaken)
+				{
+					minTimeTaken = timeTaken;
+				}
+				if(timeTaken > maxTimeTaken)
+				{
+					maxTimeTaken = timeTaken;
+				}
+			}
+			
 			if(finalAttackGraphs[entry]["nodes"][place]["id"] in usedPlaces)
 			{
 				
@@ -738,6 +797,127 @@ function viewPetriNets()
 		}
 		finalNodesEdges["links"] = finalNodesEdges["links"].concat(JSON.parse(JSON.stringify(finalAttackGraphs[entry]["links"])));
 	}
+	
+	//console.log("Max Nesting: " + maxNestingLevel);
+	//console.log("Time Taken: " + minTimeTaken + " : " + maxTimeTaken);
+	var nestingScaleRange = ["#ba4f00", "#a470ff"];
+	var nestingScale = d3.scaleLinear().domain([minNestingLevel, maxNestingLevel]).range(nestingScaleRange);
+	var timeTakenScaleRange = ["#ffcf3d", "#00ff1e", "#00315c"];
+	var timeTakenScale = d3.scaleLinear().domain([minTimeTaken, (minTimeTaken + maxTimeTaken) / 2, maxTimeTaken]).range(timeTakenScaleRange);
+	
+	var legendWidth = divBounds["width"] / 8;
+	var legendHeight = divBounds["height"] / 3
+	
+	function linspace(start, end, n)
+	{
+		var out = [];
+		var delta = (end - start) / (n - 1);
+		
+		var i = 0;
+		while(i < (n - 1)) {
+		    out.push(start + (i * delta));
+		    i++;
+		}
+		
+		out.push(end);
+		return out;
+	}
+
+	var nestingLegend = petriG.append("g");
+	var nestingGradient = nestingLegend.append('defs')
+		.append('linearGradient')
+		.attr('id', 'nestingGradient')
+		.attr('x1', '0%') // bottom
+		.attr('y1', '100%')
+		.attr('x2', '0%') // to top
+		.attr('y2', '0%')
+		.attr('spreadMethod', 'pad');
+	var nestingPct = linspace(0, 100, nestingScaleRange.length).map(function(d)
+		{
+			return Math.round(d) + '%';
+		});
+	var nestingColourPct = d3.zip(nestingPct, nestingScaleRange);
+	nestingColourPct.forEach(function(d)
+	{
+		nestingGradient.append('stop')
+			.attr('offset', d[0])
+			.attr('stop-color', d[1])
+			.attr('stop-opacity', 1);
+	});
+	nestingLegend.append('rect')
+		.attr('x', -divBounds["width"] / 2)
+		.attr('y', -divBounds["height"] / 2)
+		.attr('width', legendWidth / 4)
+		.attr('height', legendHeight)
+		.style('fill', 'url(#nestingGradient)');
+	var nestingScaleLegend = d3.scaleLinear()
+		.domain([minNestingLevel, maxNestingLevel])
+		.range([legendHeight, 0]);
+	var nestingLegendAxis = d3.axisLeft()
+		.scale(nestingScaleLegend);
+	var nestingAxisG = nestingLegend.append("g")
+		.attr("class", "legend axis")
+		.attr("transform", "translate(" + ((-divBounds["width"] / 2) + (legendWidth / 4)) + ", " + (-divBounds["height"] / 2) + ")")
+		.call(nestingLegendAxis);
+	nestingAxisG.selectAll("text").style("fill", "white");
+	nestingAxisG.selectAll("line").style("stroke", "white");
+	var axisLabel = nestingLegend.append("text")
+		.attr('x', (-divBounds["width"] / 2) + (legendWidth / 4))
+		.attr('y', (-divBounds["height"] / 2) + (legendHeight / 2))
+		.style("dominant-baseline", "text-after-edge")
+		.style("writing-mode", "tb")
+		.style("text-orientation", "upright")
+		.style("text-anchor", "middle")
+		.text("Nesting Level");
+	
+	
+	
+	var timeTakenLegend = petriG.append("g");
+	var timeTakenGradient = timeTakenLegend.append('defs')
+		.append('linearGradient')
+		.attr('id', 'timeTakenGradient')
+		.attr('x1', '0%') // bottom
+		.attr('y1', '100%')
+		.attr('x2', '0%') // to top
+		.attr('y2', '0%')
+		.attr('spreadMethod', 'pad');
+	var timeTakenPct = linspace(0, 100, timeTakenScaleRange.length).map(function(d)
+		{
+			return Math.round(d) + '%';
+		});
+	var timeTakenColourPct = d3.zip(timeTakenPct, timeTakenScaleRange);
+	timeTakenColourPct.forEach(function(d)
+	{
+		timeTakenGradient.append('stop')
+			.attr('offset', d[0])
+			.attr('stop-color', d[1])
+			.attr('stop-opacity', 1);
+	});
+	timeTakenLegend.append('rect')
+		.attr('x', -divBounds["width"] / 2)
+		.attr('y', (-divBounds["height"] / 2) + ((2 * divBounds["height"]) / 3))
+		.attr('width', legendWidth / 4)
+		.attr('height', legendHeight)
+		.style('fill', 'url(#timeTakenGradient)');
+	var timeTakenScaleLegend = d3.scaleLinear()
+		.domain([minTimeTaken / 60000, maxTimeTaken / 60000])
+		.range([legendHeight, 0]);
+	var timeTakenLegendAxis = d3.axisLeft()
+		.scale(timeTakenScaleLegend);
+	var timeTakenAxisG = timeTakenLegend.append("g")
+		.attr("class", "legend axis")
+		.attr("transform", "translate(" + ((-divBounds["width"] / 2) + (legendWidth / 4)) + ", " + ((-divBounds["height"] / 2) + ((2 * divBounds["height"]) / 3)) + ")")
+		.call(timeTakenLegendAxis);
+	timeTakenAxisG.selectAll("text").style("fill", "white");
+	timeTakenAxisG.selectAll("line").style("stroke", "white");
+	var axisLabel = timeTakenLegend.append("text")
+		.attr('x', (-divBounds["width"] / 2) + (legendWidth / 4))
+		.attr('y', (-divBounds["height"] / 2) + ((2 * divBounds["height"]) / 3) + (legendHeight / 2))
+		.style("dominant-baseline", "text-after-edge")
+		.style("writing-mode", "tb")
+		.style("text-orientation", "upright")
+		.style("text-anchor", "middle")
+		.text("Minutes Taken");
 	
 	for(var entry in finalNodesEdges["links"])
 	{
@@ -864,7 +1044,15 @@ function viewPetriNets()
 		.append("rect")
 		.attr("width", transitionWidth)
 		.attr("height", transitionHeight)
-		.attr("fill", "blue")
+		.attr("fill", function(d)
+				{
+					return timeTakenScale(d["Time Taken"]);
+				})
+		.attr("stroke-width", "3px")
+		.attr("stroke", function(d)
+				{
+					return nestingScale(d["Target Place"]["Nesting Level"]);
+				})
 		.call(d3.drag()
 		   .on("drag", dragged)
 		   .on("end", dragended));
