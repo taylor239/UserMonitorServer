@@ -800,8 +800,13 @@ function viewPetriNets()
 	
 	//console.log("Max Nesting: " + maxNestingLevel);
 	//console.log("Time Taken: " + minTimeTaken + " : " + maxTimeTaken);
+	//The multiplier range on the transition rect glyph
+	var minTransition = 1;
+	var maxTransition = 3;
+	
 	var nestingScaleRange = ["#ba4f00", "#a470ff"];
 	var nestingScale = d3.scaleLinear().domain([minNestingLevel, maxNestingLevel]).range(nestingScaleRange);
+	var nestingSizeScale = d3.scaleLinear().domain([minNestingLevel, maxNestingLevel]).range([minTransition, maxTransition]);
 	var timeTakenScaleRange = ["#ffcf3d", "#00ff1e", "#00315c"];
 	var timeTakenScale = d3.scaleLinear().domain([minTimeTaken, (minTimeTaken + maxTimeTaken) / 2, maxTimeTaken]).range(timeTakenScaleRange);
 	
@@ -1040,10 +1045,17 @@ function viewPetriNets()
 	
 	var transitionWidth = 10;
 	var transitionHeight = 20;
+	//nestingSizeScale
 	var transitions = node.filter(d => d.type === "Transition")
 		.append("rect")
-		.attr("width", transitionWidth)
-		.attr("height", transitionHeight)
+		.attr("width", function(d)
+				{
+					return transitionWidth * nestingSizeScale(d["Target Place"]["Nesting Level"]);
+				})
+		.attr("height", function(d)
+				{
+					return transitionHeight * nestingSizeScale(d["Target Place"]["Nesting Level"]);
+				})
 		.attr("fill", function(d)
 				{
 					return timeTakenScale(d["Time Taken"]);
