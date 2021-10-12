@@ -27,8 +27,6 @@ async function buildTaskMapTop(user, session, task, onlySession, colissionMap)
 	
 	console.log(curGraph);
 	
-	console.log(curGraph);
-	
 	curGraph = getNestingLevel(curGraph);
 	
 	var toReturn = await analyzeTaskMap(curGraph)
@@ -71,6 +69,8 @@ function getNestingLevel(toReturn)
 	}
 	
 	toReturn["Parent Task"]["Nesting Level"] = toReturn["Nesting Level"];
+	toReturn["Parent Task"]["Mouse Input"] = toReturn["Mouse Input"];
+	toReturn["Parent Task"]["Key Input"] = toReturn["Key Input"];
 	
 	return toReturn;
 }
@@ -514,6 +514,8 @@ async function buildTaskMap(user, session, task, onlySession, colissionMap)
 	var childTasks = [];
 	
 	var toReturn = {};
+	toReturn["Mouse Input"] = 0;
+	toReturn["Key Input"] = 0;
 	colissionMap[thisHash] = toReturn;
 	toReturn["Parent Task"] = task;
 	toReturn["Concurrent Tasks"] = concurrentTasks;
@@ -566,8 +568,70 @@ async function buildTaskMap(user, session, task, onlySession, colissionMap)
 	//at will be in between these indices.
 	for(entry in sessions)
 	{
-		var alreadyIn = false;
 		var curSession = sessionTasks[sessions[entry]];
+		
+		//Get keyboard and mouse indices to calculate IO during task
+		var getKeyValue = (await theNormData[user][sessions[entry]]["keystrokes"]["getfiltered"]())
+		var keystrokes;
+		if(getKeyValue)
+		{
+			keystrokes = getKeyValue.value;
+			var startNode = binarySearch(keystrokes, task["Index MS"]);
+			if(startNode >= 0)
+			{
+				while(keystrokes[startNode] && Number(keystrokes[startNode]["Index MS"]) < Number(task["Index MS"]))
+				{
+					startNode++;
+				}
+				
+				var endNode = binarySearch(keystrokes, task["Next"]["Index MS"]);
+				while(keystrokes[endNode] && Number(keystrokes[endNode]["Index MS"]) > Number(task["Next"]["Index MS"]))
+				{
+					endNode--;
+				}
+				
+				if(endNode > startNode)
+				{
+					toReturn["Key Input"] += (endNode - startNode);
+				}
+			}
+		}
+		else
+		{
+			
+		}
+		var getMouseValue = (await theNormData[user][sessions[entry]]["mouse"]["getfiltered"]())
+		var mouse;
+		if(getMouseValue)
+		{
+			mouse = getMouseValue.value;
+			var startNode = binarySearch(mouse, task["Index MS"]);
+			if(startNode >= 0)
+			{
+				while(mouse[startNode] && Number(mouse[startNode]["Index MS"]) < Number(task["Index MS"]))
+				{
+					startNode++;
+				}
+				
+				var endNode = binarySearch(mouse, task["Next"]["Index MS"]);
+				while(mouse[endNode] && Number(mouse[endNode]["Index MS"]) > Number(task["Next"]["Index MS"]))
+				{
+					endNode--;
+				}
+				
+				if(endNode > startNode)
+				{
+					toReturn["Mouse Input"] += (endNode - startNode);
+				}
+			}
+		}
+		else
+		{
+			
+		}
+		
+		
+		var alreadyIn = false;
 		var startNode = binarySearch(curSession, task["Index MS"]);
 		var endNode = binarySearch(curSession, task["Next"]["Index MS"]);
 		//console.log(curSession[startNode]);
@@ -757,7 +821,9 @@ function viewPetriNets()
 	
 	//In this loop we merge nodes and calculate min, max nesting level and time taken
 	var minNestingLevel = 0;
-	var maxNestingLevel = 0
+	var maxNestingLevel = 0;
+	var minInput = Infinity;
+	var maxInput = 0;
 	var minTimeTaken = Infinity;
 	var maxTimeTaken = 0;
 	
@@ -783,6 +849,16 @@ function viewPetriNets()
 				{
 					maxTimeTaken = timeTaken;
 				}
+				
+				var totalInput = finalAttackGraphs[entry]["nodes"][place]["Target Place"]["Mouse Input"] + finalAttackGraphs[entry]["nodes"][place]["Target Place"]["Key Input"];
+				if(totalInput < minInput)
+				{
+					minInput = totalInput;
+				}
+				if(totalInput > maxInput)
+				{
+					maxInput = totalInput;
+				}
 			}
 			
 			if(finalAttackGraphs[entry]["nodes"][place]["id"] in usedPlaces)
@@ -800,12 +876,12 @@ function viewPetriNets()
 	
 	//console.log("Max Nesting: " + maxNestingLevel);
 	//console.log("Time Taken: " + minTimeTaken + " : " + maxTimeTaken);
-	//The multiplier range on the transition rect glyph
+	//The multiplier range on the transition rect glyph.
 	var minTransition = 1;
 	var maxTransition = 3;
 	
-	var nestingScaleRange = ["#ba4f00", "#a470ff"];
-	var nestingScale = d3.scaleLinear().domain([minNestingLevel, maxNestingLevel]).range(nestingScaleRange);
+	var inputScaleRange = ["#ba4f00", "#a470ff"];
+	var inputScale = d3.scaleLinear().domain([minInput, maxInput]).range(inputScaleRange);
 	var nestingSizeScale = d3.scaleLinear().domain([minNestingLevel, maxNestingLevel]).range([minTransition, maxTransition]);
 	var timeTakenScaleRange = ["#ffcf3d", "#00ff1e", "#00315c"];
 	var timeTakenScale = d3.scaleLinear().domain([minTimeTaken, (minTimeTaken + maxTimeTaken) / 2, maxTimeTaken]).range(timeTakenScaleRange);
@@ -828,52 +904,52 @@ function viewPetriNets()
 		return out;
 	}
 
-	var nestingLegend = petriG.append("g");
-	var nestingGradient = nestingLegend.append('defs')
+	var inputLegend = petriG.append("g");
+	var inputGradient = inputLegend.append('defs')
 		.append('linearGradient')
-		.attr('id', 'nestingGradient')
+		.attr('id', 'inputGradient')
 		.attr('x1', '0%') // bottom
 		.attr('y1', '100%')
 		.attr('x2', '0%') // to top
 		.attr('y2', '0%')
 		.attr('spreadMethod', 'pad');
-	var nestingPct = linspace(0, 100, nestingScaleRange.length).map(function(d)
+	var inputPct = linspace(0, 100, inputScaleRange.length).map(function(d)
 		{
 			return Math.round(d) + '%';
 		});
-	var nestingColourPct = d3.zip(nestingPct, nestingScaleRange);
-	nestingColourPct.forEach(function(d)
+	var inputColourPct = d3.zip(inputPct, inputScaleRange);
+	inputColourPct.forEach(function(d)
 	{
-		nestingGradient.append('stop')
+		inputGradient.append('stop')
 			.attr('offset', d[0])
 			.attr('stop-color', d[1])
 			.attr('stop-opacity', 1);
 	});
-	nestingLegend.append('rect')
+	inputLegend.append('rect')
 		.attr('x', -divBounds["width"] / 2)
 		.attr('y', -divBounds["height"] / 2)
 		.attr('width', legendWidth / 4)
 		.attr('height', legendHeight)
-		.style('fill', 'url(#nestingGradient)');
-	var nestingScaleLegend = d3.scaleLinear()
-		.domain([minNestingLevel, maxNestingLevel])
+		.style('fill', 'url(#inputGradient)');
+	var inputScaleLegend = d3.scaleLinear()
+		.domain([minInput, maxInput])
 		.range([legendHeight, 0]);
-	var nestingLegendAxis = d3.axisLeft()
-		.scale(nestingScaleLegend);
-	var nestingAxisG = nestingLegend.append("g")
+	var inputLegendAxis = d3.axisLeft()
+		.scale(inputScaleLegend);
+	var inputAxisG = inputLegend.append("g")
 		.attr("class", "legend axis")
 		.attr("transform", "translate(" + ((-divBounds["width"] / 2) + (legendWidth / 4)) + ", " + (-divBounds["height"] / 2) + ")")
-		.call(nestingLegendAxis);
-	nestingAxisG.selectAll("text").style("fill", "white");
-	nestingAxisG.selectAll("line").style("stroke", "white");
-	var axisLabel = nestingLegend.append("text")
+		.call(inputLegendAxis);
+	inputAxisG.selectAll("text").style("fill", "white");
+	inputAxisG.selectAll("line").style("stroke", "white");
+	var axisLabel = inputLegend.append("text")
 		.attr('x', (-divBounds["width"] / 2) + (legendWidth / 4))
 		.attr('y', (-divBounds["height"] / 2) + (legendHeight / 2))
 		.style("dominant-baseline", "text-after-edge")
 		.style("writing-mode", "tb")
 		.style("text-orientation", "upright")
 		.style("text-anchor", "middle")
-		.text("Nesting Level");
+		.text("User Input");
 	
 	
 	
@@ -1063,7 +1139,7 @@ function viewPetriNets()
 		.attr("stroke-width", "3px")
 		.attr("stroke", function(d)
 				{
-					return nestingScale(d["Target Place"]["Nesting Level"]);
+					return inputScale(d["Target Place"]["Mouse Input"] + d["Target Place"]["Key Input"]);
 				})
 		.call(d3.drag()
 		   .on("drag", dragged)
