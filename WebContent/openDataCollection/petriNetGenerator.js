@@ -1,5 +1,7 @@
 //This code builds and visualizes petri nets from selected tasks.
 
+const curve = d3.line().curve(d3.curveNatural);
+
 var attackGraphs = [];
 
 function rebuildPetriMenu()
@@ -797,7 +799,8 @@ function viewPetriNets()
 	    .attr("orient", "auto")
 	  .append("svg:path")
 	    .attr("d", "M0,-5L10,0L0,5");
-
+	
+	
 	var petriRow = d3.select("#petriRow");
 	var petriDiv = d3.select("#petriDiv");
 	
@@ -1014,11 +1017,21 @@ function viewPetriNets()
 		.force("x", d3.forceX())
 		.force("y", d3.forceY());
 	
-	var link = petriG.append("g")
-		.selectAll("line")
+	//var link = petriG.append("g")
+	//	.selectAll("line")
+	//	.data(finalNodesEdges.links)
+	//	.enter()
+	//	.append("line")
+	//	.attr("stroke", "Black")
+	//	.attr("stroke-width", "2")
+	//	.attr("marker-end", "url(#end)");
+	
+	var curveLink = petriG.append("g")
+		.selectAll("path")
 		.data(finalNodesEdges.links)
 		.enter()
-		.append("line")
+		.append("path")
+		.attr('fill', 'none')
 		.attr("stroke", "Black")
 		.attr("stroke-width", "2")
 		.attr("marker-end", "url(#end)");
@@ -1175,7 +1188,44 @@ function viewPetriNets()
 	node = transitions.merge(places).merge(labels);
 	
 	simulation.on("tick", () => {
-		link
+		//link
+		//	.attr("x1", d => d.source.x)
+		//	.attr("y1", d => d.source.y)
+		//	.attr("x2", d => d.target.x)
+		//	.attr("y2", d => d.target.y);
+		
+		curveLink
+			.attr("d", function(d)
+					{
+						var toReturn = [];
+						var startPoint = [d.source.x, d.source.y];
+						toReturn.push(startPoint);
+						
+						//This may be handy later when combining multiple petri nets
+						//var totalDistance = Math.sqrt(Math.pow((d.target.x - d.source.x), 2) + Math.pow((d.target.y - d.source.y), 2));
+						//var finalDistance = .2 * totalDistance;
+						//var finalDistance = 25;
+						var finalDistance = 0;
+						if(d.target.x - d.source.x < 0)
+						{
+							finalDistance = -finalDistance;
+						}
+						var xLen = ((d.target.x - d.source.x));
+						var yLen = ((d.target.y - d.source.y));
+						var yMod = -xLen / (Math.abs(xLen) + Math.abs(yLen));
+						var xMod = yLen / (Math.abs(xLen) + Math.abs(yLen));
+						if(d.target.y - d.source.y < 0)
+						{
+							finalDistance = -finalDistance;
+						}
+						var midPoint = [(finalDistance * xMod) + (d.source.x + d.target.x) / 2, (finalDistance * yMod) + (d.source.y + d.target.y) / 2];
+						toReturn.push(midPoint);
+						
+						var endPoint = [d.target.x, d.target.y];
+						toReturn.push(endPoint);
+						
+						return curve(toReturn);
+					})
 			.attr("x1", d => d.source.x)
 			.attr("y1", d => d.source.y)
 			.attr("x2", d => d.target.x)
