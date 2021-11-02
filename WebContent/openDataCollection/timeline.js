@@ -782,7 +782,7 @@
 					curSessionCount += numSessions;
 					return toReturn;
 				})
-		.attr("fill", "Teal")
+		.attr("fill", "Cyan")
 		.attr("initFill", "Cyan")
 		.attr("stroke", "black")
 		.attr("initStroke", "black")
