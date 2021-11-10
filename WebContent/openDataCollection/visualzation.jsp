@@ -551,14 +551,14 @@ if(request.getParameter("email") != null)
 	
 	//rebuildFilters();
 
-	function removeFilter(filterNum)
+	async function removeFilter(filterNum)
 	{
 		
 		filters.splice(filterNum - 1, 1);
 		rebuildFilters();
-		start(true);
+		await start(true);
 	}
-	function addFilter()
+	async function addFilter()
 	{
 		levelVal = document.getElementById("filter_add_level_field").value;
 		prefixVal = document.getElementById("filter_add_prefix_field").value;
@@ -572,7 +572,7 @@ if(request.getParameter("email") != null)
 		filters.push(newFilter);
 		
 		rebuildFilters();
-		start(true);
+		await start(true);
 	}
 	
 	function addFilterDirect(levelVal, prefixVal, fieldVal, valueVal)
@@ -1412,6 +1412,7 @@ if(request.getParameter("email") != null)
 	}
 	
 	var searchTerms = [];
+	var doneDownloading = false;
 	
 	async function downloadData()
 	{
@@ -1708,7 +1709,8 @@ if(request.getParameter("email") != null)
 							sheet.innerHTML = "#playbutton_" + SHA256(userName + sessionName) + " {fill:Chartreuse;}";
 							if(downloadedMouseSessions == totalSessions && downloadedKeystrokesSessions == totalSessions && downloadedProcessSessions == totalSessions && downloadedSessions == totalSessions)
 							{
-								removeFilter(1);
+								await removeFilter(1);
+								doneDownloading = true;
 							}
 						}
 						
@@ -1908,7 +1910,8 @@ if(request.getParameter("email") != null)
 							sheet.innerHTML = "#playbutton_" + SHA256(userName + sessionName) + " {fill:Chartreuse;}";
 							if(downloadedMouseSessions == totalSessions && downloadedKeystrokesSessions == totalSessions && downloadedProcessSessions == totalSessions && downloadedSessions == totalSessions)
 							{
-								removeFilter(1);
+								await removeFilter(1);
+								doneDownloading = true;
 							}
 						}
 						
@@ -2108,7 +2111,8 @@ if(request.getParameter("email") != null)
 							sheet.innerHTML = "#playbutton_" + SHA256(userName + sessionName) + " {fill:Chartreuse;}";
 							if(downloadedMouseSessions == totalSessions && downloadedKeystrokesSessions == totalSessions && downloadedProcessSessions == totalSessions && downloadedSessions == totalSessions)
 							{
-								removeFilter(1);
+								await removeFilter(1);
+								doneDownloading = true;
 							}
 						}
 						
@@ -2335,7 +2339,8 @@ if(request.getParameter("email") != null)
 						sheet.innerHTML = "#playbutton_" + SHA256(userName + sessionName) + " {fill:Chartreuse;}";
 						if(downloadedMouseSessions == totalSessions && downloadedKeystrokesSessions == totalSessions && downloadedProcessSessions == totalSessions && downloadedSessions == totalSessions)
 						{
-							removeFilter(1);
+							await removeFilter(1);
+							doneDownloading = true;
 						}
 					}
 					if(imageDownloadQueue.length > 0)
@@ -2397,7 +2402,8 @@ if(request.getParameter("email") != null)
 				sheet.innerHTML = "#playbutton_" + SHA256(userName + sessionName) + " {fill:Chartreuse;}";
 				if(downloadedMouseSessions == totalSessions && downloadedKeystrokesSessions == totalSessions && downloadedProcessSessions == totalSessions && downloadedSessions == totalSessions)
 				{
-					removeFilter(1);
+					await removeFilter(1);
+					doneDownloading = true;
 				}
 			}
 			if(imageDownloadQueue.length > 0)
