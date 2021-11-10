@@ -553,13 +553,20 @@ if(request.getParameter("email") != null)
 
 	async function removeFilter(filterNum)
 	{
+		filterChanged = true;
 		
 		filters.splice(filterNum - 1, 1);
 		rebuildFilters();
 		await start(true);
 	}
+	
+	var filterChanged = true;
+	
+	
 	async function addFilter()
 	{
+		filterChanged = true;
+		
 		levelVal = document.getElementById("filter_add_level_field").value;
 		prefixVal = document.getElementById("filter_add_prefix_field").value;
 		fieldVal = document.getElementById("filter_add_field_field").value;
@@ -577,6 +584,7 @@ if(request.getParameter("email") != null)
 	
 	function addFilterDirect(levelVal, prefixVal, fieldVal, valueVal)
 	{
+		filterChanged = true;
 		//levelVal = document.getElementById("filter_add_level_field").value;
 		//fieldVal = document.getElementById("filter_add_field_field").value;
 		//valueVal = document.getElementById("filter_add_value_field").value;
@@ -3001,11 +3009,25 @@ if(request.getParameter("email") != null)
 	var selectRect;
 	var timeScaleAni;
 	
+	var lastSessionUser = "";
+	var lastSessionSession = "";
+	var cachedProcessMap;
+	var cachedSortedList;
+	var cachedMaxCPU;
+	var cachedFinalProcList;
+	var cachedLineFormattedData;
+	
 	async function showSession(owningUser, owningSession)
 	{
+		//if((!filterChanged) && lastSessionUser == curSelectUser && lastSessionSession = curSelectSession)
+		//{
+		//	
+		//}
 		curMode = "session";
 		curSelectUser = owningUser;
 		curSelectSession = owningSession;
+		
+		
 		bottomVizFontSize = bottomVisHeight / 25;
 		clearWindow();
 		
@@ -3030,7 +3052,23 @@ if(request.getParameter("email") != null)
 					showLightbox("<tr><td><div width=\"100%\"><img src=\"data:image/jpg;base64," + (await (theNormData[owningUser][owningSession]["screenshots"][0]["Screenshot"]())) + "\" style=\"max-height: " + (windowHeight * .9) + "px; max-width:100%\"></div></td></tr>");
 				});
 
-		curProcessMap = (await processMap[owningUser][owningSession]["data"]()).value;
+		
+		//Get cached things if nothing has changed
+		var getCached = false;
+		if((!filterChanged) && lastSessionUser == curSelectUser && lastSessionSession == curSelectSession)
+		{
+			getCached = true;
+			console.log("Process map cached");
+			curProcessMap = cachedProcessMap;
+		}
+		else
+		{
+			console.log("Getting process map");
+			curProcessMap = (await processMap[owningUser][owningSession]["data"]()).value;
+		}
+		cachedProcessMap = curProcessMap;
+		lastSessionUser = curSelectUser;
+		lastSessionSession = curSelectSession
 		
 		var timeScale;
 		if(timeMode == "Universal")
@@ -3218,14 +3256,16 @@ if(request.getParameter("email") != null)
 
 		cpuSortedList = [];
 		var maxCPU = 0;
+		if(!getCached)
+		{
 		for(osUser in curProcessMap)
 		{
 			for(started in curProcessMap[osUser])
 			{
 				for(pid in curProcessMap[osUser][started])
 				{
-					curProcList = curProcessMap[osUser][started][pid]
-					totalAverage = curProcList[curProcList.length-1]["Aggregate CPU"] / curProcList.length;
+					var curProcList = curProcessMap[osUser][started][pid]
+					var totalAverage = curProcList[curProcList.length-1]["Aggregate CPU"] / curProcList.length;
 					curProcList[0]["Average CPU"] = totalAverage;
 					for(entry in curProcList)
 					{
@@ -3246,6 +3286,14 @@ if(request.getParameter("email") != null)
 			if(a[0]["Average CPU"] < b[0]["Average CPU"]) { return 1; }
 			return 0;
 		})
+		}
+		else
+		{
+			cpuSortedList = cachedSortedList;
+			maxCPU = cachedMaxCPU;
+		}
+		cachedMaxCPU = maxCPU;
+		cachedSortedList = cpuSortedList;
 
 		var cpuScale = d3.scaleLinear();
 		cpuScale.domain([0, maxCPU]);
@@ -3256,6 +3304,8 @@ if(request.getParameter("email") != null)
 		
 		var lineFormattedData = []
 
+		if(!getCached)
+		{
 		for(entry in cpuSortedList)
 		{
 			for(subEntry in cpuSortedList[entry])
@@ -3276,7 +3326,15 @@ if(request.getParameter("email") != null)
 		cpuSortedList = cpuSortedList.reverse();
 		
 		finalProcList = finalProcList.reverse();
-
+		}
+		else
+		{
+			finalProcList = cachedFinalProcList;
+			lineFormattedData = cachedLineFormattedData;
+		}
+		cachedFinalProcList = finalProcList;
+		cachedLineFormattedData = lineFormattedData;
+		
 		var procPoints = newSVG.selectAll("circle")
 			.data(finalProcList)
 			.enter()
@@ -3820,7 +3878,8 @@ if(request.getParameter("email") != null)
 						return "none";
 					}
 				});
-
+		
+		filterChanged = false;
 	}
 	
 
