@@ -476,9 +476,36 @@ async function playAnimation(owningUser, owningSession, seekTo)
 			.attr("x", (8 * divBounds["width"]) / 9)
 			.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .03125));
 	
+	var fastForward = showTaskAddG.append("rect")
+			.attr("width", divBounds["width"] / 18)
+			.attr("height", (divBounds["height"] * .05))
+			.attr("fill", "Purple")
+			.attr("stroke", "Black")
+			.attr("x", (7 * divBounds["width"]) / 9)
+			.attr("y", (divBounds["height"] * .8) + textPadding)
+			.style("cursor", "pointer")
+			.attr("id", "toggleTaskButton")
+			.on("click", function(d, i)
+					{
+						seekToNextEvent();
+					});
+	var fastForwardLabel = showTaskAddG.append("text")
+			.style("pointer-events", "none")
+			.attr("text-anchor", "middle")
+			.attr("dominant-baseline", "middle")
+			.attr("font-weight", "bolder")
+			.attr("textLength", divBounds["width"] / 18)
+			.attr("fill", "Black")
+			.attr("stroke", "Black")
+			.attr("font-size", (divBounds["height"] * .0375))
+			.text("⏩")
+			.style("cursor", "pointer")
+			.attr("x", (7.25 * divBounds["width"]) / 9)
+			.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .03125));
+	
 	var playPauseG = animationSvg.append("g");
 	var playPause = playPauseG.append("rect")
-			.attr("width", divBounds["width"] / 9)
+			.attr("width", divBounds["width"] / 18)
 			.attr("height", (divBounds["height"] * .05))
 			.attr("fill", "Chartreuse")
 			.attr("stroke", "Black")
@@ -496,7 +523,7 @@ async function playAnimation(owningUser, owningSession, seekTo)
 			.attr("font-size", (divBounds["height"] * .0375))
 			.text("⏸")
 			.style("cursor", "pointer")
-			.attr("x", (7 * divBounds["width"]) / 9)
+			.attr("x", (6.75 * divBounds["width"]) / 9)
 			.attr("y", (divBounds["height"] * .8) + textPadding + (divBounds["height"] * .03125));
 	/*
 	var activeWindowTitle = playPauseG.append("text")
@@ -1886,6 +1913,15 @@ async function playAnimation(owningUser, owningSession, seekTo)
 					seekBar.attr("fill", "Crimson").attr("stroke", "Crimson");
 					runAnimation();
 				}
+	}
+	
+	function seekToNextEvent()
+	{
+		if(events[eventsIndex])
+		{
+			eventsTime = Number(events[eventsIndex]["Index MS Session"]);
+			seekTime(eventsTime);
+		}
 	}
 	
 	if(seekTo)
