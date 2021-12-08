@@ -63,6 +63,7 @@ String newPassword = request.getParameter("eventpassword");
 String newDescription = request.getParameter("description");
 boolean newPublic = request.getParameter("public") != null && request.getParameter("public").equals("public");
 boolean newPublicEvent = request.getParameter("publicevent") != null && request.getParameter("publicevent").equals("publicevent");
+boolean newAutoapproveEvent = request.getParameter("autoapproveevent") != null && request.getParameter("autoapproveevent").equals("autoapproveevent");
 String newTokens = request.getParameter("tokens");
 String newServer = request.getParameter("eventserver");
 String contactName = request.getParameter("contactname");
@@ -136,7 +137,7 @@ if(removeTokens != null && !removeTokens.equals(""))
 boolean deleteData = request.getParameter("deletedata") != null && request.getParameter("deletedata").equals("deletedata");
 
 
-String insertEvent = "INSERT INTO `Event`(`event`, `start`, `end`, `description`, `continuous`, `taskgui`, `password`, `adminEmail`, `public`, `publicEvent`) VALUES (?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE `event` = VALUES(`event`), `start` = VALUES(`start`), `end` = VALUES(`end`), `description` = VALUES(`description`), `continuous` = VALUES(`continuous`), `taskgui` = VALUES(`taskgui`), `password` = VALUES(`password`), `adminEmail` = VALUES(`adminEmail`), `public` = VALUES(`public`), `publicEvent` = VALUES(`publicEvent`)";
+String insertEvent = "INSERT INTO `Event`(`event`, `start`, `end`, `description`, `continuous`, `taskgui`, `password`, `adminEmail`, `public`, `publicEvent`, `dynamicTokens`) VALUES (?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE `event` = VALUES(`event`), `start` = VALUES(`start`), `end` = VALUES(`end`), `description` = VALUES(`description`), `continuous` = VALUES(`continuous`), `taskgui` = VALUES(`taskgui`), `password` = VALUES(`password`), `adminEmail` = VALUES(`adminEmail`), `public` = VALUES(`public`), `publicEvent` = VALUES(`publicEvent`), `dynamicTokens` = VALUES(`dynamicTokens`)";
 if(newEventName != null && !newEventName.equals("") && newDescription != null && !newDescription.equals(""))
 {
 try
@@ -152,6 +153,7 @@ try
 	insertStmt.setString(8, (String)session.getAttribute("admin"));
 	insertStmt.setBoolean(9, newPublic);
 	insertStmt.setBoolean(10, newPublicEvent);
+	insertStmt.setBoolean(11, newAutoapproveEvent);
 	insertStmt.execute();
 	insertStmt.close();
 }
@@ -183,7 +185,7 @@ catch(Exception e)
 
 if(contactNameRemove != null && !contactNameRemove.equals(""))
 {
-String contactCount = "SELECT COUNT(*) AS `theCount` FROM `openDataCollectionServer`.`Event` INNER JOIN `openDataCollectionServer`.`EventContact` ON `openDataCollectionServer`.`Event`.`event` = `openDataCollectionServer`.`EventContact`.`event` WHERE `openDataCollectionServer`.`Event`.`event` = ? AND `openDataCollectionServer`.`Event`.`adminEmail` = ? AND `publicEvent` = 1";
+String contactCount = "SELECT COUNT(*) AS `theCount` FROM `openDataCollectionServer`.`Event` INNER JOIN `openDataCollectionServer`.`EventContact` ON `openDataCollectionServer`.`Event`.`event` = `openDataCollectionServer`.`EventContact`.`event` WHERE `openDataCollectionServer`.`Event`.`event` = ? AND `openDataCollectionServer`.`Event`.`adminEmail` = ?";
 String insertContact = "DELETE FROM `EventContact` WHERE `event` = ? AND `adminEmail` = ? AND `name` = ?";
 try
 {
@@ -298,6 +300,8 @@ String description = "";
 String serverName = "";
 boolean publicEvent = false;
 boolean publicPublic = false;
+boolean autoapproveEvent = false;
+boolean autoapprove = false;
 try
 {
 	PreparedStatement selectStatement = dbConn.prepareStatement(selectTotalEvent);
@@ -318,6 +322,7 @@ try
 		serverName = myResults.getString("continuous");
 		publicEvent = myResults.getInt("publicEvent") == 1;
 		publicPublic = myResults.getInt("public") == 1;
+		autoapproveEvent = myResults.getInt("dynamicTokens") == 1;
 	}
 }
 catch(Exception e)
@@ -593,6 +598,26 @@ catch(Exception e)
 	}
 	%>
 	<input type="checkbox" id="publicevent" name="publicevent" value="publicevent" <%=publicEventChecked %> form="createform">
+	</td>
+	</tr>
+	<tr>
+	<td>
+	<h4>Autoapprove Tokens?</h4>
+	</td>
+	</tr>
+	<tr>
+	<td>
+	<p>
+	If your event is public, this will automatically approve all token requests.
+	</p>
+	<%
+	String autoapproveEventChecked = "";
+	if(autoapproveEvent)
+	{
+		autoapproveEventChecked = "checked";
+	}
+	%>
+	<input type="checkbox" id="autoapproveevent" name="autoapproveevent" value="autoapproveevent" <%=autoapproveEventChecked %> form="createform">
 	</td>
 	</tr>
 	<tr>
