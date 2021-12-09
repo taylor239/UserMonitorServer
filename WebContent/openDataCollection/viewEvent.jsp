@@ -226,9 +226,13 @@ try
 		insertToken += ",(?,?,?,?,?)";
 		rowCount++;
 	}
+	System.out.println(insertToken);
 	PreparedStatement insertStmt = dbConn.prepareStatement(insertToken);
 	for(int x=0; x<newTokenList.length; x++)
 	{
+		System.out.println(newTokenList[x]);
+		System.out.println(requesterName.get(x));
+		System.out.println(requesterName.get(x));
 		insertStmt.setString(5*x+1, newEventName);
 		insertStmt.setString(5*x+2, (String)session.getAttribute("admin"));
 		insertStmt.setString(5*x+3, newTokenList[x]);
