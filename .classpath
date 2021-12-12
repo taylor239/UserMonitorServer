@@ -97,11 +97,6 @@
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-linux-x86.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus-platform.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/artoolkitplus.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-linux-arm64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-linux-armhf.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-linux-ppc64le.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-linux-x86_64.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-linux-x86.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg-platform.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/ffmpeg.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/flandmark-linux-arm64.jar"/>
@@ -134,11 +129,9 @@
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/jbig2-imageio-3.0.3.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/jboss-logging-3.1.4.GA.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/jboss-vfs-3.2.15.Final.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/lept4j-1.13.3.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/pdfbox-2.0.24.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/pdfbox-debugger-2.0.24.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/pdfbox-tools-2.0.24.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/commons-collections-3.2.1.jar"/>
-	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/tess4j-4.5.5.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
