@@ -46,14 +46,14 @@ public class UploadDataWebsocket
 		{
 			Session curSession = sessionIter.next();
 			
-			System.out.println("Checking sessions:");
+			//System.out.println("Checking sessions:");
 			
-			System.out.println(curSession.getId());
-			System.out.println(curSession);
+			//System.out.println(curSession.getId());
+			//System.out.println(curSession);
 			
 			
-			System.out.println(session.getId());
-			System.out.println(session);
+			//System.out.println(session.getId());
+			//System.out.println(session);
 			
 			/*
 			if(!curSession.equals(session))
@@ -78,14 +78,14 @@ public class UploadDataWebsocket
 		}
 		
 		httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
-		System.out.println("Got new data upload");
+		//System.out.println("Got new data upload");
 		session.setMaxTextMessageBufferSize(400826410);
 	}
 	
 	@OnClose
 	public void end()
 	{
-		System.out.println("Server ended");
+		System.out.println("Server ended: " + wsSession.getId());
 	}
 	
 	@OnMessage
@@ -93,8 +93,7 @@ public class UploadDataWebsocket
 	{
 		long remainingSize = 0;
 		
-		System.out.println("Got message:");
-		System.out.println(message.length());
+		System.out.println("Got upload: " + message.length());
 		if(message.equals("end"))
 		{
 			try {
@@ -132,6 +131,7 @@ public class UploadDataWebsocket
 		}
 		byte[] uncompressed = output.toByteArray();
 		String uncompressedString = new String(uncompressed);
+		/*
 		if(uncompressedString.length() > 200)
 		{
 			System.out.println(uncompressedString.substring(0, 200));
@@ -140,16 +140,18 @@ public class UploadDataWebsocket
 		{
 			System.out.println(uncompressedString);
 		}
-		
+		*/
 		Gson gson = new GsonBuilder().create();
 		HashMap fromJSON = gson.fromJson(uncompressedString, HashMap.class);
 		//System.out.println(fromJSON.keySet());
-		System.out.println(fromJSON.get("username"));
-		System.out.println(fromJSON.get("token"));
+		//System.out.println(fromJSON.get("username"));
+		//System.out.println(fromJSON.get("token"));
 		String username = (String) fromJSON.get("username");
 		String token = (String) fromJSON.get("token");
 		String event = (String) fromJSON.get("event");
 		String admin = (String) fromJSON.get("admin");
+		
+		System.out.println(admin + " : " + event + " : " + username + " : " + token);
 		
 		Connection conn = null;
         Statement stmt = null;
