@@ -51,22 +51,27 @@ public class InstallScriptServlet extends HttpServlet {
 		String osPrefix = "";
 		
 		int screenshotTime = 120000;
+		int processTime = 240000;
 		if(curDevice.equals("debvm"))
 		{
-			screenshotTime = 15000;
+			screenshotTime = 2000;
+			processTime = 30000;
 		}
 		else if(curDevice.equals("debrpi"))
 		{
-			screenshotTime = 240000;
+			screenshotTime = 120000;
+			processTime = 240000;
 		}
 		else if(curDevice.equals("fedvm"))
 		{
-			screenshotTime = 60000;
+			screenshotTime = 2000;
+			processTime = 30000;
 			osPrefix = "yum install apt";
 		}
 		else if(curDevice.equals("winvm"))
 		{
-			screenshotTime = 15000;
+			screenshotTime = 2000;
+			processTime = 30000;
 			osPrefix = "";
 		}
 		
@@ -477,7 +482,7 @@ public class InstallScriptServlet extends HttpServlet {
 			+ "\ndo" 
 			+ "\npkill -f \"/usr/bin/java -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar\"" 
 			//+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/openDataCollection/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
-			+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -adminemail " + curAdmin + " -event '" + curEvent + "' " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " >> /opt/dataCollector/log.log 2>&1" 
+			+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -adminemail " + curAdmin + " -event '" + curEvent + "' " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " -process " + processTime + " >> /opt/dataCollector/log.log 2>&1" 
 			+ "\necho \"Got a crash: $(date)\" >> /opt/dataCollector/log.log" 
 			+ "\nsleep 2" 
 			+ "\ndone" 
@@ -658,7 +663,7 @@ public class InstallScriptServlet extends HttpServlet {
 					+ "\nservice tomcat9 start"
 					+ "\npkill -f \"/usr/bin/java -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar\"" 
 					//+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/openDataCollection/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
-					+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -event '" + curEvent + "' " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " >> /opt/dataCollector/log.log 2>&1" 
+					+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -event '" + curEvent + "' " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " -process " + processTime + " >> /opt/dataCollector/log.log 2>&1" 
 					+ "\necho \"Got a crash: $(date)\" >> /opt/dataCollector/log.log" 
 					+ "\nsleep 2" 
 					+ "\ndone" 
@@ -737,7 +742,7 @@ public class InstallScriptServlet extends HttpServlet {
 					"echo :wait_for_mysql>> \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\StartDataCollection.bat\"\n" + 
 					"echo 	C:\\mysql\\mysql-8.0.23-winx64\\bin\\mysql.exe -uroot -e \";\">> \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\StartDataCollection.bat\"\n" + 
 					"echo 	IF ERRORLEVEL 1 GOTO wait_for_mysql>> \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\StartDataCollection.bat\"\n" +
-					"echo start /B java -jar -XX:+IgnoreUnrecognizedVMOptions C:\\datacollector\\DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -adminemail " + curAdmin + " -event '" + curEvent + "' " + continuous + " " + taskgui + " -screenshot " + screenshotTime + ">> \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\StartDataCollection.bat\"\n" + 
+					"echo start /B java -jar -XX:+IgnoreUnrecognizedVMOptions C:\\datacollector\\DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -adminemail " + curAdmin + " -event '" + curEvent + "' " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " -process " + processTime + ">> \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\StartDataCollection.bat\"\n" + 
 					"shutdown /R\n" + 
 					"";
 		}
