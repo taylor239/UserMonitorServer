@@ -1541,7 +1541,7 @@ public class DatabaseConnector
 	
 	
 	
-	public ConcurrentHashMap addTask(String event, String user, String session, String admin, long start, long end, String taskName, String[] tags, String tagger, String goal, String note)
+	public ConcurrentHashMap addTask(String event, String user, String session, String admin, long start, long end, String taskName, String[] tags, String tagger, String goal, double completion, String note)
 	{
 		ConcurrentHashMap myReturn = new ConcurrentHashMap();
 		
@@ -1562,7 +1562,7 @@ public class DatabaseConnector
 			myStatement.setString(3, user);
 			myStatement.setString(4, session);
 			myStatement.setString(5, taskName);
-			myStatement.setString(6, "1");
+			myStatement.setDouble(6, completion);
 			myStatement.setLong(7, start);
 			myStatement.setString(8, goal);
 			myStatement.setString(9, note);

@@ -174,6 +174,7 @@ public class AddTask extends HttpServlet {
 		String taskTags = (String)request.getParameter("taskTags");
 		String taskGoal = (String)request.getParameter("taskGoal");
 		String taskNote = (String)request.getParameter("taskNote");
+		double taskCompletion = Double.parseDouble((String)request.getParameter("taskCompletion"));
 		
 		if(taskTags == null)
 		{
@@ -195,11 +196,11 @@ public class AddTask extends HttpServlet {
 		}
 		if(fromAnon)
 		{
-			result = myConnector.addTask(eventName, (String) inverseUserMap.get(userName), sessionName, admin, startTime, endTime, taskName, taskLines, tagger, taskGoal, taskNote);
+			result = myConnector.addTask(eventName, (String) inverseUserMap.get(userName), sessionName, admin, startTime, endTime, taskName, taskLines, tagger, taskGoal, taskCompletion, taskNote);
 		}
 		else
 		{
-			result = myConnector.addTask(eventName, userName, sessionName, admin, startTime, endTime, taskName, taskLines, tagger, taskGoal, taskNote);
+			result = myConnector.addTask(eventName, userName, sessionName, admin, startTime, endTime, taskName, taskLines, tagger, taskGoal, taskCompletion, taskNote);
 		}
 		Gson gson = new GsonBuilder().create();
 		
