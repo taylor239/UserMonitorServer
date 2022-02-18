@@ -341,6 +341,8 @@ public class UploadDataWebsocket
 				totalSize += userList.size();
 				userList = (List) fromJSON.get("TaskEvent");
 				totalSize += userList.size();
+				userList = (List) fromJSON.get("PerformanceMetrics");
+				totalSize += userList.size();
 				
 				String updateNumQuery = "UPDATE `UploadToken` SET `framesRemaining` = `framesRemaining` + ? WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ? AND `UploadToken`.`adminEmail` = ? AND `UploadToken`.`event` = ?";
 				PreparedStatement toUpdate = dbConn.prepareStatement(updateNumQuery);
@@ -407,6 +409,12 @@ public class UploadDataWebsocket
 				remainingSize -= curLong;
 				toUpdate.execute();
 				curLong = (insertInto("TaskEvent", fromJSON, dbConn, username, event, admin));
+				toUpdate.setLong(1, curLong);
+				toUpdate.setLong(2, curLong);
+				remainingSize -= curLong;
+				toUpdate.execute();
+				
+				curLong = (insertInto("PerformanceMetrics", fromJSON, dbConn, username, event, admin));
 				toUpdate.setLong(1, curLong);
 				toUpdate.setLong(2, curLong);
 				remainingSize -= curLong;

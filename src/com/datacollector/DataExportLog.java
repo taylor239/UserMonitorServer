@@ -466,6 +466,15 @@ public class DataExportLog extends HttpServlet {
 				ConcurrentHashMap dataMap = myConnector.getSessionDetailsHierarchy(eventName, admin, userSelectList, sessionSelectList, firstIndex, count);
 				headMap = myConnector.mergeMaps(headMap, dataMap);
 			}
+			
+			if(toSelect.contains("metrics"))
+			{
+				System.out.println("Reading metrics");
+				dataTypes.add("metrics");
+				ConcurrentHashMap dataMap = myConnector.getSessionMetricsHierarchy(eventName, admin, userSelectList, sessionSelectList, firstIndex, count);
+				headMap = myConnector.mergeMaps(headMap, dataMap);
+			}
+			
 			if(toSelect.contains("keystrokes"))
 			{
 				System.out.println("Reading keystrokes");

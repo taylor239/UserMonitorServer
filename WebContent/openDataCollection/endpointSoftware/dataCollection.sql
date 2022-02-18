@@ -335,6 +335,25 @@ CREATE TABLE `WindowDetails` (
   PRIMARY KEY (`event`, `username`,`session`,`user`,`pid`,`start`,`xid`,`timeChanged`,`adminEmail`) USING BTREE,
   CONSTRAINT `WindowDetails_ibfk_1` FOREIGN KEY (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`, `xid`) REFERENCES `Window` (`event`, `adminEmail`, `username`, `session`, `user`, `pid`, `start`, `xid`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+DROP TABLE IF EXISTS `PerformanceMetrics`;
+CREATE TABLE `PerformanceMetrics` ( `event` VARCHAR(50) NOT NULL ,
+`adminEmail` VARCHAR(100) NOT NULL ,
+`username` VARCHAR(50) NOT NULL ,
+`session` VARCHAR(50) NOT NULL ,
+`metricName` VARCHAR(50) NOT NULL ,
+`metricValue1` DOUBLE NOT NULL ,
+`metricUnit1` VARCHAR(50) NOT NULL ,
+`metricValue2` DOUBLE NOT NULL DEFAULT '0' ,
+`metricUnit2` VARCHAR(50) NULL DEFAULT NULL ,
+`recordedTimestamp` TIMESTAMP(3) NOT NULL DEFAULT (utc_timestamp(3)),
+`insertTimestamp` TIMESTAMP(3) NOT NULL DEFAULT (utc_timestamp(3)) ) ENGINE = InnoDB DEFAULT CHARSET=latin1;
+
+ALTER TABLE `PerformanceMetrics` ADD PRIMARY KEY( `event`, `adminEmail`, `username`, `session`, `metricName`, `insertTimestamp`);
+
+ALTER TABLE `PerformanceMetrics` ADD FOREIGN KEY (`event`, `adminEmail`, `username`, `session`) REFERENCES `User`(`event`, `adminEmail`, `username`, `session`) ON DELETE CASCADE ON UPDATE CASCADE;
+
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -346,4 +365,3 @@ CREATE TABLE `WindowDetails` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-06-25 15:37:09

@@ -176,6 +176,8 @@ public class DatabaseConnector
 	
 	private String sessionDetailsQuery = "SELECT * FROM `openDataCollectionServer`.`User` WHERE `event` = ? AND `adminEmail` = ? ORDER BY `insertTimestamp` ASC";
 	
+	private String sessionMetricsQuery = "SELECT `event`, `adminEmail`, `username`, `session`, `metricName`, AVG(`metricValue1`) AS `metricValue1`, `metricUnit1`, AVG(`metricValue2`) AS `metricValue2`, `metricUnit2` FROM `openDataCollectionServer`.`PerformanceMetrics` WHERE `event` = ? AND `adminEmail` = ? GROUP BY `event`, `adminEmail`, `username`, `session`, `metricName`, `metricUnit1`, `metricUnit2`";
+	
 	private String limiter = " LIMIT ?, ?";
 	
 	private String checkPerms = "SELECT * FROM `EventPassword` WHERE `event` = ? AND `adminEmail` = ? AND `password` = ?";
@@ -2587,6 +2589,142 @@ public class DatabaseConnector
 					sessionMap.put("environment", new ArrayList());
 				}
 				ArrayList eventList = (ArrayList) sessionMap.get("environment");
+				
+				eventList.add(nextRow);
+				//myReturn.add(nextRow);
+			}
+			stmt = myStatement;
+			rset = myResults;
+			
+			rset.close();
+			stmt.close();
+			conn.close();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+            try { if (rset != null) rset.close(); } catch(Exception e) { }
+            try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+            try { if (conn != null) conn.close(); } catch(Exception e) { }
+        }
+		
+		return myReturn;
+	}
+	
+	public ConcurrentHashMap getSessionMetricsHierarchy(String event, String admin, ArrayList usersToSelect, ArrayList sessionsToSelect, String start, String end)
+	{
+		ConcurrentHashMap myReturn = new ConcurrentHashMap();
+		
+		Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+		
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
+		conn = myConnector;
+		
+		String taskQuery = sessionMetricsQuery;
+		String userSelectString = "";
+		if(!usersToSelect.isEmpty())
+		{
+			userSelectString = "AND `username` IN (";
+			for(int x=0; x<usersToSelect.size(); x++)
+			{
+				userSelectString += "?";
+				if(!(x + 1 == usersToSelect.size()))
+				{
+					userSelectString += ", ";
+				}
+			}
+			userSelectString += ")";
+			taskQuery = taskQuery.replace("`adminEmail` = ?", "`adminEmail` = ? " + userSelectString);
+		}
+		
+		String sessionSelectString = "";
+		if(!sessionsToSelect.isEmpty())
+		{
+			sessionSelectString = " AND `session` IN (";
+			for(int x=0; x<sessionsToSelect.size(); x++)
+			{
+				sessionSelectString += "?";
+				if(!(x + 1 == sessionsToSelect.size()))
+				{
+					sessionSelectString += ", ";
+				}
+			}
+			sessionSelectString += ")";
+			taskQuery = taskQuery.replace("`adminEmail` = ?", "`adminEmail` = ? " + sessionSelectString);
+		}
+		
+		if(!start.isEmpty() && !end.isEmpty())
+		{
+			taskQuery = taskQuery + limiter;
+		}
+		
+		try
+		{
+			System.out.println(taskQuery);
+			PreparedStatement myStatement = myConnector.prepareStatement(taskQuery);
+			myStatement.setString(1, event);
+			myStatement.setString(2, admin);
+			
+			int sessionOffset = 0;
+			for(int x=0; x < sessionsToSelect.size(); x++)
+			{
+				myStatement.setString(3 + x, (String) sessionsToSelect.get(x));
+				sessionOffset = x + 1;
+			}
+			
+			int secondSessionOffset = 0;
+			for(int x=0; x < usersToSelect.size(); x++)
+			{
+				myStatement.setString(3 + sessionOffset + x, (String) usersToSelect.get(x));
+				secondSessionOffset = x + 1;
+			}
+			
+			if(!start.isEmpty() && !end.isEmpty())
+			{
+				myStatement.setInt(3 + sessionOffset + secondSessionOffset, Integer.parseInt(start));
+				myStatement.setInt(4 + sessionOffset + secondSessionOffset, Integer.parseInt(end));
+			}
+			
+			
+			ResultSet myResults = myStatement.executeQuery();
+			while(myResults.next())
+			{
+				ConcurrentHashMap nextRow = new ConcurrentHashMap();
+				
+				//nextRow.put("Username", myResults.getString("username"));
+				String userName = myResults.getString("username");
+				//nextRow.put("Session", myResults.getString("session"));
+				String sessionName = myResults.getString("session");
+				nextRow.put("MetricName", myResults.getString("metricName"));
+				//nextRow.put("Index", myResults.getTimestamp("insertTimestamp", cal));
+				nextRow.put("MetricValue1", myResults.getString("metricValue1"));
+				nextRow.put("MetricUnit1", myResults.getString("metricUnit1"));
+				nextRow.put("MetricValue2", myResults.getString("metricValue2"));
+				nextRow.put("MetricUnit2", myResults.getString("metricUnit2"));
+				
+				
+				if(!myReturn.containsKey(userName))
+				{
+					myReturn.put(userName, new ConcurrentHashMap());
+				}
+				ConcurrentHashMap userMap = (ConcurrentHashMap) myReturn.get(userName);
+				
+				if(!userMap.containsKey(sessionName))
+				{
+					userMap.put(sessionName, new ConcurrentHashMap());
+				}
+				ConcurrentHashMap sessionMap = (ConcurrentHashMap) userMap.get(sessionName);
+				
+				if(!sessionMap.containsKey("metrics"))
+				{
+					sessionMap.put("metrics", new ArrayList());
+				}
+				ArrayList eventList = (ArrayList) sessionMap.get("metrics");
 				
 				eventList.add(nextRow);
 				//myReturn.add(nextRow);
