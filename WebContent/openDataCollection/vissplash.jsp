@@ -315,6 +315,24 @@ function toggleCol(colToExpand)
 
 <script>
 
+	function roundTo(n, digits) {
+    var negative = false;
+    if (digits === undefined) {
+        digits = 0;
+    }
+    if (n < 0) {
+        negative = true;
+        n = n * -1;
+    }
+    var multiplicator = Math.pow(10, digits);
+    n = parseFloat((n * multiplicator).toFixed(11));
+    n = (Math.round(n) / multiplicator).toFixed(digits);
+    if (negative) {
+        n = (n * -1).toFixed(digits);
+    }
+    return n;
+}
+
 	var visWidth = window.innerWidth;
 	var visHeight = window.innerHeight;
 	var barHeight = visHeight / 10;
@@ -1498,17 +1516,30 @@ function toggleCol(colToExpand)
 				
 				metricList.forEach (function(value)
 				{
+					//if(theNormData[user][sessionName]["metricsMap"][value])
+					//{
+					//	var curMetric = theNormData[user][sessionName]["metricsMap"][value];
+					//	if(curMetric["MetricUnit2"] == "None")
+					//	{
+					//		curRow.append("td").attr("colspan", 2).html(curMetric["<textarea readonly style=\"width: 100%; height: 100%;\">" + "MetricValue1"] + " " + curMetric["MetricUnit1"] + "</textarea>");
+					//	}
+					//	else
+					//	{
+					//		curRow.append("td").html("<textarea readonly style=\"width: 100%; height: 100%;\">" + curMetric["MetricValue1"] + " " + curMetric["MetricUnit1"] + "</textarea>");
+					//		curRow.append("td").html("<textarea readonly style=\"width: 100%; height: 100%;\">" + curMetric["MetricValue2"] + " " + curMetric["MetricUnit2"] + "</textarea>");
+					//	}
+					//}
 					if(theNormData[user][sessionName]["metricsMap"][value])
 					{
 						var curMetric = theNormData[user][sessionName]["metricsMap"][value];
 						if(curMetric["MetricUnit2"] == "None")
 						{
-							curRow.append("td").attr("colspan", 2).html(curMetric["MetricValue1"] + " " + curMetric["MetricUnit1"]);
+							curRow.append("td").attr("colspan", 2).html(roundTo(curMetric["MetricValue1"], 2) + " " + curMetric["MetricUnit1"]);
 						}
 						else
 						{
-							curRow.append("td").html(curMetric["MetricValue1"] + " " + curMetric["MetricUnit1"]);
-							curRow.append("td").html(curMetric["MetricValue2"] + " " + curMetric["MetricUnit2"]);
+							curRow.append("td").html(roundTo(curMetric["MetricValue1"], 2) + " " + curMetric["MetricUnit1"]);
+							curRow.append("td").html(roundTo(curMetric["MetricValue2"], 2) + " " + curMetric["MetricUnit2"]);
 						}
 					}
 					else

@@ -329,6 +329,8 @@ public class UploadDataWebsocket
 				totalSize += userList.size();
 				userList = (List) fromJSON.get("ProcessAttributes");
 				totalSize += userList.size();
+				userList = (List) fromJSON.get("ProcessThreads");
+				totalSize += userList.size();
 				userList = (List) fromJSON.get("Window");
 				totalSize += userList.size();
 				userList = (List) fromJSON.get("WindowDetails");
@@ -379,6 +381,11 @@ public class UploadDataWebsocket
 				remainingSize -= curLong;
 				toUpdate.execute();
 				curLong = (insertInto("ProcessAttributes", fromJSON, dbConn, username, event, admin));
+				toUpdate.setLong(1, curLong);
+				toUpdate.setLong(2, curLong);
+				remainingSize -= curLong;
+				toUpdate.execute();
+				curLong = (insertInto("ProcessThreads", fromJSON, dbConn, username, event, admin));
 				toUpdate.setLong(1, curLong);
 				toUpdate.setLong(2, curLong);
 				remainingSize -= curLong;
