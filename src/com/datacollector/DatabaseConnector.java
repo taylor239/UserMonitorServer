@@ -905,6 +905,14 @@ public class DatabaseConnector
 	
 	public ConcurrentHashMap mergeMaps(ConcurrentHashMap a, ConcurrentHashMap b)
 	{
+		if(b.isEmpty())
+		{
+			return a;
+		}
+		if(a.isEmpty())
+		{
+			return b;
+		}
 		Iterator bIterator = b.entrySet().iterator();
 		while(bIterator.hasNext())
 		{
@@ -3449,7 +3457,7 @@ public class DatabaseConnector
 		String userSelectString = "";
 		if(!usersToSelect.isEmpty())
 		{
-			userSelectString = "AND `ProcessAttributes`.`username` IN (";
+			userSelectString = "AND `Process`.`username` IN (";
 			for(int x=0; x<usersToSelect.size(); x++)
 			{
 				userSelectString += "?";
@@ -3459,14 +3467,16 @@ public class DatabaseConnector
 				}
 			}
 			userSelectString += ")";
-			allProcessQuery = allProcessQuery.replace("`ProcessAttributes`.`adminEmail` = ?", "`ProcessAttributes`.`adminEmail` = ? " + userSelectString);
+			allProcessQuery = allProcessQuery.replace("`Process`.`adminEmail` = ?", "`Process`.`adminEmail` = ? " + userSelectString);
 
 		}
 		
 		String sessionSelectString = "";
+		//System.out.println("Sessions to select:");
+		//System.out.println(sessionsToSelect);
 		if(!sessionsToSelect.isEmpty())
 		{
-			sessionSelectString = " AND `ProcessAttributes`.`session` IN (";
+			sessionSelectString = " AND `Process`.`session` IN (";
 			for(int x=0; x<sessionsToSelect.size(); x++)
 			{
 				sessionSelectString += "?";
@@ -3476,7 +3486,7 @@ public class DatabaseConnector
 				}
 			}
 			sessionSelectString += ")";
-			allProcessQuery = allProcessQuery.replace("`ProcessAttributes`.`adminEmail` = ?", "`ProcessAttributes`.`adminEmail` = ? " + sessionSelectString);
+			allProcessQuery = allProcessQuery.replace("`Process`.`adminEmail` = ?", "`Process`.`adminEmail` = ? " + sessionSelectString);
 		}
 		
 		if(!start.isEmpty() && !end.isEmpty())
@@ -3491,12 +3501,15 @@ public class DatabaseConnector
 			myStatement.setString(1, event);
 			myStatement.setString(2, admin);
 			
+			
 			int sessionOffset = 0;
 			for(int x=0; x < sessionsToSelect.size(); x++)
 			{
 				myStatement.setString(3 + x, (String) sessionsToSelect.get(x));
 				sessionOffset = x + 1;
 			}
+			
+			System.out.println(myStatement);
 			
 			int secondSessionOffset = 0;
 			for(int x=0; x < usersToSelect.size(); x++)

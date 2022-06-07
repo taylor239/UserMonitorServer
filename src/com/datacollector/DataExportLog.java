@@ -456,7 +456,9 @@ public class DataExportLog extends HttpServlet {
 				System.out.println("Reading process summary");
 				dataTypes.add("processsummary");
 				ConcurrentHashMap dataMap = myConnector.getProcessSummaryHierarchy(eventName, admin, userSelectList, sessionSelectList, firstIndex, count);
+				//System.out.println(dataMap);
 				headMap = myConnector.mergeMaps(headMap, dataMap);
+				//System.out.println("Head: " + headMap);
 			}
 			
 			if(toSelect.contains("environment"))
@@ -464,6 +466,7 @@ public class DataExportLog extends HttpServlet {
 				System.out.println("Reading environment");
 				dataTypes.add("environment");
 				ConcurrentHashMap dataMap = myConnector.getSessionDetailsHierarchy(eventName, admin, userSelectList, sessionSelectList, firstIndex, count);
+				//System.out.println(dataMap);
 				headMap = myConnector.mergeMaps(headMap, dataMap);
 			}
 			
@@ -472,7 +475,9 @@ public class DataExportLog extends HttpServlet {
 				System.out.println("Reading metrics");
 				dataTypes.add("metrics");
 				ConcurrentHashMap dataMap = myConnector.getSessionMetricsHierarchy(eventName, admin, userSelectList, sessionSelectList, firstIndex, count);
+				//System.out.println(dataMap);
 				headMap = myConnector.mergeMaps(headMap, dataMap);
+				//System.out.println(headMap);
 			}
 			
 			if(toSelect.contains("keystrokes"))
@@ -550,6 +555,7 @@ public class DataExportLog extends HttpServlet {
 			//headMap = deInsert(headMap);
 			System.out.println("Normalizing time");
 			headMap = myConnector.normalizeAllTime(headMap);
+			//System.out.println(headMap);
 			System.out.println("Time normalized");
 			//System.out.println(headMap.get("bounds"));
 			//headMap.remove("bounds");
@@ -583,6 +589,7 @@ public class DataExportLog extends HttpServlet {
 				headMap = newMap;
 			}
 			
+			/*
 			if((usersToSelect != null && !usersToSelect.isEmpty()) || (sessionSelectList != null && !sessionSelectList.isEmpty()))
 			{
 				Iterator userIterator = headMap.entrySet().iterator();
@@ -615,6 +622,7 @@ public class DataExportLog extends HttpServlet {
 					}
 				}
 			}
+			*/
 			
 			if(normalize != null && !normalize.equals("none"))
 			{
