@@ -1775,11 +1775,11 @@ function deepEqual(a,b)
 	
 	async function needsUpdate()
 	{
-		await persistDataAndWait("testPersist", "true");
-		while(!(await hasData("testPersist")))
+		await persistDataAndWait("indexdata", "true");
+		while(!(await hasData("indexdata")))
 		{
-			await persistDataAndWait("testPersist", "true");
-			await retrieveData("testPersist");
+			await persistDataAndWait("indexdata", "true");
+			await retrieveData("indexdata");
 			console.log("Waiting on persist");
 		}
 		

@@ -589,7 +589,7 @@ public class DataExportLog extends HttpServlet {
 				headMap = newMap;
 			}
 			
-			/*
+			
 			if((usersToSelect != null && !usersToSelect.isEmpty()) || (sessionSelectList != null && !sessionSelectList.isEmpty()))
 			{
 				Iterator userIterator = headMap.entrySet().iterator();
@@ -598,7 +598,7 @@ public class DataExportLog extends HttpServlet {
 					Entry userEntry = (Entry) userIterator.next();
 					String curUser = (String) userEntry.getKey();
 					
-					if(usersToSelect.isEmpty() || usersToSelect.contains(curUser))
+					if(usersToSelect == null || usersToSelect.isEmpty() || usersToSelect.contains(curUser))
 					{
 						ConcurrentHashMap sessionMap = (ConcurrentHashMap) userEntry.getValue();
 						Iterator sessionIterator = (Iterator) sessionMap.entrySet().iterator();
@@ -606,7 +606,7 @@ public class DataExportLog extends HttpServlet {
 						{
 							Entry sessionEntry = (Entry) sessionIterator.next();
 							String curSession = (String) sessionEntry.getKey();
-							if(sessionSelectList.isEmpty() || sessionSelectList.contains(curSession))
+							if(sessionSelectList == null || sessionSelectList.isEmpty() || sessionSelectList.contains(curSession))
 							{
 								
 							}
@@ -622,7 +622,7 @@ public class DataExportLog extends HttpServlet {
 					}
 				}
 			}
-			*/
+			
 			
 			if(normalize != null && !normalize.equals("none"))
 			{
