@@ -93,6 +93,7 @@ public class DataExportLog extends HttpServlet {
 				if(myWriter == null)
 				{
 					keepingAlive = false;
+					doneKeepingAlive = true;
 					return;
 				}
 				ZipEntry paddingFile = null;
@@ -104,6 +105,7 @@ public class DataExportLog extends HttpServlet {
 					} catch (IOException e) {
 						e.printStackTrace();
 						keepingAlive = false;
+						doneKeepingAlive = true;
 						return;
 					}
 				}
@@ -117,6 +119,7 @@ public class DataExportLog extends HttpServlet {
 							if(zipOut == null || keepingAlive == false)
 							{
 								keepingAlive = false;
+								doneKeepingAlive = true;
 								return;
 							}
 							zipOut.write(0);
@@ -127,16 +130,18 @@ public class DataExportLog extends HttpServlet {
 							if(myWriter == null || keepingAlive == false)
 							{
 								keepingAlive = false;
+								doneKeepingAlive = true;
 								return;
 							}
 							myWriter.append(" ");
-							//myWriter.flush();
+							myWriter.flush();
 						}
 						
 					} catch (Exception e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 						keepingAlive = false;
+						doneKeepingAlive = true;
 						return;
 					}
 					try {
@@ -144,6 +149,7 @@ public class DataExportLog extends HttpServlet {
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 						keepingAlive = false;
+						doneKeepingAlive = true;
 						return;
 					}
 				}
@@ -159,6 +165,7 @@ public class DataExportLog extends HttpServlet {
 				} catch (IOException e) {
 					e.printStackTrace();
 					keepingAlive = false;
+					doneKeepingAlive = true;
 					return;
 				}
 			}
@@ -187,6 +194,7 @@ public class DataExportLog extends HttpServlet {
 			HttpSession session = request.getSession(true);
 			
 			boolean zip = request.getRequestURI().contains(".zip");
+			System.out.println("Exporting zip mode: " + zip);
 			ServletOutputStream out = null;
 			if(zip)
 			{
@@ -728,6 +736,7 @@ public class DataExportLog extends HttpServlet {
 					padder.setKeepingAlive(false);
 					Thread.currentThread().sleep(100);
 					threadToJoin.join(100);
+					System.out.println("Waiting for padder to die");
 				}
 				System.out.println("Zipping");
 				
