@@ -38,6 +38,7 @@ public class DataExportLog extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	
 	private static WeakHashMap boundsCache = new WeakHashMap();
+	
     
 	//private boolean keepingAlive = true;
 	//private boolean doneKeepingAlive = false;
@@ -223,6 +224,8 @@ public class DataExportLog extends HttpServlet {
 				session.setAttribute("connector", myConnector);
 			}
 			TestingConnectionSource myConnectionSource = myConnector.getConnectionSource();
+			
+			
 			
 			
 			padder.setID(request.getRequestURL().toString());

@@ -36,6 +36,8 @@ public class UploadDataWebsocket
 	private Session wsSession;
 	private HttpSession httpSession;
 	
+	private static BackgroundBoundCacher myCacher = null;
+	
 	@OnOpen
 	public void start(Session session, EndpointConfig config)
 	{
@@ -169,6 +171,10 @@ public class UploadDataWebsocket
 			}
 			TestingConnectionSource myConnectionSource = myConnector.getConnectionSource();
 			
+			if(myCacher == null)
+			{
+				myCacher = new BackgroundBoundCacher(new DatabaseConnector(httpSession.getServletContext()));
+			}
 			
 			Connection dbConn = myConnectionSource.getDatabaseConnectionNoTimeout();
 			conn = dbConn;
@@ -631,6 +637,7 @@ public class UploadDataWebsocket
 					return 0;
 				}
 				toReturn++;
+				myCacher.addSession(adminemail, eventname, username, (String) entry.get("session"));
 				for(String key : masterKeySet)
 				{
 					//System.out.println(entry.get(key).getClass());

@@ -318,6 +318,21 @@ public class DatabaseConnector
 			myStmt = myConnector.prepareStatement(cachedQuery);
 			myStmt.setString(1, adminEmail);
 			myStmt.setString(2, eventName);
+			
+			int sessionOffset = 0;
+			for(int x=0; sessionsToSelect != null && x < sessionsToSelect.size(); x++)
+			{
+				myStmt.setString(3 + x, (String) sessionsToSelect.get(x));
+				sessionOffset = x + 1;
+			}
+			
+			int secondSessionOffset = 0;
+			for(int x=0; usersToSelect != null && x < usersToSelect.size(); x++)
+			{
+				myStmt.setString(3 + sessionOffset + x, (String) usersToSelect.get(x));
+				secondSessionOffset = x + 1;
+			}
+			
 			System.out.println(myStmt);
 			myResults = myStmt.executeQuery();
 			

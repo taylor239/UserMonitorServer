@@ -1133,20 +1133,29 @@ function deepEqual(a,b)
 					//then we can more optimally update just the sessions we need
 					//to update rather than search through all known sessions.
 					//But this takes work and the O(n) runtime here is OK.
-					if(theNormDataInit && theNormDataInit.length > 0 && sessionsToQuery)
+					//console.log("Downloaded data:");
+					//console.log(data);
+					//console.log("Local data:");
+					//console.log(theNormDataInit);
+					if(theNormDataInit && Object.keys(theNormDataInit).length > 0)
 					{
 						for(user in data)
 						{
 							for(session in data[user])
 							{
-								if(sessionsToQuery.includes(session))
-								{
+								//console.log("Adding session: " + user + ":" + session);
+								//console.log(data[user][session]);
+								//if(sessionsToQuery.includes(session))
+								//{
 									theNormDataInit[user][session] = data[user][session];
-								}
+								//}
+								//console.log(theNormDataInit[user][session]);
 							}
 						}
 						data = theNormDataInit;
 					}
+					//console.log("Final loaded data:");
+					//console.log(data);
 					try
 					{
 						var isDone = false;
@@ -1160,7 +1169,7 @@ function deepEqual(a,b)
 						console.log(err);
 					}
 					
-					theNormData = await preprocess(data);
+					theNormData = await (preprocess(data));
 					theNormDataDone = true;
 					
 					d3.select("#title")
