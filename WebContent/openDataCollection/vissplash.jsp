@@ -1205,9 +1205,16 @@ function deepEqual(a,b)
 				newCell.innerHTML = sessionName;
 				
 				newCell = newRow.insertCell();
-				if(sessionName != "Aggregated" && theNormData[user][sessionName]["activetime"])
+				if(sessionName != "Aggregated")
 				{
-					newCell.innerHTML = Math.round(theNormData[user][sessionName]["Index MS Session Max"] / 60000) + "<br /><b>" + theNormData[user][sessionName]["activetime"][0]["ActiveTime"] + "</b>";
+					if(theNormData[user][sessionName]["activetime"])
+					{
+						newCell.innerHTML = Math.round(theNormData[user][sessionName]["Index MS Session Max"] / 60000) + "<br /><b>" + theNormData[user][sessionName]["activetime"][0]["ActiveTime"] + "</b>";
+					}
+					else
+					{
+						newCell.innerHTML = Math.round(theNormData[user][sessionName]["Index MS Session Max"] / 60000) + "<br /><b>" + "0" + "</b>";
+					}
 				}
 				else
 				{
@@ -1905,7 +1912,7 @@ function deepEqual(a,b)
 			}
 			
 			d3.select("#title")
-				.html(origTitle + "<br />Bound data: <b>" + downloadedSize + "</b> bytes downloaded.")
+				.html(origTitle + "<br />Bound data: <b>" + downloadedSize + "</b> bytes downloaded.  All sessions are up to date.")
 			
 			
 			d3.select("body").style("cursor", "");
@@ -1915,7 +1922,7 @@ function deepEqual(a,b)
 				{
 					downloadedSize = d["loaded"];
 					d3.select("#title")
-							.html(origTitle + "<br />Bound Size: <b>" + d["loaded"] + "</b> bytes")
+							.html(origTitle + "<br />Checking cached sessions with bound data. Bound Size: <b>" + d["loaded"] + "</b> bytes")
 					//console.log(d);
 				});
 		

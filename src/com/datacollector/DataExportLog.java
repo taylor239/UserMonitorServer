@@ -430,7 +430,7 @@ public class DataExportLog extends HttpServlet {
 			//dataTypes.add("bounds");
 			
 			
-			ConcurrentHashMap boundsMap = myConnector.getCachedBounds(admin, eventName);
+			ConcurrentHashMap boundsMap = myConnector.getCachedBounds(admin, eventName, userSelectList, sessionSelectList);
 			headMap = myConnector.mergeMaps(headMap, boundsMap);
 			
 			if(toSelect.contains("events"))

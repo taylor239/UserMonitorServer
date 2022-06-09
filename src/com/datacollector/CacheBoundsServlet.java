@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -226,7 +227,12 @@ public class CacheBoundsServlet extends HttpServlet {
 			
 			padder.setID(request.getRequestURL().toString());
 			
-			myConnector.cacheBounds(eventName, admin, padder);
+			//ArrayList sessionsToSelect = new ArrayList();
+			//sessionsToSelect.add("23595ffe-9cc9-47b0-9df5-e312921ca5d7");
+			
+			//myConnector.cacheBounds(eventName, admin, padder, null, sessionsToSelect);
+			
+			myConnector.cacheBounds(eventName, admin, padder, null, null);
 			
 			//padder.consumeUpdate(myConnector.getActiveMinutes( admin, eventName, 5));
 			while(!padder.getDoneKeepingAlive())
