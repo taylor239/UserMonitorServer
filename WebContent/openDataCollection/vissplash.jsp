@@ -1129,7 +1129,7 @@ function deepEqual(a,b)
 			if(await hasData("indexdata_" + eventName))
 			{
 				theNormDataInit = ((await retrieveData("indexdata_" + eventName)).value);
-				console.log(JSON.stringify(theNormDataInit["Sometoken"]["1430c609-3e8e-4de6-969a-958f98a6244a"]));
+				
 			}
 			
 			d3.json("logExport.json?event=" + eventName + "&datasources=windows,events,environment,processsummary,metrics&normalize=none" + userSessionFilter, async function(error, data)
@@ -1156,8 +1156,6 @@ function deepEqual(a,b)
 						}
 						data = theNormDataInit;
 					}
-					console.log("Final loaded data:");
-					console.log(JSON.stringify(theNormDataInit["Sometoken"]["1430c609-3e8e-4de6-969a-958f98a6244a"]));
 					try
 					{
 						var isDone = false;
