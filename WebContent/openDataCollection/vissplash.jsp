@@ -385,6 +385,12 @@ function deepEqual(a,b)
 			aggregateSession = {}
 			listsToAdd = {}
 			newSession = {}
+			
+			if(dataToModify[user]["Aggregated"])
+			{
+				delete dataToModify[user]["Aggregated"];
+			}
+			
 			for(session in dataToModify[user])
 			{
 				if(Object.keys(dataToModify[user][session]).length < 3)
@@ -1123,24 +1129,20 @@ function deepEqual(a,b)
 			if(await hasData("indexdata_" + eventName))
 			{
 				theNormDataInit = ((await retrieveData("indexdata_" + eventName)).value);
-				console.log(theNormDataInit);
+				console.log(JSON.stringify(theNormDataInit["Sometoken"]["1430c609-3e8e-4de6-969a-958f98a6244a"]));
 			}
 			
 			d3.json("logExport.json?event=" + eventName + "&datasources=windows,events,environment,processsummary,metrics&normalize=none" + userSessionFilter, async function(error, data)
 				{
-					//This iterates through everything to search for sessions
-					//which need updating.  If we pass username with the session
-					//then we can more optimally update just the sessions we need
-					//to update rather than search through all known sessions.
-					//But this takes work and the O(n) runtime here is OK.
-					//console.log("Downloaded data:");
-					//console.log(data);
-					//console.log("Local data:");
-					//console.log(theNormDataInit);
+					
 					if(theNormDataInit && Object.keys(theNormDataInit).length > 0)
 					{
 						for(user in data)
 						{
+							if(theNormDataInit[user]["Aggregated"])
+							{
+								delete theNormDataInit[user]["Aggregated"];
+							}
 							for(session in data[user])
 							{
 								//console.log("Adding session: " + user + ":" + session);
@@ -1154,8 +1156,8 @@ function deepEqual(a,b)
 						}
 						data = theNormDataInit;
 					}
-					//console.log("Final loaded data:");
-					//console.log(data);
+					console.log("Final loaded data:");
+					console.log(JSON.stringify(theNormDataInit["Sometoken"]["1430c609-3e8e-4de6-969a-958f98a6244a"]));
 					try
 					{
 						var isDone = false;
@@ -1168,6 +1170,8 @@ function deepEqual(a,b)
 					{
 						console.log(err);
 					}
+					
+					
 					
 					theNormData = await (preprocess(data));
 					theNormDataDone = true;
@@ -1843,7 +1847,7 @@ function deepEqual(a,b)
 		if(await hasData("indexdata_" + eventName))
 		{
 			theNormDataInit = ((await retrieveData("indexdata_" + eventName)).value);
-			console.log(theNormDataInit);
+			
 		}
 		else
 		{
@@ -1879,7 +1883,10 @@ function deepEqual(a,b)
 								if(data[user][session][dataType].length == 2)
 								{
 									//console.log("\t\tType is bound");
-									if(deepEqual(data[user][session][dataType], theNormDataInit[user][session][dataType]))
+									//console.log(data[user][session][dataType]);
+									//console.log(theNormDataInit[user][session][dataType]);
+									if(data[user][session][dataType][0]["Index MS"] == theNormDataInit[user][session][dataType][0]["Index MS"]
+										&& data[user][session][dataType][1]["Index MS"] == theNormDataInit[user][session][dataType][1]["Index MS"])
 									{
 										
 									}
