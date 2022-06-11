@@ -1883,7 +1883,9 @@ function deepEqual(a,b)
 									//console.log("\t\tType is bound");
 									//console.log(data[user][session][dataType]);
 									//console.log(theNormDataInit[user][session][dataType]);
-									if(data[user][session][dataType][0]["Index MS"] == theNormDataInit[user][session][dataType][0]["Index MS"]
+									if(theNormDataInit[user][session][dataType] && data[user][session][dataType]
+										&& data[user][session][dataType][0] && data[user][session][dataType][1] && theNormDataInit[user][session][dataType][0] && theNormDataInit[user][session][dataType][1]
+										&& data[user][session][dataType][0]["Index MS"] == theNormDataInit[user][session][dataType][0]["Index MS"]
 										&& data[user][session][dataType][1]["Index MS"] == theNormDataInit[user][session][dataType][1]["Index MS"])
 									{
 										
