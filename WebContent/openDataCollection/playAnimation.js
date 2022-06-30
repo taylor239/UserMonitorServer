@@ -971,11 +971,14 @@ async function playAnimation(owningUser, owningSession, seekTo)
 				
 			}
 			lastScreenshot = curScreenshot;
-			for(toRemove in garbageToRemove)
+			if(curFrame["Type"] == "key")
 			{
-				if(curFrame["Index MS Session"] - garbageToRemove[toRemove]["Index MS Session"] > 10000)
+				for(toRemove in garbageToRemove)
 				{
-					garbageToRemove[toRemove].remove();
+					if(curFrame["Index MS Session"] - garbageToRemove[toRemove]["Index MS Session"] > 10000)
+					{
+						garbageToRemove[toRemove].remove();
+					}
 				}
 			}
 		
@@ -1108,11 +1111,14 @@ async function playAnimation(owningUser, owningSession, seekTo)
 				//lastScreenshot.remove();
 			}
 			lastScreenshot = curScreenshot;
-			for(toRemove in garbageToRemove)
+			if(curFrame["Type"] == "key")
 			{
-				//if(curFrame["Index MS Session"] - garbageToRemove[toRemove]["Index MS Session"] > 10000)
+				for(toRemove in garbageToRemove)
 				{
-					garbageToRemove[toRemove].remove();
+					//if(curFrame["Index MS Session"] - garbageToRemove[toRemove]["Index MS Session"] > 10000)
+					{
+						garbageToRemove[toRemove].remove();
+					}
 				}
 			}
 		}
@@ -1746,10 +1752,21 @@ async function playAnimation(owningUser, owningSession, seekTo)
 				curTop = {};
 				updateProcAni = true;
 				var curDiff = Infinity;
+				var screenshotFrameStack = [];
 				if(screenshots && screenshots.length > 0)
 				{
 					screenshotIndex = closestIndexMSBinarySession(screenshots, selectTime);
 					var curScreenshot = screenshots[screenshotIndex];
+					while(curScreenshot["Type"] != "key")
+					{
+						if(screenshotIndex <= 0)
+						{
+							break;
+						}
+						screenshotFrameStack.push(curScreenshot);
+						screenshotIndex--;
+						curScreenshot = screenshots[screenshotIndex];
+					}
 				}
 				if(keystrokes && keystrokes.length > 0)
 				{
@@ -1852,7 +1869,7 @@ async function playAnimation(owningUser, owningSession, seekTo)
 					}
 				}
 				
-				while(screenshots && screenshotIndex < screenshots.length && Number(screenshots[screenshotIndex]["Index MS Session"]) < Number(selectedEntry["Index MS Session"]))
+				while(screenshots && screenshotIndex < screenshots.length && Number(screenshots[screenshotIndex]["Index MS Session"]) < Number(selectedEntry["Index MS Session"]) && screenshots[screenshotIndex]["Type"] != "key")
 				{
 					screenshotIndex++;
 				}

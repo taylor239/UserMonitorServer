@@ -3113,6 +3113,11 @@ public class DatabaseConnector
 				
 				nextRow.put("Text", myResults.getString("ocrtext"));
 				
+				nextRow.put("Encoding", myResults.getString("encoding"));
+				nextRow.put("Type", myResults.getString("frameType"));
+				nextRow.put("X", myResults.getString("xStart"));
+				nextRow.put("Y", myResults.getString("yStart"));
+				
 				byte[] image = myResults.getBytes("screenshot");
 				nextRow.put("Size", image.length);
 				
