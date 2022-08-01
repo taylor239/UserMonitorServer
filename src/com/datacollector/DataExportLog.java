@@ -511,13 +511,35 @@ public class DataExportLog extends HttpServlet {
 				//System.out.println(headMap);
 			}
 			
-			if(toSelect.contains("screenshots"))
+			if(toSelect.contains("screenshots") && !toSelect.contains("compositedscreenshots"))
 			{
 				System.out.println("Reading screenshots");
 				if(zip)
 				{
 					dataTypes.add("screenshots");
-					ConcurrentHashMap screenshotPair = myConnector.getScreenshotsHierarchyBinary(eventName, admin, userSelectList, sessionSelectList, firstIndex, count);
+					ConcurrentHashMap screenshotPair = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, sessionSelectList, false, false, false, true, firstIndex, count);
+					ConcurrentHashMap screenshotMap = (ConcurrentHashMap) screenshotPair.get("json");
+					ConcurrentHashMap screenshotMapBinary = (ConcurrentHashMap) screenshotPair.get("binary");
+					//System.out.println(screenshotMap);
+					//System.out.println(screenshotMapBinary);
+					headMap = myConnector.mergeMaps(headMap, screenshotMap);
+					fileWriteMap = myConnector.mergeMaps(fileWriteMap, screenshotMapBinary);
+				}
+				else
+				{
+					dataTypes.add("screenshots");
+					ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, sessionSelectList, false, true, false, false, firstIndex, count);
+					headMap = myConnector.mergeMaps(headMap, screenshotMap);
+				}
+			}
+			
+			if(toSelect.contains("compositedscreenshots"))
+			{
+				System.out.println("Reading compositedscreenshots");
+				if(zip)
+				{
+					dataTypes.add("screenshots");
+					ConcurrentHashMap screenshotPair = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, sessionSelectList, false, false, true, true, firstIndex, count);
 					ConcurrentHashMap screenshotMap = (ConcurrentHashMap) screenshotPair.get("json");
 					ConcurrentHashMap screenshotMapBinary = (ConcurrentHashMap) screenshotPair.get("binary");
 					headMap = myConnector.mergeMaps(headMap, screenshotMap);
@@ -526,7 +548,7 @@ public class DataExportLog extends HttpServlet {
 				else
 				{
 					dataTypes.add("screenshots");
-					ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, sessionSelectList, false, true, firstIndex, count);
+					ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, sessionSelectList, false, true, true, false, firstIndex, count);
 					headMap = myConnector.mergeMaps(headMap, screenshotMap);
 				}
 			}
@@ -534,7 +556,7 @@ public class DataExportLog extends HttpServlet {
 			if(false || toSelect.contains("video"))
 			{
 				dataTypes.add("video");
-				ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, sessionSelectList, false, false, firstIndex, count);
+				ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, sessionSelectList, false, false, true, false, firstIndex, count);
 				screenshotMap = myConnector.normalizeAllTime(screenshotMap);
 				ConcurrentHashMap videoPair = toVideo(screenshotMap, zip);
 				if(zip)
@@ -553,7 +575,7 @@ public class DataExportLog extends HttpServlet {
 			{
 				System.out.println("Reading screenshotindices");
 				dataTypes.add("screenshots");
-				ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, sessionSelectList, true, true, firstIndex, count);
+				ConcurrentHashMap screenshotMap = myConnector.getScreenshotsHierarchy(eventName, admin, userSelectList, sessionSelectList, true, true, false, false, firstIndex, count);
 				headMap = myConnector.mergeMaps(headMap, screenshotMap);
 			}
 			
@@ -759,15 +781,18 @@ public class DataExportLog extends HttpServlet {
 				System.out.println("Adding files");
 				//System.out.println(fileWriteMap);
 				ArrayList filesToAdd = myConnector.toDirMap(fileWriteMap, "");
+				//System.out.println(filesToAdd);
 				for(int x=0; x<filesToAdd.size(); x++)
 				{
 					//System.out.println(filesToAdd.get(x));
 					ConcurrentHashMap curFile = (ConcurrentHashMap) filesToAdd.get(x);
+					//System.out.println(curFile);
 					String filePath = (String) curFile.get("filePath");
 					ArrayList filesInPath = (ArrayList) curFile.get("file");
 					for(int y=0; y<filesInPath.size(); y++)
 					{
 						ConcurrentHashMap thisFile = (ConcurrentHashMap) filesInPath.get(y);
+						//System.out.println(thisFile);
 						byte[] toOutput = null;
 						if(thisFile.containsKey("Screenshot"))
 						{
@@ -777,7 +802,9 @@ public class DataExportLog extends HttpServlet {
 						{
 							toOutput = (byte[]) thisFile.get("Video");
 						}
-						String fileName = filePath + "/" + thisFile.get("Index").toString();
+						String fileName = filePath.substring(1) + "/" + thisFile.get("Index").toString();
+						//System.out.println(fileName);
+						//System.out.println(toOutput.length);
 						ZipEntry finalFile = new ZipEntry(fileName);
 						zipOut.putNextEntry(finalFile);
 						zipOut.write(toOutput);

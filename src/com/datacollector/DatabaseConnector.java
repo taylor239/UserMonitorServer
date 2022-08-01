@@ -1,7 +1,9 @@
 package com.datacollector;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,7 +21,12 @@ import java.util.Map.Entry;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
+import javax.imageio.stream.ImageOutputStream;
 import javax.servlet.ServletContext;
 
 import com.google.gson.Gson;
@@ -127,6 +134,8 @@ public class DatabaseConnector
 			"LEFT JOIN `ProcessAttributes` ON `Process`.`event` = `ProcessAttributes`.`event` AND `Process`.`adminEmail` = `ProcessAttributes`.`adminEmail` AND `Process`.`username` = `ProcessAttributes`.`username` AND `Process`.`session` = `ProcessAttributes`.`session` AND `Process`.`user` = `ProcessAttributes`.`user` AND `Process`.`pid` = `ProcessAttributes`.`pid` AND `Process`.`start` = `ProcessAttributes`.`start`\n" + 
 			"WHERE `ProcessAttributes`.`event` = ? AND `ProcessAttributes`.`adminEmail` = ? ORDER BY `ProcessAttributes`.`timestamp` ASC";
 	
+	
+	
 	//private String allProcessQuery = "SELECT * FROM\n" + 
 	//		"(\n" + 
 	//		"\n" + 
@@ -193,16 +202,29 @@ public class DatabaseConnector
 	//	setupConnectionSource();
 	//}
 	
+	ServletContext mySC;
+	
 	public DatabaseConnector(ServletContext sc)
 	{
+		mySC = sc;
 		cal.setTimeZone(TimeZone.getDefault());
 		setupDBManager(sc);
 		setupConnectionSource();
 		
 	}
 	
+	public DatabaseConnector getExtraConn()
+	{
+		if(databaseName != null)
+		{
+			return new DatabaseConnector(mySC, databaseName);
+		}
+		return new DatabaseConnector(mySC);
+	}
+	
 	public DatabaseConnector(ServletContext sc, String dbname)
 	{
+		mySC = sc;
 		cal.setTimeZone(TimeZone.getDefault());
 		setupDBManager(sc);
 		databaseName = dbname;
@@ -265,6 +287,36 @@ public class DatabaseConnector
 		
 		System.out.println(myConnector.toJSON(filteredResults));
 	}*/
+	
+	/**
+	 * This might be a helpful query at some point.  Not used yet.
+	 * @return
+	 */
+	private ConcurrentHashMap getPreferredQuerySizes()
+	{
+		String checkRowSize = "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '?' AND TABLE_NAME = '?'";
+		
+		ArrayList tablesToCheck = new ArrayList();
+		
+		tablesToCheck.add("KeyboardInput");
+		tablesToCheck.add("MouseInput");
+		
+		tablesToCheck.add("Process");
+		tablesToCheck.add("ProcessArgs");
+		tablesToCheck.add("ProcessAttributes");
+		tablesToCheck.add("ProcessThreads");
+		
+		tablesToCheck.add("Screenshot");
+		
+		tablesToCheck.add("Task");
+		tablesToCheck.add("TaskEvent");
+		tablesToCheck.add("TaskTags");
+		
+		tablesToCheck.add("Window");
+		tablesToCheck.add("WindowDetails");
+		
+		return null;
+	}
 	
 	public ConcurrentHashMap getCachedBounds(String adminEmail, String eventName, ArrayList usersToSelect, ArrayList sessionsToSelect)
 	{
@@ -3023,9 +3075,130 @@ public class DatabaseConnector
 		return myReturn;
 	}
 	
-	public ConcurrentHashMap getScreenshotsHierarchy(String event, String admin, ArrayList usersToSelect, ArrayList sessionsToSelect, boolean onlyIndex, boolean base64, String start, String end)
+	private BufferedImage createImageFromBytes(byte[] imageData)
 	{
+		ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
+		try
+		{
+			return ImageIO.read(bais);
+		}
+		catch(Exception e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private byte[] compressImageToBytes(BufferedImage toCompress, String imageCompressionType)
+	{
+		//System.err.println("Compressing image with " + imageCompressionType + " of size: " + toCompress.getWidth() + ", " + toCompress.getHeight());
+		//System.err.println(toCompress.getColorModel());
+		/*
+		for(int x = 0; x < toCompress.getWidth(); x++)
+		{
+			for(int y = 0; y < toCompress.getHeight(); y++)
+			{
+				System.err.print(":" + x + "," + y + "=" + toCompress.getRGB(x, y) + ":");
+			}
+			System.err.println();
+		}
+		*/
+		try
+		{
+			float imageCompressionFactor = 0;
+			ByteArrayOutputStream toByte = new ByteArrayOutputStream();
+			ImageOutputStream imageOutput = ImageIO.createImageOutputStream(toByte);
+			ImageWriter myWriter = ImageIO.getImageWritersByFormatName(imageCompressionType).next();
+			myWriter.setOutput(imageOutput);
+			if(imageCompressionType.equals("jpg"))
+			{
+				JPEGImageWriteParam jpegParams = new JPEGImageWriteParam(null);
+				jpegParams.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+				jpegParams.setCompressionQuality((float) imageCompressionFactor);
+				myWriter.write(null, new IIOImage((RenderedImage) toCompress, null, null), jpegParams);
+			}
+			else if(imageCompressionType.equals("png"))
+			{
+				ImageWriteParam pngParam = myWriter.getDefaultWriteParam();
+				if(pngParam.canWriteCompressed())
+				{
+					pngParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+					pngParam.setCompressionQuality((float) imageCompressionFactor);
+				}
+				IIOImage toWrite = new IIOImage((RenderedImage) toCompress, null, null);
+				//IIOImage toWrite = new IIOImage(toCompress.getRaster(), null, null);
+				myWriter.write(null, toWrite, pngParam);
+			}
+			return toByte.toByteArray();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public ConcurrentHashMap combineFrames(ConcurrentHashMap prevFrame, ConcurrentHashMap nextFrame)
+	{
+		BufferedImage prevImage = createImageFromBytes((byte[]) prevFrame.get("ScreenshotBytes"));
+		BufferedImage nextImage = createImageFromBytes((byte[]) nextFrame.get("ScreenshotBytes"));
+		BufferedImage resultImage = new BufferedImage(prevImage.getWidth(), prevImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		
+		if(nextFrame.get("Type").equals("seg"))
+		{
+			int startX = Integer.parseInt((String) nextFrame.get("X"));
+			int startY = Integer.parseInt((String) nextFrame.get("Y"));
+			for(int x = 0; x < resultImage.getWidth(); x++)
+			{
+				for(int y = 0; y < resultImage.getHeight(); y++)
+				{
+					resultImage.setRGB(x, y, prevImage.getRGB(x, y));
+				}
+			}
+			for(int x = startX; x < nextImage.getWidth() + startX; x++)
+			{
+				for(int y = startY; y < nextImage.getHeight() + startY; y++)
+				{
+					//System.out.println("Setting " + x + " from " + (x - startX));
+					//System.out.println("And " + y + " from " + (y - startY));
+					//System.out.println("Dimensions of changes: " + nextImage.getWidth() + ", " + nextImage.getHeight());
+					resultImage.setRGB(x, y, nextImage.getRGB(x - startX, y - startY));
+				}
+			}
+		}
+		else if(nextFrame.get("Type").equals("diff"))
+		{
+			if(prevImage.getWidth() != nextImage.getWidth() || prevImage.getHeight() != nextImage.getHeight())
+			{
+				System.out.println("Warning: Diff image dimensions do not match");
+			}
+			else
+			{
+				for(int x = 0; x < prevImage.getWidth(); x++)
+				{
+					for(int y = 0; y < prevImage.getHeight(); y++)
+					{
+						if(nextImage.getRGB(x, y) != 0)
+						{
+							resultImage.setRGB(x, y, nextImage.getRGB(x, y));
+						}
+						else
+						{
+							resultImage.setRGB(x, y, prevImage.getRGB(x, y));
+						}
+					}
+				}
+			}
+		}
+		byte[] reconstructedImage = compressImageToBytes(resultImage, (String) nextFrame.get("Encoding"));
+		nextFrame.put("ScreenshotBytes", reconstructedImage);
+		return nextFrame;
+	}
+	
+	public ConcurrentHashMap getScreenshotsHierarchy(String event, String admin, ArrayList usersToSelect, ArrayList sessionsToSelect, boolean onlyIndex, boolean base64, boolean reconstruct, boolean separateFiles, String start, String end)
+	{
+		ConcurrentHashMap toReturn = new ConcurrentHashMap();
 		ConcurrentHashMap myReturn = new ConcurrentHashMap();
+		ConcurrentHashMap myReturnBinary = new ConcurrentHashMap();
 		
 		Connection conn = null;
         Statement stmt = null;
@@ -3097,6 +3270,11 @@ public class DatabaseConnector
 				myStatement.setInt(4 + sessionOffset + secondSessionOffset, Integer.parseInt(end));
 			}
 			
+			System.out.println("Querying screenshots:");
+			System.out.println(myStatement);
+			
+			ConcurrentHashMap lastFullFrame = new ConcurrentHashMap();
+			
 			ResultSet myResults = myStatement.executeQuery();
 			while(myResults.next())
 			{
@@ -3106,6 +3284,7 @@ public class DatabaseConnector
 				String userName = myResults.getString("username");
 				//nextRow.put("Session", myResults.getString("session"));
 				String sessionName = myResults.getString("session");
+				
 				
 				nextRow.put("Taken", myResults.getTimestamp("taken", cal));
 				nextRow.put("Index", myResults.getTimestamp("taken", cal));
@@ -3118,10 +3297,144 @@ public class DatabaseConnector
 				nextRow.put("X", myResults.getString("xStart"));
 				nextRow.put("Y", myResults.getString("yStart"));
 				
+				
+				ConcurrentHashMap nextRowBinary = null;
+				if(separateFiles)
+				{
+					//System.out.println("Adding file paths...");
+					nextRow.put("Path", "./" + userName + "/" + sessionName + "/screenshots/" + ((String)myResults.getTimestamp("taken", cal).toString()).replaceAll(" ", "_") + ".jpg");
+					
+					nextRowBinary = new ConcurrentHashMap();
+					nextRowBinary.put("Index", ((String)myResults.getTimestamp("taken", cal).toString()).replaceAll(" ", "_") + ".jpg");
+				}
+				
 				byte[] image = myResults.getBytes("screenshot");
 				nextRow.put("Size", image.length);
 				
-				
+				if(reconstruct && !onlyIndex)
+				{
+					System.out.println("Compositing images...");
+					nextRow.put("ScreenshotBytes", image);
+					if(nextRow.get("Type").equals("key"))
+					{
+						nextRow.put("Calculated", true);
+						
+						ConcurrentHashMap lastFullFrameUser;
+						if(lastFullFrame.containsKey(userName))
+						{
+							lastFullFrameUser = (ConcurrentHashMap) lastFullFrame.get(userName);
+						}
+						else
+						{
+							lastFullFrameUser = new ConcurrentHashMap();
+							lastFullFrame.put(userName, lastFullFrameUser);
+						}
+						
+						if(separateFiles)
+						{
+							lastFullFrameUser.put(sessionName, nextRowBinary);
+						}
+						else
+						{
+							lastFullFrameUser.put(sessionName, nextRow);
+						}
+						
+					}
+					else
+					{
+						ConcurrentHashMap prevFrame;
+						
+						ConcurrentHashMap lastFullFrameUser;
+						if(lastFullFrame.containsKey(userName))
+						{
+							lastFullFrameUser = (ConcurrentHashMap) lastFullFrame.get(userName);
+						}
+						else
+						{
+							lastFullFrameUser = new ConcurrentHashMap();
+							lastFullFrame.put(userName, lastFullFrameUser);
+						}
+						
+						if(lastFullFrameUser.containsKey(sessionName))
+						{
+							prevFrame = (ConcurrentHashMap) lastFullFrameUser.get(sessionName);
+							//System.out.println(prevFrame);
+							if(base64)
+							{
+								String base64Enc = (String) prevFrame.get("Screenshot");
+								prevFrame.put("ScreenshotBytes", Base64.getDecoder().decode(base64Enc));
+							}
+							else
+							{
+								prevFrame.put("ScreenshotBytes", prevFrame.get("Screenshot"));
+							}
+							nextRow = combineFrames(prevFrame, nextRow);
+							prevFrame.remove("ScreenshotBytes");
+							nextRow.put("Calculated", true);
+							if(separateFiles)
+							{
+								lastFullFrameUser.put(sessionName, nextRowBinary);
+							}
+							else
+							{
+								lastFullFrameUser.put(sessionName, nextRow);
+							}
+						}
+						else
+						{
+							//Uh oh, we need to reconstruct from whatever the prev
+							//key frame was and its an item before this query.
+							DatabaseConnector dupeConn = getExtraConn();
+							ArrayList userList = new ArrayList();
+							userList.add(userName);
+							ArrayList sessionList = new ArrayList();
+							userList.add(sessionName);
+							
+							String startInt = (Integer.parseInt(start) - 1) + "";
+							ConcurrentHashMap prevMap = dupeConn.getScreenshotsHierarchy(event, admin, userList, sessionList, false, false, true, false, startInt, startInt + 1);
+							
+							nextRow.put("Calculated", false);
+							
+							if(prevMap.containsKey(userName))
+							{
+								ConcurrentHashMap prevUserMap = (ConcurrentHashMap) prevMap.get(userName);
+								if(prevUserMap.containsKey(sessionName))
+								{
+									ConcurrentHashMap prevSessionMap = (ConcurrentHashMap) prevUserMap.get(sessionName);
+									if(prevSessionMap.containsKey("screenshots"))
+									{
+										ArrayList prevImageList = (ArrayList) prevSessionMap.get("screenshots");
+										ConcurrentHashMap prevImage = (ConcurrentHashMap) prevImageList.get(0);
+										if(base64)
+										{
+											String base64Enc = (String) prevImage.get("Screenshot");
+											prevImage.put("ScreenshotBytes", Base64.getDecoder().decode(base64Enc));
+										}
+										else
+										{
+											prevImage.put("ScreenshotBytes", prevImage.get("Screenshot"));
+										}
+										nextRow = combineFrames(prevImage, nextRow);
+										prevImage.remove("ScreenshotBytes");
+										nextRow.put("Calculated", true);
+										
+										if(separateFiles)
+										{
+											lastFullFrameUser.put(sessionName, nextRowBinary);
+										}
+										else
+										{
+											lastFullFrameUser.put(sessionName, nextRow);
+										}
+									}
+									
+								}
+							}
+						}
+					}
+					image = (byte[]) nextRow.get("ScreenshotBytes");
+					nextRow.remove("ScreenshotBytes");
+				}
 				/*
 				if(myResults.getInt("doneocr") <= 0)
 				{
@@ -3146,8 +3459,14 @@ public class DatabaseConnector
 					//byte[] image = myResults.getBytes("screenshot");
 					if(base64)
 					{
+						//System.out.println("Converting to b64...");
 						String imageEncoded = Base64.getEncoder().encodeToString(image);
 						nextRow.put("Screenshot", imageEncoded);
+					}
+					else if(separateFiles)
+					{
+						nextRowBinary.put("Screenshot", image);
+						nextRowBinary.put("Size", image.length);
 					}
 					else
 					{
@@ -3155,25 +3474,57 @@ public class DatabaseConnector
 					}
 				}
 				
-				if(!myReturn.containsKey(userName))
+				if(separateFiles)
 				{
-					myReturn.put(userName, new ConcurrentHashMap());
+					if(!myReturn.containsKey(userName))
+					{
+						myReturn.put(userName, new ConcurrentHashMap());
+						myReturnBinary.put(userName, new ConcurrentHashMap());
+					}
+					ConcurrentHashMap userMap = (ConcurrentHashMap) myReturn.get(userName);
+					ConcurrentHashMap userMapBinary = (ConcurrentHashMap) myReturnBinary.get(userName);
+					
+					if(!userMap.containsKey(sessionName))
+					{
+						userMap.put(sessionName, new ConcurrentHashMap());
+						userMapBinary.put(sessionName, new ConcurrentHashMap());
+					}
+					ConcurrentHashMap sessionMap = (ConcurrentHashMap) userMap.get(sessionName);
+					ConcurrentHashMap sessionMapBinary = (ConcurrentHashMap) userMapBinary.get(sessionName);
+					
+					if(!sessionMap.containsKey("screenshots"))
+					{
+						sessionMap.put("screenshots", new ArrayList());
+						sessionMapBinary.put("screenshots", new ArrayList());
+					}
+					ArrayList eventList = (ArrayList) sessionMap.get("screenshots");
+					ArrayList eventListBinary = (ArrayList) sessionMapBinary.get("screenshots");
+					
+					eventList.add(nextRow);
+					eventListBinary.add(nextRowBinary);
 				}
-				ConcurrentHashMap userMap = (ConcurrentHashMap) myReturn.get(userName);
-				
-				if(!userMap.containsKey(sessionName))
+				else
 				{
-					userMap.put(sessionName, new ConcurrentHashMap());
+					if(!myReturn.containsKey(userName))
+					{
+						myReturn.put(userName, new ConcurrentHashMap());
+					}
+					ConcurrentHashMap userMap = (ConcurrentHashMap) myReturn.get(userName);
+					
+					if(!userMap.containsKey(sessionName))
+					{
+						userMap.put(sessionName, new ConcurrentHashMap());
+					}
+					ConcurrentHashMap sessionMap = (ConcurrentHashMap) userMap.get(sessionName);
+					
+					if(!sessionMap.containsKey("screenshots"))
+					{
+						sessionMap.put("screenshots", new ArrayList());
+					}
+					ArrayList eventList = (ArrayList) sessionMap.get("screenshots");
+					
+					eventList.add(nextRow);
 				}
-				ConcurrentHashMap sessionMap = (ConcurrentHashMap) userMap.get(sessionName);
-				
-				if(!sessionMap.containsKey("screenshots"))
-				{
-					sessionMap.put("screenshots", new ArrayList());
-				}
-				ArrayList eventList = (ArrayList) sessionMap.get("screenshots");
-				
-				eventList.add(nextRow);
 				//myReturn.add(nextRow);
 			}
 			stmt = myStatement;
@@ -3194,6 +3545,14 @@ public class DatabaseConnector
             try { if (conn != null) conn.close(); } catch(Exception e) { }
         }
 		
+		
+		if(separateFiles)
+		{
+			toReturn.put("json", myReturn);
+			toReturn.put("binary", myReturnBinary);
+			
+			return toReturn;
+		}
 		return myReturn;
 	}
 	
@@ -3323,7 +3682,7 @@ public class DatabaseConnector
 		return myReturn;
 	}
 	
-	public ConcurrentHashMap getScreenshotsHierarchyBinary(String event, String admin, ArrayList usersToSelect, ArrayList sessionsToSelect, String start, String end)
+	public ConcurrentHashMap getScreenshotsHierarchyBinary(String event, String admin, ArrayList usersToSelect, ArrayList sessionsToSelect, boolean reconstruct, String start, String end)
 	{
 		ConcurrentHashMap toReturn = new ConcurrentHashMap();
 		ConcurrentHashMap myReturn = new ConcurrentHashMap();
@@ -3660,7 +4019,7 @@ public class DatabaseConnector
 		while(userIterator.hasNext())
 		{
 			Entry userEntry = (Entry) userIterator.next();
-			System.out.println(userEntry.getKey());
+			//System.out.println(userEntry.getKey());
 			ConcurrentHashMap sessionMap = (ConcurrentHashMap) userEntry.getValue();
 			Iterator sessionIterator = sessionMap.entrySet().iterator();
 			while(sessionIterator.hasNext())
@@ -3816,7 +4175,7 @@ public class DatabaseConnector
 				sessionOffset = x + 1;
 			}
 			
-			System.out.println(myStatement);
+			//System.out.println(myStatement);
 			
 			int secondSessionOffset = 0;
 			for(int x=0; x < usersToSelect.size(); x++)
@@ -3990,7 +4349,7 @@ public class DatabaseConnector
 			myStatement.setString(1, event);
 			myStatement.setString(2, admin);
 			
-			System.out.println(myStatement);
+			//System.out.println(myStatement);
 			
 			int sessionOffset = 0;
 			for(int x=0; sessionsToSelect != null && x < sessionsToSelect.size(); x++)
@@ -4006,7 +4365,7 @@ public class DatabaseConnector
 				secondSessionOffset = x + 1;
 			}
 			
-			System.out.println(myStatement);
+			//System.out.println(myStatement);
 			
 			
 			
