@@ -3139,8 +3139,19 @@ public class DatabaseConnector
 	
 	public ConcurrentHashMap combineFrames(ConcurrentHashMap prevFrame, ConcurrentHashMap nextFrame)
 	{
-		BufferedImage prevImage = createImageFromBytes((byte[]) prevFrame.get("ScreenshotBytes"));
-		BufferedImage nextImage = createImageFromBytes((byte[]) nextFrame.get("ScreenshotBytes"));
+		BufferedImage prevImage = null;
+		if(prevFrame.containsKey("ScreenshotImage"))
+		{
+			prevImage = (BufferedImage) prevFrame.get("ScreenshotImage");
+			prevFrame.remove("ScreenshotImage");
+		}
+		else
+		{
+			prevImage = createImageFromBytes((byte[]) prevFrame.get("ScreenshotBytes"));
+		}
+		BufferedImage nextImage = null;
+		nextImage = createImageFromBytes((byte[]) nextFrame.get("ScreenshotBytes"));
+		
 		BufferedImage resultImage = new BufferedImage(prevImage.getWidth(), prevImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		
 		if(nextFrame.get("Type").equals("seg"))
@@ -3189,6 +3200,7 @@ public class DatabaseConnector
 				}
 			}
 		}
+		nextFrame.put("ScreenshotImage", resultImage);
 		byte[] reconstructedImage = compressImageToBytes(resultImage, (String) nextFrame.get("Encoding"));
 		nextFrame.put("ScreenshotBytes", reconstructedImage);
 		return nextFrame;
@@ -3270,8 +3282,8 @@ public class DatabaseConnector
 				myStatement.setInt(4 + sessionOffset + secondSessionOffset, Integer.parseInt(end));
 			}
 			
-			System.out.println("Querying screenshots:");
-			System.out.println(myStatement);
+			//System.out.println("Querying screenshots:");
+			//System.out.println(myStatement);
 			
 			ConcurrentHashMap lastFullFrame = new ConcurrentHashMap();
 			
@@ -3313,7 +3325,7 @@ public class DatabaseConnector
 				
 				if(reconstruct && !onlyIndex)
 				{
-					System.out.println("Compositing images...");
+					//System.out.println("Compositing images...");
 					nextRow.put("ScreenshotBytes", image);
 					if(nextRow.get("Type").equals("key"))
 					{
@@ -3391,7 +3403,15 @@ public class DatabaseConnector
 							userList.add(sessionName);
 							
 							String startInt = (Integer.parseInt(start) - 1) + "";
-							ConcurrentHashMap prevMap = dupeConn.getScreenshotsHierarchy(event, admin, userList, sessionList, false, false, true, false, startInt, startInt + 1);
+							
+							ArrayList userSelectList = new ArrayList();
+							userSelectList.add(userName);
+							ArrayList sessionSelectList = new ArrayList();
+							sessionSelectList.add(sessionName);
+							ConcurrentHashMap prevMap = dupeConn.getScreenshotsHierarchy(event, admin, userSelectList, sessionSelectList, false, false, true, false, startInt, "1");
+							
+							//System.out.println("Got prev for " + userName + ", " + sessionName + ":");
+							//System.out.println(prevMap);
 							
 							nextRow.put("Calculated", false);
 							
@@ -3405,6 +3425,8 @@ public class DatabaseConnector
 									{
 										ArrayList prevImageList = (ArrayList) prevSessionMap.get("screenshots");
 										ConcurrentHashMap prevImage = (ConcurrentHashMap) prevImageList.get(0);
+										//System.out.println("Got prev image:");
+										//System.out.println(prevImage);
 										if(base64)
 										{
 											String base64Enc = (String) prevImage.get("Screenshot");
@@ -3545,6 +3567,25 @@ public class DatabaseConnector
             try { if (conn != null) conn.close(); } catch(Exception e) { }
         }
 		
+		
+		Iterator userIterator = myReturn.entrySet().iterator();
+		while(userIterator.hasNext())
+		{
+			Entry nextUser = (Entry) userIterator.next();
+			ConcurrentHashMap sessionMap = (ConcurrentHashMap) nextUser.getValue();
+			Iterator sessionIterator = sessionMap.entrySet().iterator();
+			while(sessionIterator.hasNext())
+			{
+				Entry nextSession = (Entry) sessionIterator.next();
+				ConcurrentHashMap dataMap = (ConcurrentHashMap) nextSession.getValue();
+				ArrayList screenshotList = (ArrayList) dataMap.get("screenshots");
+				for(int x = 0; x < screenshotList.size(); x++)
+				{
+					ConcurrentHashMap screenshotMap = (ConcurrentHashMap) screenshotList.get(x);
+					screenshotMap.remove("ScreenshotImage");
+				}
+			}
+		}
 		
 		if(separateFiles)
 		{
