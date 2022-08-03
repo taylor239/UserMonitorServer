@@ -3290,6 +3290,10 @@ public class DatabaseConnector
 			ResultSet myResults = myStatement.executeQuery();
 			while(myResults.next())
 			{
+				if(myResults.getString("frameType").equals("empty"))
+				{
+					continue;
+				}
 				ConcurrentHashMap nextRow = new ConcurrentHashMap();
 				
 				//nextRow.put("Username", myResults.getString("username"));
