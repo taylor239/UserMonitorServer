@@ -17,6 +17,7 @@ import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.varia.NullAppender;
 import org.apache.commons.dbcp2.ConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnection;
 import org.apache.commons.dbcp2.PoolingDataSource;
@@ -186,8 +187,9 @@ public class TestingConnectionSource implements Runnable
 	
 	public static DataSource setupDataSource(String connectURI, String myUsername, String myPassword) {
         
-		org.apache.log4j.BasicConfigurator.configure();
-		Logger.getRootLogger().setLevel(Level.INFO);
+		//org.apache.log4j.BasicConfigurator.configure();
+		//Logger.getRootLogger().setLevel(Level.INFO);
+		org.apache.log4j.BasicConfigurator.configure(new NullAppender());
 		
 		//
         // First, we'll create a ConnectionFactory that the
