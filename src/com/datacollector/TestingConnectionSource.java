@@ -15,6 +15,8 @@ import javax.sql.DataSource;
 
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.commons.dbcp2.ConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnection;
 import org.apache.commons.dbcp2.PoolingDataSource;
@@ -54,6 +56,8 @@ public class TestingConnectionSource implements Runnable
 	
 	public TestingConnectionSource(String theUser, String thePwd, String theAddr)
 	{
+		
+		
 		userName = theUser;
 		password = thePwd;
 		address = theAddr;
@@ -181,7 +185,11 @@ public class TestingConnectionSource implements Runnable
 	}
 	
 	public static DataSource setupDataSource(String connectURI, String myUsername, String myPassword) {
-        //
+        
+		org.apache.log4j.BasicConfigurator.configure();
+		Logger.getRootLogger().setLevel(Level.INFO);
+		
+		//
         // First, we'll create a ConnectionFactory that the
         // pool will use to create Connections.
         // We'll use the DriverManagerConnectionFactory,
