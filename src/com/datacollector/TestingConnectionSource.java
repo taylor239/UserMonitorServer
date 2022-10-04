@@ -189,7 +189,7 @@ public class TestingConnectionSource implements Runnable
         
 		//org.apache.log4j.BasicConfigurator.configure();
 		//Logger.getRootLogger().setLevel(Level.INFO);
-		org.apache.log4j.BasicConfigurator.configure(new NullAppender());
+		//org.apache.log4j.BasicConfigurator.configure(new NullAppender());
 		
 		//
         // First, we'll create a ConnectionFactory that the
