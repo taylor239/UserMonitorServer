@@ -78,6 +78,11 @@ String newDiffType = request.getParameter("diffcomp");
 String newImageType = request.getParameter("imagecomp");
 String newImageAmount = request.getParameter("compamount");
 
+boolean newMetrics = request.getParameter("collectmetrics") != null && request.getParameter("collectmetrics").equals("collectmetrics");
+String newGranularity = request.getParameter("processgranularity");
+String newScreenshotInterval = request.getParameter("screenshotinterval");
+String newProcessInterval = request.getParameter("processinterval");
+
 
 String taggerQuery = "SELECT * FROM `EventPassword` WHERE `event` = ? AND `adminEmail` = ? ORDER BY `password` ASC";
 
@@ -225,10 +230,10 @@ boolean deleteData = request.getParameter("deletedata") != null && request.getPa
 
 
 String insertEvent = "INSERT INTO `Event`"
-+"(`event`, `start`, `end`, `description`, `continuous`, `taskgui`, `password`, `adminEmail`, `public`, `publicEvent`, `dynamicTokens`, `autorestart`, `diffType`, `compType`, `compAmount`) "
-+"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
++"(`event`, `start`, `end`, `description`, `continuous`, `taskgui`, `password`, `adminEmail`, `public`, `publicEvent`, `dynamicTokens`, `autorestart`, `diffType`, `compType`, `compAmount`, `metrics`, `processGranularity`, `screenshotInterval`, `processInterval`) "
++"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
 +"ON DUPLICATE KEY UPDATE "
-+"`event` = VALUES(`event`), `start` = VALUES(`start`), `end` = VALUES(`end`), `description` = VALUES(`description`), `continuous` = VALUES(`continuous`), `taskgui` = VALUES(`taskgui`), `password` = VALUES(`password`), `adminEmail` = VALUES(`adminEmail`), `public` = VALUES(`public`), `publicEvent` = VALUES(`publicEvent`), `dynamicTokens` = VALUES(`dynamicTokens`), `autorestart` = VALUES(`autorestart`), `diffType` = VALUES(`diffType`), `compType` = VALUES(`compType`), `compAmount` = VALUES(`compAmount`)";
++"`event` = VALUES(`event`), `start` = VALUES(`start`), `end` = VALUES(`end`), `description` = VALUES(`description`), `continuous` = VALUES(`continuous`), `taskgui` = VALUES(`taskgui`), `password` = VALUES(`password`), `adminEmail` = VALUES(`adminEmail`), `public` = VALUES(`public`), `publicEvent` = VALUES(`publicEvent`), `dynamicTokens` = VALUES(`dynamicTokens`), `autorestart` = VALUES(`autorestart`), `diffType` = VALUES(`diffType`), `compType` = VALUES(`compType`), `compAmount` = VALUES(`compAmount`), `metrics` = VALUES(`metrics`), `processGranularity` = VALUES(`processGranularity`), `screenshotInterval` = VALUES(`screenshotInterval`), `processInterval` = VALUES(`processInterval`)";
 if(newEventName != null && !newEventName.equals("") && newDescription != null && !newDescription.equals(""))
 {
 try
@@ -249,6 +254,10 @@ try
 	insertStmt.setString(13, newDiffType);
 	insertStmt.setString(14, newImageType);
 	insertStmt.setString(15, newImageAmount);
+	insertStmt.setBoolean(16, newMetrics);
+	insertStmt.setString(17, newGranularity);
+	insertStmt.setString(18, newScreenshotInterval);
+	insertStmt.setString(19, newProcessInterval);
 	insertStmt.execute();
 	insertStmt.close();
 }
@@ -433,6 +442,11 @@ String diffType = "";
 String compType = "";
 String compAmount = "";
 
+boolean metrics = false;
+String processGranularity = "";
+String screenshotInterval = "";
+String processInterval = "";
+
 try
 {
 	PreparedStatement selectStatement = dbConn.prepareStatement(selectTotalEvent);
@@ -459,6 +473,11 @@ try
 		diffType = myResults.getString("diffType");
 		compType = myResults.getString("compType");
 		compAmount = myResults.getString("compAmount");
+		
+		metrics = myResults.getInt("metrics") == 1;
+		processGranularity = myResults.getString("processGranularity");
+		screenshotInterval = myResults.getString("screenshotInterval");
+		processInterval = myResults.getString("processInterval");
 	}
 }
 catch(Exception e)
@@ -791,7 +810,14 @@ catch(Exception e)
 	<p>
 	This option causes the endpoint monitor (on new installs) to collect metrics in order to identify bottlenecks in the data collection software.
 	</p>
-	<input type="checkbox" id="collectmetrics" name="collectmetrics" value="collectmetrics" form="createform">
+	<%
+	String metricsChecked = "";
+	if(metrics)
+	{
+		metricsChecked = "checked";
+	}
+	%>
+	<input type="checkbox" id="collectmetrics" name="collectmetrics" value="collectmetrics" <%=metricsChecked %> form="createform">
 	</td>
 	</tr>
 	<tr>
@@ -824,10 +850,10 @@ catch(Exception e)
 		</tr>
 		<tr>
 		<td>
-		<input type="text" value="100" id="screenshotinterval" name="screenshotinterval" form="createform">
+		<input type="text" value="<%=screenshotInterval %>" id="screenshotinterval" name="screenshotinterval" form="createform">
 		</td>
 		<td>
-		<input type="text" value="10000" id="processinterval" name="processinterval" form="createform">
+		<input type="text" value="<%=processInterval %>" id="processinterval" name="processinterval" form="createform">
 		</td>
 		</tr>
 	</table>
@@ -847,6 +873,9 @@ catch(Exception e)
 		<option value="process">process</option>
 		<option value="thread">thread</option>
 	</select>
+	<script>
+	document.getElementById("processgranularity").value = "<%=processGranularity %>";
+	</script>
 	</td>
 	</tr>
 	<tr>
