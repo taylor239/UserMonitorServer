@@ -613,7 +613,12 @@ catch(Exception e)
 	A zip version of the export which, additionally, has image files and relative paths to them in the json for screenshots if "screenshots" is specified.
 	</p>
 	<p>
-	Note that these links can be customized with parameters for various purposes.  "email" and "password" can be passed to log you in as you do the export, which is helpful for uses which do no manage a session.
+	Note that these links can be customized with parameters for various purposes.  "email" and "password" can be passed to log you in as you do the export, which is helpful for uses which do no manage a session.  <b>These links also serve the entirety of this event's data, which could cause the server to crash if the data size is too larget for the server's memory.</b>  The data may be segmented by using the following arguments:
+	<ul>
+		<li><b>first</b> and <b>count</b>, which select only <i>count</i> individual pieces of data, per data category selected, starting at index <i>first</i>.  The data is sorted according to time, so the entire event data can be reconstructed efficiently one frame at a time with this method.</li>
+		<li><b>users</b>, which specifies the user tokens (in a comma separated list) to export data for.</li>
+		<li><b>sessions</b>, which similarly only selects data from sessions in the supplied comma separated list.</li>
+	</ul>
 	Additionally, different parameters can be used to filter and limit the data set, allowing for smaller data size.  Those parameters are as follows:
 	</p>
 	<ul>
