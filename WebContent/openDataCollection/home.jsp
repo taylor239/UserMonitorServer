@@ -266,6 +266,133 @@ If your event is public, this will automatically approve all token requests.
 </tr>
 <tr>
 <td>
+<h4>Autorestart?</h4>
+</td>
+</tr>
+<tr>
+<td>
+<p>
+When subjects install the endpoint monitor, this will automatically restart their devices.
+</p>
+<input type="checkbox" id="autorestart" name="autorestart" value="autorestart" form="createform">
+</td>
+</tr>
+<tr>
+<td>
+<h4>Image Compression</h4>
+</td>
+</tr>
+<tr>
+<td>
+<p>
+This option selects the type of image compression subjects will use.  This option, if
+changed, will only apply to future installs and will not alter the compression for
+devices with the software installed already.  Images are compressed according to a
+<i>diff algorithm</i> and an <i>image compression algorithm</i>.
+</p>
+<br />
+<p>
+The <i>diff
+algorithm</i> can be set to store either a full-frame, pixel by pixel difference
+between a frame and its previous frame with the "diff" option; store the smallest
+possible rectangular portion of the screenshot encompassing differences between a frame
+and the previous frame with the "boundrect" option; or skip diff compression altogether
+by selecting "none".  Both diff algorithms support image reconstruction and do not
+inherently cause lossiness, though the <i>image compression algorithm</i> lossiness
+level may be influenced by the diff algorithm selected.  The two diff algorithm options
+result in less data required for storage and transfer for the visualization or download.
+They also have differing performance impacts on the endpoint monitor, including
+possibly decreasing frame rate or increasing CPU use, depending on the particular
+device running the software.  Key frames (full frames) periodically taken prevent data
+corruption in the event of glitches/bugs or accumulating lossiness due to the
+<i>image compression algorithm</i> used.
+</p>
+<br />
+<p>
+The <i>image compression algorithm</i> compresses individual frames (or frame portions)
+in order to reduce storage requirements.  The algorithm supports whichever compression
+algorithms are available in the Java distribution installed, which typically offers
+"png" and "jpg" algorithms - these are the only options offered here for simplicity.  For full frame diff, an alpha (transparency) layer must
+be supported in the compression algorithm, so jpg will not work; png is the safest
+option to use with this particular diff algorithm.  In addition to a compression type,
+a compression level enables greater compression at the cost of lossiness in the data -
+ie., screenshots will not be perfect copies of the source data from subjects' devices
+if lossy compression levels/algorithms are used.  Compression levels range from a max
+of 0 (lossless for png formats) to a minimum of 1.
+</p>
+	<table width="100%">
+		<tr>
+			<td width="33.333%">
+			Diff Compression Type
+			</td>
+			<td width="33.333%">
+			Image Compression Type
+			</td>
+			<td width="33.333%">
+			Image Compression Amount
+			</td>
+		</tr>
+		<tr>
+			<td>
+			<select name="diffcomp" id="diffcomp" form="createform">
+				<option value="diff">diff</option>
+				<option value="boundrect">boundrect</option>
+				<option value="">none</option>
+			</select>
+			</td>
+			<td>
+			<select name="imagecomp" id="imagecomp" form="createform">
+				<option id="pngselect" value="png">png</option>
+				<option id="jpgselect" value="jpg" disabled>jpg</option>
+			</select>
+			</td>
+			<td>
+				<table>
+				<tr>
+				<td>
+				<input type="range" min="0" max="100" value="0" id="comprange">
+				</td>
+				<td>
+				<input type="text" size="3" id="compamount" name="compamount" form="createform" value="0">
+				</td>
+				</tr>
+				</table>
+				<script>
+					var compSlider = document.getElementById("comprange");
+					var compForm = document.getElementById("compamount");
+					compForm.value = compSlider.value;
+					compSlider.oninput = function()
+					{
+						compForm.value = Number(this.value) / 100;
+					}
+					
+					var diffSelect = document.getElementById("diffcomp");
+					var imageSelect = document.getElementById("imagecomp");
+					diffSelect.onchange = function()
+					{
+						var curComp = this.value;
+						if(curComp == "diff")
+						{
+							document.getElementById("jpgselect").setAttribute("disabled", "");
+							if(imageSelect.value == "jpg")
+							{
+								imageSelect.value = "png";
+							}
+						}
+						else
+						{
+							document.getElementById("jpgselect").removeAttribute("disabled");
+						}
+					}
+					
+				</script>
+			</td>
+		</tr>
+	</table>
+</td>
+</tr>
+<tr>
+<td>
 <h4>Tokens</h4>
 </td>
 </tr>
