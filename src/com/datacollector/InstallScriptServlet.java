@@ -100,6 +100,16 @@ public class InstallScriptServlet extends HttpServlet {
 		{
 			downloadURL = request.getServerName();
 		}
+		String downloadPort = ProxyDomainInfo.getProxiedPort();
+		if(downloadPort.equals(""))
+		{
+			downloadPort = "80";
+		}
+		
+		boolean autoRestart = false;
+		String diffType = "";
+		String compType = "";
+		String compAmount = "";
 		
 		try
 		{
@@ -122,11 +132,19 @@ public class InstallScriptServlet extends HttpServlet {
 			{
 				continuous = "";
 			}
+			
+			autoRestart = myResults.getBoolean("autorestart");
+			diffType = myResults.getString("diffType");
+			compType = myResults.getString("compType");
+			compAmount = myResults.getString("compAmount");
+			
 			taskgui = myResults.getString("taskgui");
 			if(myResults.wasNull())
 			{
 				taskgui = "";
 			}
+			
+			
 			myResults.close();
 			queryStmt.close();
 		}
@@ -266,14 +284,21 @@ public class InstallScriptServlet extends HttpServlet {
 		
 		//Reverse proxy made this necessary, since URL URL does not match actual server domain
 		//Add a config file to change this I guess :/
+		//Update: Done, domain.xml
 		String serverName = downloadURL;
-		String port = "80";
+		String port = downloadPort;
 		
 		String mariaPassword = "LFgVMrQ8rqR41StN";
+		
+		String autoRestartString = "";
 		
 		String output = "";
 		if(curDevice.equals("debvm") || curDevice.equals("debrpi"))
 		{
+			if(autoRestart)
+			{
+				autoRestartString = "\nreboot\n";
+			}
 			output = "#!/bin/bash" 
 			+ "\nclear" 
 			+ "\n" 
@@ -491,7 +516,7 @@ public class InstallScriptServlet extends HttpServlet {
 			+ "\ndo" 
 			+ "\npkill -f \"/usr/bin/java -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar\"" 
 			//+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/openDataCollection/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
-			+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -adminemail " + curAdmin + " -event '" + curEvent + "' " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " -process " + processTime + " " + metrics + " " + granularity + " >> /opt/dataCollector/log.log 2>&1" 
+			+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -adminemail " + curAdmin + " -event '" + curEvent + "' " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " -process " + processTime + " " + metrics + " " + granularity + " -imagecompression " + compType + " " + compAmount + " " + diffType + " >> /opt/dataCollector/log.log 2>&1" 
 			+ "\necho \"Got a crash: $(date)\" >> /opt/dataCollector/log.log" 
 			+ "\nsleep 2" 
 			+ "\ndone" 
@@ -534,7 +559,8 @@ public class InstallScriptServlet extends HttpServlet {
 			+ "\n\tfi"
 			+ "\nelse"
 			+ "\n\techo \"Warning: Installer completed with errors.  See installOutput.txt for a log.\""
-			+ "\nfi;" ;
+			+ "\nfi;" 
+			+ autoRestartString;
 			//+ "\nsudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password " + mySqlPassword + "'" 
 			//+ "\nsudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password " + mySqlPassword + "'" 
 			//+ "\nsudo apt-get -y install mysql-server" 
@@ -672,7 +698,7 @@ public class InstallScriptServlet extends HttpServlet {
 					+ "\nservice tomcat9 start"
 					+ "\npkill -f \"/usr/bin/java -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar\"" 
 					//+ "\n/usr/bin/java -Xmx1536m -jar /opt/dataCollector/DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -event " + curEvent + " -continuous "+ myNewToken + " http://revenge.cs.arizona.edu/DataCollectorServer/openDataCollection/UploadData" + " >> /opt/dataCollector/log.log 2>&1" 
-					+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -event '" + curEvent + "' " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " -process " + processTime + " " + metrics + " " + granularity + " >> /opt/dataCollector/log.log 2>&1" 
+					+ "\n/usr/bin/java -Xmx1536m -jar -XX:+IgnoreUnrecognizedVMOptions /opt/dataCollector/DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -event '" + curEvent + "' " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " -process " + processTime + " " + metrics + " " + granularity + " -imagecompression " + compType + " " + compAmount + " " + diffType + " >> /opt/dataCollector/log.log 2>&1" 
 					+ "\necho \"Got a crash: $(date)\" >> /opt/dataCollector/log.log" 
 					+ "\nsleep 2" 
 					+ "\ndone" 
@@ -708,6 +734,10 @@ public class InstallScriptServlet extends HttpServlet {
 		}
 		else if(curDevice.equals("winvm"))
 		{
+			if(autoRestart)
+			{
+				autoRestartString = "\nshutdown /R\n";
+			}
 			output = "@ECHO OFF\n" + 
 					"echo You are about to install the data collection suite from the Catalyst Open Data Collection engine.  Please review the documentation for this software at the location you downloaded it.  Generalized documentation for this software and information about your particular event can also be found at the following locations:\n" + 
 					"\n" + 
@@ -751,8 +781,9 @@ public class InstallScriptServlet extends HttpServlet {
 					"echo :wait_for_mysql>> \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\StartDataCollection.bat\"\n" + 
 					"echo 	C:\\mysql\\mysql-8.0.23-winx64\\bin\\mysql.exe -uroot -e \";\">> \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\StartDataCollection.bat\"\n" + 
 					"echo 	IF ERRORLEVEL 1 GOTO wait_for_mysql>> \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\StartDataCollection.bat\"\n" +
-					"echo start /B java -jar -XX:+IgnoreUnrecognizedVMOptions C:\\datacollector\\DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -adminemail " + curAdmin + " -event '" + curEvent + "' " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " -process " + processTime + " " + metrics + " " + granularity + " >> \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\StartDataCollection.bat\"\n" + 
-					"shutdown /R\n" + 
+					"echo start /B java -jar -XX:+IgnoreUnrecognizedVMOptions C:\\datacollector\\DataCollector.jar -user " + curUsername + " -server " + serverName + ":" + port + " -adminemail " + curAdmin + " -event '" + curEvent + "' " + continuous + " " + taskgui + " -screenshot " + screenshotTime + " -process " + processTime + " " + metrics + " " + granularity + " -imagecompression " + compType + " " + compAmount + " " + diffType + " >> \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\StartDataCollection.bat\"\n" + 
+					autoRestartString +
+					"\n" + 
 					"";
 		}
 		response.getWriter().append(output);

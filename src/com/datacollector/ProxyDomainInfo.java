@@ -35,13 +35,24 @@ public class ProxyDomainInfo
 		return infoSource.appLocation;
 	}
 	
+	public static String getProxiedPort()
+	{
+		if(infoSource == null)
+		{
+			return "";
+		}
+		return infoSource.proxyPort;
+	}
+	
 	private String proxyDomain = "";
 	private String appLocation = "";
+	private String proxyPort = "";
 	
-	protected ProxyDomainInfo(String prox, String app)
+	protected ProxyDomainInfo(String prox, String app, String port)
 	{
 		proxyDomain = prox;
 		appLocation = app;
+		proxyPort = "";
 	}
 	
 	public static void setupInfo(ServletContext sc, boolean overwrite)
@@ -58,6 +69,7 @@ public class ProxyDomainInfo
 	{
 		String tmpProxy = "";
 		String tmpApp = "";
+		String tmpPort = "";
 		File tmp = new File(reportPath);
 		DocumentBuilderFactory factory=DocumentBuilderFactory.newInstance();
 		try
@@ -74,6 +86,7 @@ public class ProxyDomainInfo
 				{
 					tmpProxy = ele.getElementsByTagName("address").item(0).getTextContent();
 					tmpApp = ele.getElementsByTagName("application").item(0).getTextContent();
+					tmpPort = ele.getElementsByTagName("port").item(0).getTextContent();
 				}
 			}
 		}
@@ -81,6 +94,6 @@ public class ProxyDomainInfo
 		{
 			e.printStackTrace();
 		}
-		infoSource = new ProxyDomainInfo(tmpProxy, tmpApp);
+		infoSource = new ProxyDomainInfo(tmpProxy, tmpApp, tmpPort);
 	}
 }
