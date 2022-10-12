@@ -49,34 +49,9 @@ public class InstallScriptServlet extends HttpServlet {
 		
 		String metrics = "-metrics";
 		
-		String granularity = "-processgranularity thread";
+		String granularity = "-processgranularity ";
 		
 		String osPrefix = "";
-		
-		int screenshotTime = 120000;
-		int processTime = 240000;
-		if(curDevice.equals("debvm"))
-		{
-			screenshotTime = 2000;
-			processTime = 20000;
-		}
-		else if(curDevice.equals("debrpi"))
-		{
-			screenshotTime = 120000;
-			processTime = 240000;
-		}
-		else if(curDevice.equals("fedvm"))
-		{
-			screenshotTime = 2000;
-			processTime = 30000;
-			osPrefix = "yum install apt";
-		}
-		else if(curDevice.equals("winvm"))
-		{
-			screenshotTime = 2000;
-			processTime = 30000;
-			osPrefix = "";
-		}
 		
 		String continuous = "";
 		String taskgui = "";
@@ -111,6 +86,9 @@ public class InstallScriptServlet extends HttpServlet {
 		String compType = "";
 		String compAmount = "";
 		
+		String screenshotInterval = "100";
+		String processInterval = "10000";
+		
 		try
 		{
 			
@@ -138,6 +116,16 @@ public class InstallScriptServlet extends HttpServlet {
 			compType = myResults.getString("compType");
 			compAmount = myResults.getString("compAmount");
 			
+			granularity += myResults.getString("processGranularity");
+			
+			screenshotInterval = myResults.getString("screenshotInterval");
+			processInterval = myResults.getString("processInterval");
+			
+			if(!myResults.getBoolean("metrics"))
+			{
+				metrics = "";
+			}
+			
 			taskgui = myResults.getString("taskgui");
 			if(myResults.wasNull())
 			{
@@ -151,6 +139,33 @@ public class InstallScriptServlet extends HttpServlet {
 		catch(Exception e)
 		{
 			e.printStackTrace();
+		}
+		
+		int screenshotTime = Integer.parseInt(screenshotInterval);
+		int processTime = Integer.parseInt(processInterval);
+		if(curDevice.equals("debvm"))
+		{
+			//screenshotTime = 2000;
+			//processTime = 20000;
+		}
+		else if(curDevice.equals("debrpi"))
+		{
+			//screenshotTime = 120000;
+			//processTime = 240000;
+			screenshotTime = 4 * screenshotTime;
+			processTime = 2 * processTime;
+		}
+		else if(curDevice.equals("fedvm"))
+		{
+			//screenshotTime = 2000;
+			//processTime = 30000;
+			osPrefix = "yum install apt";
+		}
+		else if(curDevice.equals("winvm"))
+		{
+			//screenshotTime = 2000;
+			//processTime = 30000;
+			osPrefix = "";
 		}
 		
 		boolean foundOK = false;

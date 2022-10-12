@@ -279,6 +279,74 @@ When subjects install the endpoint monitor, this will automatically restart thei
 </tr>
 <tr>
 <td>
+<h4>Collect Metrics?</h4>
+</td>
+</tr>
+<tr>
+<td>
+<p>
+This option causes the endpoint monitor (on new installs) to collect metrics in order to identify bottlenecks in the data collection software.
+</p>
+<input type="checkbox" id="collectmetrics" name="collectmetrics" value="collectmetrics" form="createform">
+</td>
+</tr>
+<tr>
+<td>
+<h4>Polling Intervals</h4>
+</td>
+</tr>
+<tr>
+<td>
+<p>
+These options change the polling intervals for screenshots and process data.
+The shorter the interval, the more data gets collected and the higher the
+resource use.  Specifically, the screenshot interval is the period the endpoint
+monitor waits between the completion of one screenshot record and the start of
+the next screenshot record.  Window data gets polled with screenshots as well;
+both of these data sources also get captured upon input from the keyboard or
+mouse.  Likewise, process data polling collects a complete snapshot of running
+system processes (and, potentially, threads) with the listed interval between
+each poll.  Polls are in microseconds and are multiplied for lower performance
+devices such as RPIs.
+</p>
+<table width="100%">
+	<tr>
+	<td width="50%">
+	Screenshot Interval
+	</td>
+	<td width="50%">
+	Process Interval
+	</td>
+	</tr>
+	<tr>
+	<td>
+	<input type="text" value="100" id="screenshotinterval" name="screenshotinterval" form="createform">
+	</td>
+	<td>
+	<input type="text" value="10000" id="processinterval" name="processinterval" form="createform">
+	</td>
+	</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td>
+<h4>Process Granularity</h4>
+</td>
+</tr>
+<tr>
+<td>
+<p>
+The endpoint monitor process information may be either limited to just the process or include thread level granularity.
+</p>
+<select name="processgranularity" id="processgranularity" form="createform">
+	<option value="process">process</option>
+	<option value="thread">thread</option>
+</select>
+</td>
+</tr>
+<tr>
+<td>
 <h4>Image Compression</h4>
 </td>
 </tr>
