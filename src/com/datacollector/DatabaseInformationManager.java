@@ -104,7 +104,7 @@ public class DatabaseInformationManager
 					newConn.put("username",ele.getElementsByTagName("username").item(0).getTextContent());
 					newConn.put("password",ele.getElementsByTagName("password").item(0).getTextContent());
 					newConn.put("driver",ele.getElementsByTagName("driver").item(0).getTextContent());
-					newConn.put("maxconnections",new Integer(ele.getElementsByTagName("maxconnections").item(0).getTextContent()));
+					newConn.put("maxconnections", Integer.parseInt(ele.getElementsByTagName("maxconnections").item(0).getTextContent()));
 					String name=ele.getElementsByTagName("name").item(0).getTextContent();
 					newConn.put("name",name);
 					if(connectionList.containsKey(name))

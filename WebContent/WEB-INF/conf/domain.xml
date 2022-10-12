@@ -1,0 +1,4 @@
+<domain id="proxy">
+	<address>revenge2.cs.arizona.edu</address>
+	<application>/DataCollectorServer</application>
+</domain>

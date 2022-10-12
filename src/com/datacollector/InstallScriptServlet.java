@@ -41,6 +41,7 @@ public class InstallScriptServlet extends HttpServlet {
 	{
 		HttpSession session = request.getSession(true);
 		
+		
 		String curUsername = request.getParameter("username");
 		String curEvent = request.getParameter("event");
 		String curAdmin = request.getParameter("admin");
@@ -93,6 +94,12 @@ public class InstallScriptServlet extends HttpServlet {
 		
 		
 		Connection dbConn = myConnectionSource.getDatabaseConnection();
+		
+		String downloadURL = ProxyDomainInfo.getProxiedDomain();
+		if(downloadURL.equals(""))
+		{
+			downloadURL = request.getServerName();
+		}
 		
 		try
 		{
@@ -259,7 +266,7 @@ public class InstallScriptServlet extends HttpServlet {
 		
 		//Reverse proxy made this necessary, since URL URL does not match actual server domain
 		//Add a config file to change this I guess :/
-		String serverName = "revenge.cs.arizona.edu";
+		String serverName = downloadURL;
 		String port = "80";
 		
 		String mariaPassword = "LFgVMrQ8rqR41StN";

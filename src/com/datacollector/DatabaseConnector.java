@@ -248,6 +248,7 @@ public class DatabaseConnector
 	
 	public void setupDBManager(ServletContext sc)
 	{
+		ProxyDomainInfo.setupInfo(sc, false);
 		cal.setTimeZone(TimeZone.getDefault());
 		DatabaseInformationManager manager=DatabaseInformationManager.getInstance();
 		//ServletContext sc=getServletContext();
