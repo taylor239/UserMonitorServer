@@ -635,8 +635,9 @@ catch(Exception e)
 				<li><b>processes:</b> enabled in default link; contains background process information.</li>
 				<li><b>windows:</b> enabled in default link; contains active (foreground) window information.</li>
 				<li><b>events:</b> enabled in default link; contains task completion information.</li>
-				<li><b>screenshots:</b> disabled in default link; has base64 encoded screenshots.  <b>screenshotindices</b> can also be specified which includes the index data but not the actual encoded image.</li>
-				<li><b>video:</b> disabled in default link; builds a mkv formatted video from the screenshots for each session, encoded to base64 for json output.</li>
+				<li><b>screenshots:</b> disabled in default link; has base64 encoded screenshots or actual image files in .zip output.  <b>screenshotindices</b> can also be specified which includes the index data but not the actual encoded image.</li>
+				<li><b>compositedscreenshots:</b> same as screenshots, but will reconstruct complete frames from diff frames instead of serving those frames as raw diffs.</li>
+				<li><b>video:</b> disabled in default link; builds a mkv formatted video from the screenshots for each session, encoded to base64 for json output.  Currently broken and disabled.</li>
 			</ul>
 		</li>
 		<li>
