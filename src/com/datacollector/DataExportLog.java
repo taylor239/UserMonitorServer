@@ -579,7 +579,6 @@ public class DataExportLog extends HttpServlet {
 				headMap = myConnector.mergeMaps(headMap, screenshotMap);
 			}
 			
-			headMap = filterEmpty(headMap);
 			
 			if(toFix)
 			{
@@ -594,7 +593,6 @@ public class DataExportLog extends HttpServlet {
 			System.out.println("Time normalized");
 			//System.out.println(headMap.get("bounds"));
 			//headMap.remove("bounds");
-			
 			
 			//System.out.println("Exporting " + headMap.size());
 			//System.out.println(dataTypes);
@@ -657,6 +655,10 @@ public class DataExportLog extends HttpServlet {
 					}
 				}
 			}
+			
+
+			System.out.println("Filtering empty...");
+			headMap = filterEmpty(headMap);
 			
 			
 			if(normalize != null && !normalize.equals("none"))
@@ -879,6 +881,7 @@ public class DataExportLog extends HttpServlet {
 			ConcurrentHashMap curMap = (ConcurrentHashMap) userEntry.getValue();
 			if(curMap.isEmpty())
 			{
+				System.out.println("Empty: " + curUser);
 				toFilter.remove(curUser);
 			}
 			

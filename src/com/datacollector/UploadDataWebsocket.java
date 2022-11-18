@@ -571,6 +571,7 @@ public class UploadDataWebsocket
 			columnNamesStatement.close();
 			
 			Set<String> masterKeySet = firstUser.keySet();
+			String onDupe = "";
 			for(String heading : masterKeySet)
 			{
 				if(!secureHeadingMap.containsKey(heading))
@@ -585,9 +586,11 @@ public class UploadDataWebsocket
 				}
 				else
 				{
+					onDupe += ", ";
 					values += ", ";
 					headings += ", ";
 				}
+				onDupe += " `" + heading + "` = VALUES(`" + heading + "`)";
 				values += "?";
 				headings += heading;
 				first = false;
@@ -595,7 +598,7 @@ public class UploadDataWebsocket
 			values += ")";
 			headings += ")";
 			
-			String userInsert = "INSERT IGNORE INTO `" + table + "` " + headings + " VALUES ";
+			String userInsert = "INSERT INTO `" + table + "` " + headings + " VALUES ";
 			StringBuilder totalQuery = new StringBuilder();
 			totalQuery.append(userInsert);
 			first = true;
@@ -612,6 +615,11 @@ public class UploadDataWebsocket
 				totalQuery.append(values);
 				first = false;
 			}
+			
+			totalQuery.append(" ON DUPLICATE KEY UPDATE " + onDupe);
+			
+			
+			
 			userInsert = totalQuery.toString();
 			//System.out.println(userInsert);
 			//System.out.println(userList);
