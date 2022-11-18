@@ -579,6 +579,8 @@ public class DataExportLog extends HttpServlet {
 				headMap = myConnector.mergeMaps(headMap, screenshotMap);
 			}
 			
+			headMap = filterEmpty(headMap);
+			
 			if(toFix)
 			{
 				//System.out.println("Trying to fix timestamps");
@@ -865,6 +867,25 @@ public class DataExportLog extends HttpServlet {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+	}
+	
+	private ConcurrentHashMap filterEmpty(ConcurrentHashMap toFilter)
+	{
+		Iterator userIterator = toFilter.entrySet().iterator();
+		while(userIterator.hasNext())
+		{
+			Entry userEntry = (Entry) userIterator.next();
+			String curUser = (String) userEntry.getKey();
+			ConcurrentHashMap curMap = (ConcurrentHashMap) userEntry.getValue();
+			if(curMap.isEmpty())
+			{
+				toFilter.remove(curUser);
+			}
+			
+		}
+		
+		
+		return toFilter;
 	}
 	
 	private ConcurrentHashMap fixTime(ConcurrentHashMap toFix)
