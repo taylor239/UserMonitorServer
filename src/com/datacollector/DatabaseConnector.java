@@ -3307,7 +3307,7 @@ public class DatabaseConnector
 				nextRow.put("Index", myResults.getTimestamp("taken", cal));
 				nextRow.put("Index MS", myResults.getDouble("indexMS") * 1000);
 				
-				nextRow.put("Text", myResults.getString("ocrtext"));
+				//nextRow.put("Text", myResults.getString("ocrtext"));
 				
 				nextRow.put("Encoding", myResults.getString("encoding"));
 				nextRow.put("Type", myResults.getString("frameType"));
