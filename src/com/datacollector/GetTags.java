@@ -148,6 +148,7 @@ public class GetTags extends HttpServlet
 				}
 				else
 				{
+					response.getWriter().close();
 					return;
 				}
 			}
