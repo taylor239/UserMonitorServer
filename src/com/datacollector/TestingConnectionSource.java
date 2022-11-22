@@ -34,6 +34,7 @@ public class TestingConnectionSource implements Runnable
 	String userName = "dataCollectorServer";
 	String password = "uBgiDDGhndviQeEZ";
 	String address = "jdbc:mysql://localhost:3306/openDataCollectionServer?autoReconnect=true";
+	int maxConnections = 50;
 	static DataSource singletonDataSource = null;
 	static ConcurrentHashMap<Object, Object> toClose, nextClose;
 	static Thread closeThread;
@@ -55,13 +56,14 @@ public class TestingConnectionSource implements Runnable
 		*/
 	//}
 	
-	public TestingConnectionSource(String theUser, String thePwd, String theAddr)
+	public TestingConnectionSource(String theUser, String thePwd, String theAddr, int numConn)
 	{
 		
 		
 		userName = theUser;
 		password = thePwd;
 		address = theAddr;
+		maxConnections = numConn;
 		/*
 		try
 		{
@@ -95,7 +97,7 @@ public class TestingConnectionSource implements Runnable
 			//System.out.println(address);
 			if(singletonDataSource == null)
 			{
-				singletonDataSource = setupDataSource(address, userName, password);
+				singletonDataSource = setupDataSource(address, userName, password, maxConnections);
 			}
 			Connection toReturn = singletonDataSource.getConnection();
 			//toReturn.set
@@ -138,7 +140,7 @@ public class TestingConnectionSource implements Runnable
 			if(singletonDataSource == null)
 			{
 				
-				singletonDataSource = setupDataSource(address, userName, password);
+				singletonDataSource = setupDataSource(address, userName, password, maxConnections);
 			}
 			
 			
@@ -185,7 +187,8 @@ public class TestingConnectionSource implements Runnable
 		//}
 	}
 	
-	public static DataSource setupDataSource(String connectURI, String myUsername, String myPassword) {
+	public static DataSource setupDataSource(String connectURI, String myUsername, String myPassword, int maxConn)
+	{
         
 		//org.apache.log4j.BasicConfigurator.configure();
 		//Logger.getRootLogger().setLevel(Level.INFO);
@@ -201,7 +204,7 @@ public class TestingConnectionSource implements Runnable
 		Properties properties = new Properties();
 		properties.setProperty("user", myUsername);
 		properties.setProperty("password", myPassword);
-		properties.setProperty("maxTotal", "50");
+		properties.setProperty("maxTotal", "" + maxConn);
         ConnectionFactory connectionFactory =
             new DriverManagerConnectionFactory(connectURI, properties);
         

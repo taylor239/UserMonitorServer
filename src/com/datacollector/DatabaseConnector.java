@@ -236,7 +236,7 @@ public class DatabaseConnector
 		cal.setTimeZone(TimeZone.getDefault());
 		ConcurrentHashMap tmp=DatabaseInformationManager.getInstance().getNext(databaseName);
 		//(String)tmp.get("address"), (String)tmp.get("driver"), (String)tmp.get("username"), (Integer)tmp.get("maxconnections"), (String)tmp.get("password")
-		mySource = new TestingConnectionSource((String)tmp.get("username"), (String)tmp.get("password"), (String)tmp.get("address"));
+		mySource = new TestingConnectionSource((String)tmp.get("username"), (String)tmp.get("password"), (String)tmp.get("address"), (Integer)tmp.get("maxconnections"));
 	}
 	
 	public TestingConnectionSource getConnectionSource()
