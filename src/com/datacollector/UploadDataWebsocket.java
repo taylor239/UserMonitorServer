@@ -197,6 +197,9 @@ public class UploadDataWebsocket
 				outputMap.put("problem", "token not recognized");
 				String toWrite = gson.toJson(outputMap);
 				session.getBasicRemote().sendText(toWrite);
+				rset.close();
+				stmt.close();
+				conn.close();
 				return;
 			}
 			else
@@ -212,6 +215,9 @@ public class UploadDataWebsocket
 					outputMap.put("problem", "token stale");
 					String toWrite = gson.toJson(outputMap);
 					session.getBasicRemote().sendText(toWrite);
+					rset.close();
+					stmt.close();
+					conn.close();
 					return;
 				}
 				else if(isContinuous)
@@ -225,10 +231,15 @@ public class UploadDataWebsocket
 						outputMap.put("problem", "event stale");
 						String toWrite = gson.toJson(outputMap);
 						session.getBasicRemote().sendText(toWrite); //session.close();
+						rset.close();
+						stmt.close();
+						conn.close();
 						return;
 					}
 				}
-				
+				rset.close();
+				stmt.close();
+				//conn.close();
 				
 				if(fromJSON.containsKey("User") && ((List)fromJSON.get("User")).size() > 0)
 				{
@@ -280,7 +291,7 @@ public class UploadDataWebsocket
 					//System.out.println(userList);
 					
 					PreparedStatement insertStatement = dbConn.prepareStatement(userInsert);
-					stmt.close();
+					//stmt.close();
 					stmt = insertStatement;
 					
 					int curEnt = 1;
@@ -470,7 +481,7 @@ public class UploadDataWebsocket
 		}
 		catch(Exception e)
 		{
-			try
+			/*try
 			{
 				Class.forName("com.mysql.jdbc.Driver");
 				//HttpSession session = request.getSession(true);
@@ -497,7 +508,7 @@ public class UploadDataWebsocket
 			{
 				e2.printStackTrace();
 			}
-			
+			*/
 			HashMap outputMap = new HashMap();
 			outputMap.put("result", "nokay");
 			outputMap.put("problem", "insert issue");
@@ -509,7 +520,6 @@ public class UploadDataWebsocket
 				e1.printStackTrace();
 			}
 			e.printStackTrace();
-			return;
 		}
 		finally
 		{
@@ -517,6 +527,10 @@ public class UploadDataWebsocket
             try { if (stmt != null) stmt.close(); } catch(Exception e) { }
             try { if (conn != null) conn.close(); } catch(Exception e) { }
         }
+		
+		try { if (rset != null) rset.close(); } catch(Exception e) { }
+        try { if (stmt != null) stmt.close(); } catch(Exception e) { }
+        try { if (conn != null) conn.close(); } catch(Exception e) { }
 		
 		System.out.println(new Date());
 		//System.out.println("Done: " + fromJSON.get("totalDone") + "/" + fromJSON.get("totalToDo"));
@@ -554,6 +568,25 @@ public class UploadDataWebsocket
 			List<Map> userList = (List) fromJSON.get(table);
 			Map<String, Object> firstUser = (Map) userList.get(0);
 			int listSize = userList.size();
+			
+			for(Map entry : userList)
+			{
+				if(!entry.get("username").equals(username))
+				{
+					System.out.println("Invalid username: " + entry.get("username") + ", " + username);
+					return 0;
+				}
+				if(!entry.get("event").equals(eventname))
+				{
+					System.out.println("Invalid event: " + entry.get("event") + ", " + username);
+					return 0;
+				}
+				if(!entry.get("adminEmail").equals(adminemail))
+				{
+					System.out.println("Invalid adminEmail: " + entry.get("adminEmail") + ", " + username);
+					return 0;
+				}
+			}
 			
 			String headings = "(";
 			String values = "(";
@@ -624,26 +657,16 @@ public class UploadDataWebsocket
 			//System.out.println(userInsert);
 			//System.out.println(userList);
 			
-			PreparedStatement insertStatement = dbConn.prepareStatement(userInsert);
+			PreparedStatement insertStatement = null;
+			
+			try
+			{
+			
+			insertStatement = dbConn.prepareStatement(userInsert);
 			
 			int curEnt = 1;
 			for(Map entry : userList)
 			{
-				if(!entry.get("username").equals(username))
-				{
-					System.out.println("Invalid username: " + entry.get("username") + ", " + username);
-					return 0;
-				}
-				if(!entry.get("event").equals(eventname))
-				{
-					System.out.println("Invalid event: " + entry.get("event") + ", " + username);
-					return 0;
-				}
-				if(!entry.get("adminEmail").equals(adminemail))
-				{
-					System.out.println("Invalid adminEmail: " + entry.get("adminEmail") + ", " + username);
-					return 0;
-				}
 				toReturn++;
 				myCacher.addSession(adminemail, eventname, username, (String) entry.get("session"));
 				for(String key : masterKeySet)
@@ -666,6 +689,25 @@ public class UploadDataWebsocket
 			insertStatement.execute();
 			insertStatement.close();
 			//dbConn.close();
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+			finally
+			{
+				try
+				{
+					if(insertStatement != null)
+					{
+						insertStatement.close();
+					}
+				}
+				catch(Exception e)
+				{
+					
+				}
+			}
 		}
 		return toReturn;
 	}
