@@ -319,6 +319,57 @@ public class DatabaseConnector
 		return null;
 	}
 	
+	public long getMaxPacketLength()
+	{
+		long myReturn = Long.MAX_VALUE;
+		String query = "show variables like 'max_allowed_packet'";
+		
+		Connection myConnector = mySource.getDatabaseConnectionNoTimeout();
+		PreparedStatement myStmt = null;
+		ResultSet myResults = null;
+		
+		try
+		{
+			myStmt = myConnector.prepareStatement(query);
+			myResults = myStmt.executeQuery();
+			if(myResults.next())
+			{
+				myReturn = myResults.getLong("Value");
+			}
+			myResults.close();
+			myStmt.close();
+			myConnector.close();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			try
+			{
+				if(myResults != null)
+				{
+					myResults.close();
+				}
+				if(myStmt != null)
+				{
+					myStmt.close();
+				}
+				if(myConnector != null)
+				{
+					myConnector.close();
+				}
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
+		
+		return myReturn;
+	}
+	
 	public ConcurrentHashMap getCachedBounds(String adminEmail, String eventName, ArrayList usersToSelect, ArrayList sessionsToSelect)
 	{
 		ConcurrentHashMap myReturn = new ConcurrentHashMap();

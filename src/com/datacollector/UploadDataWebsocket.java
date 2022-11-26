@@ -80,6 +80,22 @@ public class UploadDataWebsocket
 		}
 		
 		httpSession = (HttpSession) config.getUserProperties().get(HttpSession.class.getName());
+		
+		DatabaseConnector myConnector=(DatabaseConnector)httpSession.getAttribute("connector");
+		if(myConnector==null)
+		{
+			myConnector=new DatabaseConnector(httpSession.getServletContext());
+			httpSession.setAttribute("connector", myConnector);
+		}
+		
+		try
+		{
+			session.getBasicRemote().sendText(myConnector.getMaxPacketLength() + "");
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 		//System.out.println("Got new data upload");
 		session.setMaxTextMessageBufferSize(400826410);
 	}
