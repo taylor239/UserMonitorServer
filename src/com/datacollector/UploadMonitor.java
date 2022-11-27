@@ -50,6 +50,7 @@ public class UploadMonitor implements Runnable
 			eventMap = new ConcurrentHashMap<String, ConcurrentHashMap<String, ConcurrentHashMap<String, Object>>>();
 			adminMap.put(admin, eventMap);
 		}
+		eventMap = adminMap.get(admin);
 		
 		ConcurrentHashMap<String, ConcurrentHashMap<String, Object>> userMap = null;
 		if(!eventMap.containsKey(event))
@@ -57,6 +58,7 @@ public class UploadMonitor implements Runnable
 			userMap = new ConcurrentHashMap<String, ConcurrentHashMap<String, Object>>();
 			eventMap.put(event, userMap);
 		}
+		userMap = eventMap.get(event);
 		
 		ConcurrentHashMap<String, Object> tokenMap = null;
 		if(!userMap.containsKey(user))
@@ -64,6 +66,7 @@ public class UploadMonitor implements Runnable
 			tokenMap = new ConcurrentHashMap<String, Object>();
 			userMap.put(user, tokenMap);
 		}
+		tokenMap = userMap.get(user);
 		
 		tokenMap.put(token, metricValues);
 	}
