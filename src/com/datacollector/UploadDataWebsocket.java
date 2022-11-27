@@ -353,31 +353,54 @@ public class UploadDataWebsocket
 					insertStatement.close();
 				}
 				
+				ConcurrentHashMap<String, Object> uploadDetailsParent = new ConcurrentHashMap<String, Object>();
+				
+				uploadDetailsParent.put("Uncompressed Size:", uncompressedString.length());
+				uploadDetailsParent.put("Compressed Size:", compressed.length);
+				
+				
+				ConcurrentHashMap<String, Object> uploadDetails = new ConcurrentHashMap<String, Object>();
+				
 				long totalSize = 0;
 				List<Map> userList = (List) fromJSON.get("Screenshot");
+				uploadDetails.put("Screenshot", userList.size());
 				totalSize += userList.size();
 				userList = (List) fromJSON.get("Process");
+				uploadDetails.put("Process", userList.size());
 				totalSize += userList.size();
 				userList = (List) fromJSON.get("ProcessArgs");
+				uploadDetails.put("Process Args", userList.size());
 				totalSize += userList.size();
 				userList = (List) fromJSON.get("ProcessAttributes");
+				uploadDetails.put("Process Att", userList.size());
 				totalSize += userList.size();
 				userList = (List) fromJSON.get("ProcessThreads");
+				uploadDetails.put("Process Thread", userList.size());
 				totalSize += userList.size();
 				userList = (List) fromJSON.get("Window");
+				uploadDetails.put("Window", userList.size());
 				totalSize += userList.size();
 				userList = (List) fromJSON.get("WindowDetails");
+				uploadDetails.put("Window Details", userList.size());
 				totalSize += userList.size();
 				userList = (List) fromJSON.get("MouseInput");
+				uploadDetails.put("Mouse", userList.size());
 				totalSize += userList.size();
 				userList = (List) fromJSON.get("KeyboardInput");
+				uploadDetails.put("Keyboard", userList.size());
 				totalSize += userList.size();
 				userList = (List) fromJSON.get("Task");
+				uploadDetails.put("Task", userList.size());
 				totalSize += userList.size();
 				userList = (List) fromJSON.get("TaskEvent");
+				uploadDetails.put("Task Event", userList.size());
 				totalSize += userList.size();
 				userList = (List) fromJSON.get("PerformanceMetrics");
+				uploadDetails.put("Metrics", userList.size());
 				totalSize += userList.size();
+				
+				uploadDetailsParent.put("Attempted", uploadDetails);
+				uploadDetails = new ConcurrentHashMap<String, Object>();
 				
 				String updateNumQuery = "UPDATE `UploadToken` SET `framesRemaining` = `framesRemaining` + ? WHERE `UploadToken`.`username` = ? AND `UploadToken`.`token` = ? AND `UploadToken`.`adminEmail` = ? AND `UploadToken`.`event` = ?";
 				PreparedStatement toUpdate = dbConn.prepareStatement(updateNumQuery);
@@ -399,68 +422,84 @@ public class UploadDataWebsocket
 				
 				remainingSize = totalSize;
 				long curLong = insertInto("Screenshot", fromJSON, dbConn, username, event, admin);
+				uploadDetails.put("Screenshot", curLong);
 				toUpdate.setLong(1, curLong);
 				toUpdate.setLong(2, curLong);
 				remainingSize -= curLong;
 				toUpdate.execute();
 				curLong = (insertInto("Process", fromJSON, dbConn, username, event, admin));
+				uploadDetails.put("Process", curLong);
 				toUpdate.setLong(1, curLong);
 				toUpdate.setLong(2, curLong);
 				remainingSize -= curLong;
 				toUpdate.execute();
 				curLong = (insertInto("ProcessArgs", fromJSON, dbConn, username, event, admin));
+				uploadDetails.put("Process Args", curLong);
 				toUpdate.setLong(1, curLong);
 				toUpdate.setLong(2, curLong);
 				remainingSize -= curLong;
 				toUpdate.execute();
 				curLong = (insertInto("ProcessAttributes", fromJSON, dbConn, username, event, admin));
+				uploadDetails.put("Process Att", curLong);
 				toUpdate.setLong(1, curLong);
 				toUpdate.setLong(2, curLong);
 				remainingSize -= curLong;
 				toUpdate.execute();
 				curLong = (insertInto("ProcessThreads", fromJSON, dbConn, username, event, admin));
+				uploadDetails.put("Process Thread", curLong);
 				toUpdate.setLong(1, curLong);
 				toUpdate.setLong(2, curLong);
 				remainingSize -= curLong;
 				toUpdate.execute();
 				curLong = (insertInto("Window", fromJSON, dbConn, username, event, admin));
+				uploadDetails.put("Window", curLong);
 				toUpdate.setLong(1, curLong);
 				toUpdate.setLong(2, curLong);
 				remainingSize -= curLong;
 				toUpdate.execute();
 				curLong = (insertInto("WindowDetails", fromJSON, dbConn, username, event, admin));
+				uploadDetails.put("Window Details", curLong);
 				toUpdate.setLong(1, curLong);
 				toUpdate.setLong(2, curLong);
 				remainingSize -= curLong;
 				toUpdate.execute();
 				curLong = (insertInto("MouseInput", fromJSON, dbConn, username, event, admin));
+				uploadDetails.put("Mouse", curLong);
 				toUpdate.setLong(1, curLong);
 				toUpdate.setLong(2, curLong);
 				remainingSize -= curLong;
 				toUpdate.execute();
 				curLong = (insertInto("KeyboardInput", fromJSON, dbConn, username, event, admin));
+				uploadDetails.put("Keyboard", curLong);
 				toUpdate.setLong(1, curLong);
 				toUpdate.setLong(2, curLong);
 				remainingSize -= curLong;
 				toUpdate.execute();
 				curLong = (insertInto("Task", fromJSON, dbConn, username, event, admin));
+				uploadDetails.put("Task", curLong);
 				toUpdate.setLong(1, curLong);
 				toUpdate.setLong(2, curLong);
 				remainingSize -= curLong;
 				toUpdate.execute();
 				curLong = (insertInto("TaskEvent", fromJSON, dbConn, username, event, admin));
+				uploadDetails.put("Task Event", curLong);
 				toUpdate.setLong(1, curLong);
 				toUpdate.setLong(2, curLong);
 				remainingSize -= curLong;
 				toUpdate.execute();
 				
 				curLong = (insertInto("PerformanceMetrics", fromJSON, dbConn, username, event, admin));
+				uploadDetails.put("Metrics", curLong);
 				toUpdate.setLong(1, curLong);
 				toUpdate.setLong(2, curLong);
 				remainingSize -= curLong;
 				toUpdate.execute();
 				
 				toUpdate.close();
+				
+				uploadDetailsParent.put("Completed", uploadDetails);
+				
+				UploadMonitor.getUploadMonitor().activeUser(admin, event, username, token, uploadDetailsParent);
 				//double totalDoneTmp = (Double) fromJSON.get("totalDone");
 				//double totalToDoTmp = (Double) fromJSON.get("totalToDo");
 				//int totalDone = (int)totalDoneTmp;

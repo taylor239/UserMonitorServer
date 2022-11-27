@@ -289,6 +289,13 @@ public class DatabaseConnector
 		System.out.println(myConnector.toJSON(filteredResults));
 	}*/
 	
+	public long freeMemory()
+	{
+		long allocatedMemory = (Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory());
+		long presumableFreeMemory = Runtime.getRuntime().maxMemory() - allocatedMemory;
+		return presumableFreeMemory;
+	}
+	
 	/**
 	 * This might be a helpful query at some point.  Not used yet.
 	 * @return
