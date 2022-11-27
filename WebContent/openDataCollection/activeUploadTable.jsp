@@ -79,7 +79,7 @@ if(request.getParameter("email") != null)
 			<table style="overflow-x:auto" id="visTable">
 				<tr>
 					<td>
-						<div align="center" id="title">User and Session Selection for <%=eventName %> Visualization</div>
+						<div align="center" id="title">Latest Upload Segment Info for <%=eventName %></div>
 					</td>
 				</tr>
 				<tr>
