@@ -3265,6 +3265,8 @@ public class DatabaseConnector
 		return nextFrame;
 	}
 	
+	private ImageFrameCompositor frameCompositor = null;
+	
 	public ConcurrentHashMap getScreenshotsHierarchy(String event, String admin, ArrayList usersToSelect, ArrayList sessionsToSelect, boolean onlyIndex, boolean base64, boolean reconstruct, boolean separateFiles, String start, String end)
 	{
 		ConcurrentHashMap toReturn = new ConcurrentHashMap();
@@ -3373,19 +3375,24 @@ public class DatabaseConnector
 				nextRow.put("Y", myResults.getString("yStart"));
 				
 				
-				ConcurrentHashMap nextRowBinary = null;
+				//ConcurrentHashMap nextRowBinary = null;
 				if(separateFiles)
 				{
 					//System.out.println("Adding file paths...");
 					nextRow.put("Path", "./" + userName + "/" + sessionName + "/screenshots/" + ((String)myResults.getTimestamp("taken", cal).toString()).replaceAll(" ", "_") + ".jpg");
 					
-					nextRowBinary = new ConcurrentHashMap();
-					nextRowBinary.put("Index", ((String)myResults.getTimestamp("taken", cal).toString()).replaceAll(" ", "_") + ".jpg");
+					//nextRowBinary = new ConcurrentHashMap();
+					//nextRowBinary.put("Index", ((String)myResults.getTimestamp("taken", cal).toString()).replaceAll(" ", "_") + ".jpg");
 				}
 				
 				byte[] image = myResults.getBytes("screenshot");
 				nextRow.put("Size", image.length);
 				
+				if(reconstruct && !onlyIndex)
+				{
+					nextRow.put("ScreenshotBytes", image);
+				}
+				/*
 				if(reconstruct && !onlyIndex)
 				{
 					//System.out.println("Compositing images...");
@@ -3520,6 +3527,8 @@ public class DatabaseConnector
 					image = (byte[]) nextRow.get("ScreenshotBytes");
 					nextRow.remove("ScreenshotBytes");
 				}
+				*/
+				
 				/*
 				if(myResults.getInt("doneocr") <= 0)
 				{
@@ -3539,25 +3548,30 @@ public class DatabaseConnector
 				}
 				*/
 				
-				if(!onlyIndex)
-				{
+				//if(!onlyIndex)
+				//{
 					//byte[] image = myResults.getBytes("screenshot");
+					/*
 					if(base64)
 					{
 						//System.out.println("Converting to b64...");
 						String imageEncoded = Base64.getEncoder().encodeToString(image);
 						nextRow.put("Screenshot", imageEncoded);
 					}
-					else if(separateFiles)
-					{
-						nextRowBinary.put("Screenshot", image);
-						nextRowBinary.put("Size", image.length);
-					}
-					else
-					{
-						nextRow.put("Screenshot", image);
-					}
-				}
+					*/
+					//if(separateFiles)
+					//{
+					//	nextRowBinary.put("Screenshot", image);
+					//	nextRowBinary.put("Size", image.length);
+					//}
+					//else
+				//	{
+				//		nextRow.put("Screenshot", image);
+				//	}
+				//}
+				
+				nextRow.put("Screenshot", image);
+				
 				
 				if(separateFiles)
 				{
@@ -3586,7 +3600,7 @@ public class DatabaseConnector
 					ArrayList eventListBinary = (ArrayList) sessionMapBinary.get("screenshots");
 					
 					eventList.add(nextRow);
-					eventListBinary.add(nextRowBinary);
+					//eventListBinary.add(nextRowBinary);
 				}
 				else
 				{
@@ -3618,6 +3632,112 @@ public class DatabaseConnector
 			rset.close();
 			stmt.close();
 			conn.close();
+			
+			if(!onlyIndex)
+			{
+				Iterator userIterator = myReturn.entrySet().iterator();
+				while(userIterator.hasNext())
+				{
+					Entry nextUser = (Entry) userIterator.next();
+					ConcurrentHashMap sessionMap = (ConcurrentHashMap) nextUser.getValue();
+					Iterator sessionIterator = sessionMap.entrySet().iterator();
+					while(sessionIterator.hasNext())
+					{
+						Entry nextSession = (Entry) sessionIterator.next();
+						ConcurrentHashMap dataMap = (ConcurrentHashMap) nextSession.getValue();
+						ArrayList screenshotList = (ArrayList) dataMap.get("screenshots");
+						for(int x = 0; x < screenshotList.size(); x++)
+						{
+							ConcurrentHashMap screenshotMap = (ConcurrentHashMap) screenshotList.get(x);
+							
+							//If we are on the first image, check to see if we need to composite
+							if(reconstruct && x == 0)
+							{
+								ConcurrentHashMap prevImage = null;
+								
+								//screenshotMap.put("ScreenshotBytes", screenshotMap.get("Screenshot"));
+								if(screenshotMap.get("Type").equals("key"))
+								{
+									System.out.println("Got first image: " + start);
+									screenshotMap.put("Calculated", true);
+									
+									prevImage = screenshotMap;
+								}
+								else
+								{
+									
+									ArrayList userList = new ArrayList();
+									userList.add(nextUser.getKey());
+									ArrayList sessionList = new ArrayList();
+									userList.add(nextSession.getKey());
+									
+									String startInt = (Integer.parseInt(start) - 1) + "";
+									
+									System.out.println("Searching for first: " + startInt);
+									
+									ArrayList userSelectList = new ArrayList();
+									userSelectList.add(nextUser.getKey());
+									ArrayList sessionSelectList = new ArrayList();
+									sessionSelectList.add(nextSession.getKey());
+									ConcurrentHashMap prevMap = getScreenshotsHierarchy(event, admin, userSelectList, sessionSelectList, false, false, true, false, startInt, "1");
+									
+									if(prevMap.containsKey(nextUser.getKey()))
+									{
+										ConcurrentHashMap prevUserMap = (ConcurrentHashMap) prevMap.get(nextUser.getKey());
+										if(prevUserMap.containsKey(nextSession.getKey()))
+										{
+											ConcurrentHashMap prevSessionMap = (ConcurrentHashMap) prevUserMap.get(nextSession.getKey());
+											if(prevSessionMap.containsKey("screenshots"))
+											{
+												ArrayList prevImageList = (ArrayList) prevSessionMap.get("screenshots");
+												prevImage = (ConcurrentHashMap) prevImageList.get(0);
+												
+												//OK, so now we have the last full frame image.  Time to combine.
+											}
+										}
+									}
+								}
+								
+								//screenshotList has the ConcurrentHashMaps that contain frame data and metadata, ordered
+								//prevImage is the last known calculated frame, from 1 entry before screenshotList
+								
+								if(frameCompositor == null)
+								{
+									frameCompositor = new ImageFrameCompositor(4);
+								}
+								screenshotList = frameCompositor.composite(prevImage, screenshotList);
+							}
+							
+							if(base64)
+							{
+								//System.out.println("Converting to b64...");
+								String imageEncoded = Base64.getEncoder().encodeToString((byte[]) screenshotMap.get("Screenshot"));
+								screenshotMap.put("Screenshot", imageEncoded);
+							}
+							
+							if(separateFiles)
+							{
+								ConcurrentHashMap userMapBinary = (ConcurrentHashMap) myReturnBinary.get(nextUser.getKey());
+								ConcurrentHashMap sessionMapBinary = (ConcurrentHashMap) userMapBinary.get(nextSession.getKey());
+								//ConcurrentHashMap dataMapBinary = (ConcurrentHashMap) sessionMapBinary.get("screenshots");
+								ArrayList screenshotListBinary = (ArrayList) sessionMapBinary.get("screenshots");
+								
+								ConcurrentHashMap nextRowBinary = new ConcurrentHashMap();
+								nextRowBinary.put("Screenshot", screenshotMap.get("Screenshot"));
+								nextRowBinary.put("Size", ((byte[])screenshotMap.get("Screenshot")).length);
+								
+								nextRowBinary.put("Index", ((String)screenshotMap.get("Index").toString()).replaceAll(" ", "_") + ".jpg");
+								
+								screenshotListBinary.add(nextRowBinary);
+								
+								screenshotMap.remove("Screenshot");
+							}
+						}
+					}
+				}
+			}
+			
+			
 		}
 		catch(Exception e)
 		{
@@ -3645,7 +3765,10 @@ public class DatabaseConnector
 				for(int x = 0; x < screenshotList.size(); x++)
 				{
 					ConcurrentHashMap screenshotMap = (ConcurrentHashMap) screenshotList.get(x);
-					screenshotMap.remove("ScreenshotImage");
+					if(screenshotMap.containsKey("ScreenshotImage"))
+					{
+						screenshotMap.remove("ScreenshotImage");
+					}
 				}
 			}
 		}
