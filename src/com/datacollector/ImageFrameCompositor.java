@@ -22,6 +22,27 @@ public class ImageFrameCompositor
 	
 	private int sleepInterval = 1000;
 	
+	
+	private class SyncBufferedImageHolder
+	{
+		private BufferedImage toHold = null;
+		private int width, height, type;
+		private SyncBufferedImageHolder(int width, int height, int type)
+		{
+			this.width = width; this.height = height; this.type = type;
+			//toHold = new BufferedImage(width, height, type);
+		}
+		
+		private synchronized BufferedImage heldImage()
+		{
+			if(toHold == null)
+			{
+				toHold = new BufferedImage(width, height, type);
+			}
+			return toHold;
+		}
+	}
+	
 	//private boolean compositeDone = true;
 	
 	private class CompositeWorker implements Runnable
@@ -93,24 +114,41 @@ public class ImageFrameCompositor
 							BufferedImage curImage = (BufferedImage) curScreenshot.get("ScreenshotImage");
 							
 							BufferedImage resultImage = null;
-							if(curScreenshot.containsKey("ResultScreenshot"))
+							if(curScreenshot.containsKey("ResultScreenshotHolder"))
 							{
-								while(curScreenshot.get("ResultScreenshot") instanceof Boolean)
-								{
-									
-								}
-								resultImage = (BufferedImage) curScreenshot.get("ResultScreenshot");
+								//resultImage = (BufferedImage) curScreenshot.get("ResultScreenshot");
 							}
 							else
 							{
-								curScreenshot.put("ResultScreenshot", false);
+								curScreenshot.put("ResultScreenshotHolder", new SyncBufferedImageHolder(prevImage.getWidth(), prevImage.getHeight(), BufferedImage.TYPE_INT_ARGB));
 								
-								resultImage = new BufferedImage(prevImage.getWidth(), prevImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+								//resultImage = new BufferedImage(prevImage.getWidth(), prevImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
 								
 								
+								//curScreenshot.put("ResultScreenshot", resultImage);
+							}
+							SyncBufferedImageHolder resultImageHolder = (SyncBufferedImageHolder) curScreenshot.get("ResultScreenshotHolder");
+							resultImage = resultImageHolder.heldImage();
+							//if(curScreenshot.containsKey("ResultScreenshot"))
+							//{
+							//	
+							//}
+							//else
+							//{
+							curScreenshot.put("ResultScreenshot", resultImage);
+							//}
+							
+							boolean firstTime = true;
+							
+							while(firstTime || resultImageHolder != curScreenshot.get("ResultScreenshotHolder"))
+							{
+							firstTime = false;
+							if(resultImageHolder != curScreenshot.get("ResultScreenshotHolder"))
+							{
+								resultImageHolder = (SyncBufferedImageHolder) curScreenshot.get("ResultScreenshotHolder");
+								resultImage = resultImageHolder.heldImage();
 								curScreenshot.put("ResultScreenshot", resultImage);
 							}
-							
 							if(curScreenshot.get("Type").equals("seg"))
 							{
 								int startX = Integer.parseInt((String) curScreenshot.get("X")) + modulo;
@@ -158,6 +196,7 @@ public class ImageFrameCompositor
 								}
 								
 							}
+							}
 							
 							curScreenshot.put("Calculated_" + modulo, true);
 							
@@ -177,7 +216,7 @@ public class ImageFrameCompositor
 								byte[] reconstructedImage = compressImageToBytes(resultImage, (String) curScreenshot.get("Encoding"));
 								curScreenshot.put("ScreenshotBytes", reconstructedImage);
 								curScreenshot.put("Screenshot", reconstructedImage);
-								
+								curScreenshot.remove("ResultScreenshotHolder");
 								//System.out.println("Finished " + x);
 								
 								curScreenshot.put("Calculated", true);
