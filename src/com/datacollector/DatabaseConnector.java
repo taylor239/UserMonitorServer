@@ -3570,8 +3570,10 @@ public class DatabaseConnector
 				//	}
 				//}
 				
-				nextRow.put("Screenshot", image);
-				
+				if(!onlyIndex)
+				{
+					nextRow.put("Screenshot", image);
+				}
 				
 				if(separateFiles)
 				{
@@ -3708,7 +3710,7 @@ public class DatabaseConnector
 								screenshotList = frameCompositor.composite(prevImage, screenshotList);
 							}
 							
-							if(base64)
+							if(base64 && !onlyIndex)
 							{
 								//System.out.println("Converting to b64...");
 								String imageEncoded = Base64.getEncoder().encodeToString((byte[]) screenshotMap.get("Screenshot"));
